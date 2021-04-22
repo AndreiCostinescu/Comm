@@ -11,7 +11,7 @@ add_executable(${EXE} testNormalSockets.cpp)
 target_link_libraries(${EXE} ${MASTER_LIBRARIES})
 
 set(EXE "TestBothCommunication")
-add_executable(${EXE} testBothCommunication.cpp)
+add_executable(${EXE} testBothCommunication.cpp string_utils.cpp)
 target_link_libraries(${EXE} ${MASTER_LIBRARIES})
 
 set(EXE "TestEndianness")
@@ -19,7 +19,7 @@ add_executable(${EXE} testEndianness.cpp)
 target_link_libraries(${EXE} ${MASTER_LIBRARIES})
 
 set(EXE "TestTCPClientUDPServer")
-add_executable(${EXE} testTCPClientUDPServer.cpp)
+add_executable(${EXE} testTCPClientUDPServer.cpp string_utils.cpp)
 target_link_libraries(${EXE} ${MASTER_LIBRARIES})
 
 set(EXE "TestSendImageUDP")

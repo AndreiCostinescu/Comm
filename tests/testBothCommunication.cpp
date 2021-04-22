@@ -8,7 +8,7 @@
 #include <comm/data/StatusData.h>
 #include <iostream>
 #include <thread>
-// #include <utils/string_utils.h>
+#include "string_utils.h"
 
 using namespace comm;
 using namespace std;

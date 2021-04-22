@@ -22,6 +22,7 @@ typedef int SocketAddressLength;
 #define SOCKET_SHUTDOWN WSAESHUTDOWN
 #define SOCKET_PIPE WSAESHUTDOWN
 
+#define SIGKILL 9
 #define SIGPIPE 13
 
 #else
