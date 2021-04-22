@@ -23,14 +23,15 @@ double angle(const cv::Point3f &p1, const cv::Point3f &p2) {
 }
 
 bool calculateAngle(Buffer &buffer, bool verbose = false) {
-    vector<double> angle_vector = {CV_PI/6, CV_PI/4, CV_PI/3, CV_PI/2, CV_PI/1, 2 * CV_PI};
+    vector<double> angle_vector = {CV_PI/6, CV_PI/4, CV_PI/3, CV_PI/2, CV_PI/1, 2 * CV_PI,
+                                   CV_PI/6, CV_PI/4, CV_PI/3, CV_PI/2, CV_PI/1, 2 * CV_PI};
     if (verbose) {
-        char outputBuffer[54];
+        char outputBuffer[108];
         sprintf(outputBuffer, "%08.3f %08.3f %08.3f %08.3f %08.3f %08.3f", angle_vector[0], angle_vector[1],
                 angle_vector[2], angle_vector[3], angle_vector[4], angle_vector[5]);
         cout << outputBuffer << endl;
     }
-    buffer.setBufferContentSize(6 * sizeof(double));
+    buffer.setBufferContentSize(angle_vector.size() * sizeof(double));
     for (int i = 0; i < angle_vector.size(); i++) {
         buffer.setDouble(angle_vector[i], (int) sizeof(double) * i);
     }
@@ -41,9 +42,10 @@ void sendAngles(int argc, char **argv) {
     Communication comm;
     // comm.createSocket(SocketType::UDP, SocketPartner("131.159.203.138", 25001, false));
     // comm.createSocket(SocketType::UDP, SocketPartner("131.159.61.13", 25001, false));
-    comm.createSocket(SocketType::UDP, SocketPartner("131.159.215.122", 25001, false));
+    // comm.createSocket(SocketType::UDP, SocketPartner("131.159.215.122", 25001, false));
+    comm.createSocket(SocketType::UDP, SocketPartner("10.157.9.139", 25001, false));
     StatusData angleData;
-    Buffer buffer(6 * sizeof(double));
+    Buffer buffer(12 * sizeof(double));
 
     while (!quit) {
         if (calculateAngle(buffer, true)) {
