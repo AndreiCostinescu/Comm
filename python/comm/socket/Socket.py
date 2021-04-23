@@ -1,11 +1,12 @@
 import errno
+import platform
 import socket
 import struct
 from python.comm.socket.SocketPartner import SocketPartner
 from python.comm.socket.SocketType import SocketType
 from python.comm.socket.Buffer import Buffer
 from python.comm.socket.utils import prepareBuffer, SOCKET_BUFFER_RECV_SIZE, SOCKET_BUFFER_SEND_SIZE, \
-    CLIENT_MAX_MESSAGE_BYTES, comparePartners, memcpy
+    CLIENT_MAX_MESSAGE_BYTES, comparePartners, memcpy, strToCStr
 from typing import Optional, Tuple
 
 
@@ -30,6 +31,7 @@ class Socket:
         errno.EAGAIN,
         errno.EWOULDBLOCK, errno.WSAEWOULDBLOCK,
     ]
+    os = platform.system()  # type: str
 
     @staticmethod
     def Socket(protocol: SocketType, partner: SocketPartner = None, myPort: int = 0, sendTimeout: int = -1,
@@ -65,7 +67,8 @@ class Socket:
         self.recvBuffer = None
 
     def close(self):
-        self.socket.close()
+        if self.socket:
+            self.socket.close()
         self.socket = None
 
     def copy(self):
@@ -109,7 +112,7 @@ class Socket:
                 print("Socket Initialization: connected tcp socket to", self.partner.getPartnerString())
 
         Socket._setSocketTimeouts(self.socket, self.sendTimeout, self.recvTimeout)
-        printSocketDetails(self.socket)
+        # printSocketDetails(self.socket)
         self.initialized = True
         return True
 
@@ -169,7 +172,7 @@ class Socket:
         print("Socket Initialization: accepting tcp connection...", acceptSocket.partner.getPartnerString())
         try:
             acceptSocket.socket, partner = self.socket.accept()
-            acceptSocket.setPartner(partner, False)
+            acceptSocket.setPartner(SocketPartner.SocketPartner(partner, False), False)
             if verbose:
                 print("Found connection...")
         except Exception:
@@ -178,7 +181,7 @@ class Socket:
 
         acceptSocket.initMyself(False)
         print("Socket Initialization: accepted tcp connection from", acceptSocket.partner.getPartnerString())
-        printSocketDetails(acceptSocket.socket)
+        # printSocketDetails(acceptSocket.socket)
 
         Socket._setSocketBufferSizes(acceptSocket.socket)
         acceptSocket.initialized = True
@@ -198,8 +201,10 @@ class Socket:
             success, dataBuffer, errorCode = self._receiveBytes(dataBuffer, buffer[2], errorCode, retries, verbose)
             return success, (dataBuffer, bufferLength), errorCode
         else:
+            # print("Expecting " + str(buffer.getBufferContentSize()) + "bytes...")
             success, dataBuffer, errorCode = self._receiveBytes(buffer.getBuffer(), buffer.getBufferContentSize(),
                                                                 errorCode, retries, verbose)
+            # print("Expected", buffer.getBufferContentSize(), "bytes, got", len(strToCStr(dataBuffer)))
             buffer.buffer = dataBuffer
             return success, buffer, errorCode
 
@@ -213,11 +218,19 @@ class Socket:
     @staticmethod
     def _setSocketTimeouts(sock: socket.socket, sendTimeout: int = -1, recvTimeout: int = -1):
         if sendTimeout > 0:
-            timeval = struct.pack('ll', 0, 1000 * sendTimeout)
+            if Socket.os == "Windows":
+                timeval = sendTimeout
+            else:
+                timeval = struct.pack('ll', 0, 1000 * sendTimeout)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDTIMEO, timeval)
+            print("Socket send timeout:", sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDTIMEO))
         if recvTimeout > 0:
-            timeval = struct.pack('ll', 0, 1000 * recvTimeout)
+            if Socket.os == "Windows":
+                timeval = recvTimeout
+            else:
+                timeval = struct.pack('ll', 0, 1000 * recvTimeout)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
+            print("Socket recv timeout:", sock.getsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO))
 
     @staticmethod
     def tcp_socket_with_partner(partner: SocketPartner):
@@ -245,13 +258,12 @@ class Socket:
 
     def initMyself(self, withBind: bool = True):
         if withBind:
-            pass
-        print("Socket Initialization: binding socket to local ", self.myself.getPartnerString(), "...", sep="")
-        try:
-            self.socket.bind(self.myself.getPartner())
-        except Exception as e:
-            print("ERROR on binding:", e)
-            raise RuntimeError("ERROR binding server socket")
+            print("Socket Initialization: binding socket to local ", self.myself.getPartnerString(), "...", sep="")
+            try:
+                self.socket.bind(self.myself.getPartner())
+            except Exception as e:
+                print("ERROR on binding:", e)
+                raise RuntimeError("ERROR binding server socket")
 
         if self.myself is None or self.myself.getPort() == 0:
             new_address = self.socket.getsockname()
@@ -273,9 +285,11 @@ class Socket:
                 return False, localBytesSent, errorCode
 
             if verbose:
-                print("Pre sendto: already sentBytes =", sentBytes)
+                print("Pre sendto: already sentBytes =", sentBytes, "to send bytes now =", sendSize, "to", toAddress,
+                      "buffer =", buffer, "sentBytes =", sentBytes, "dataToBeSent: \"",
+                      buffer[sentBytes:sentBytes + sendSize], "\"")
 
-            localBytesSent = self.socket.sendto(buffer[sentBytes:sentBytes:sendSize], toAddress)
+            localBytesSent = self.socket.sendto(buffer[sentBytes:sentBytes + sendSize], toAddress)
             if verbose:
                 print("Post sendto: managed to send (UDP) localBytesSent =", localBytesSent)
                 """
@@ -423,7 +437,7 @@ class Socket:
                     print(int(buffer[i + receivedBytes]), ", ", sep="")
                 print()
                 # """
-        if self.protocol == SocketType.UDP_HEADER:
+        elif self.protocol == SocketType.UDP_HEADER:
             if verbose:
                 print("Pre recvfrom... already recvBytes = ", receivedBytes, ", expecting ", 4 + receiveSize, sep="")
 
@@ -436,20 +450,19 @@ class Socket:
                 self.recvBuffer.buffer, self.recvAddress = self.socket.recvfrom(4 + receiveSize)
                 localReceivedBytes = len(self.recvBuffer.buffer)
 
-                if localReceivedBytes >= 0:
-                    if localReceivedBytes < 4:
-                        print("Wrong protocol for self socket!!!")
-                        localReceivedBytes = -1
-                        return False, buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner
-                    self.recvBuffer.setBufferContentSize(localReceivedBytes)
-                    localReceivedBytes -= 4
-                    if verbose:
-                        print("Should have received ", self.recvBuffer.getShort(2), ", received ", localReceivedBytes,
-                              sep="")
-
+            if localReceivedBytes >= 0:
+                if localReceivedBytes < 4:
+                    print("Wrong protocol for self socket!!!")
+                    localReceivedBytes = -1
+                    return False, buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner
+                self.recvBuffer.setBufferContentSize(localReceivedBytes)
+                localReceivedBytes -= 4
                 if verbose:
-                    print("Post recvfrom... localReceivedBytes =", localReceivedBytes, "overwritePartner =",
-                          overwritePartner)
+                    print("Should have received ", self.recvBuffer.getShort(2), ", received ", localReceivedBytes,
+                          sep="")
+            if verbose:
+                print("Post recvfrom... localReceivedBytes =", localReceivedBytes, "overwritePartner =",
+                      overwritePartner)
 
             if localReceivedBytes >= 0:
                 if not recvFirstMessage:
@@ -517,6 +530,10 @@ class Socket:
                 # recv timeout
                 errorCode = 0
                 localReceivedBytes = -1
+            elif errorCode in [errno.EMSGSIZE, errno.WSAEMSGSIZE]:
+                # UDP_HEADER might get a too large message from another packet size
+                errorCode = 0
+                localReceivedBytes = -1
             elif errorCode != 0:
                 print("ReceiveBytes:", errorCode)
                 return (False, buffer, errorCode, localReceivedBytes, overwritePartner, recvFirstMessage,
@@ -578,12 +595,11 @@ class Socket:
                   "any" if (self.partner is None) else self.partner.getStringAddress())
 
         maxRetries = retries
-        localReceivedBytes = 0
         receivedBytes = 0
         maxPossibleReceiveBytes = CLIENT_MAX_MESSAGE_BYTES
         errorCode = 0
         recvFirstMessage = False
-        recvFromCorrectPartner = False
+        recvFromCorrectPartner = True
         overwritePartner = self.partner is None or (not self.partner.isInitialized() or self.partner.getOverwrite())
         if self.protocol == SocketType.UDP_HEADER and self.recvBuffer is None:
             self.recvBuffer = Buffer(maxPossibleReceiveBytes + 4)
@@ -592,8 +608,12 @@ class Socket:
             receiveSize = min(expectedLength - receivedBytes, maxPossibleReceiveBytes)
             # wait to receive data from socket (and retry when timeout occurs) do
             retry = True
-            # < - continue retry receiving until the first message has been received
-            while not recvFirstMessage and retry:
+            firstInnerIteration = True
+            localReceivedBytes = 0
+            # <- continue retry receiving until the first message has been received
+            while firstInnerIteration or (not recvFirstMessage and retry):
+                firstInnerIteration = False
+
                 (success, buffer, errorCode, localReceivedBytes, overwritePartner, recvFirstMessage,
                  recvFromCorrectPartner) = \
                     self.interpretReceiveResult(buffer, errorCode, localReceivedBytes, receiveSize, receivedBytes,
@@ -615,7 +635,7 @@ class Socket:
 
             receivedBytes += localReceivedBytes
 
-        assert (receivedBytes == expectedLength)
+        assert (receivedBytes == expectedLength), "{} vs. {}".format(receivedBytes, expectedLength)
         if verbose:
             # noinspection PyUnresolvedReferences
             print("Exiting _receiveBytes function having received = ", expectedLength, "B from ",

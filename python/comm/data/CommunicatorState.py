@@ -7,6 +7,17 @@ class CommunicatorState(enum.Enum):
     COMMUNICATOR_DONE = 2,
 
     @staticmethod
+    def intToMessageType(i: int):
+        if i == 0:
+            return CommunicatorState.COMMUNICATOR_IDLE
+        elif i == 1:
+            return CommunicatorState.COMMUNICATOR_ACTIVE
+        elif i == 2:
+            return CommunicatorState.COMMUNICATOR_DONE
+        else:
+            raise RuntimeError("Unknown CommunicatorState " + str(i))
+
+    @staticmethod
     def stringToCommunicatorMethod(s: str):
         if s == "idle":
             return CommunicatorState.COMMUNICATOR_IDLE

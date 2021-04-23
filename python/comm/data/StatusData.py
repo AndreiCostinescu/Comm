@@ -2,13 +2,13 @@ from python.comm.data.CommunicationData import CommunicationData
 from python.comm.data.MessageType import MessageType
 from python.comm.data.Messages import Messages
 from python.comm.socket.Buffer import Buffer
-from python.comm.socket.utils import prepareBuffer, strcmp, memcpy
+from python.comm.socket.utils import prepareBuffer, strcmp, memcpy, strToCStr
 from typing import Optional
 
 
 class StatusData(CommunicationData):
     headerSize = 4
-    statusDataType = MessageType.STATUS
+    statusDataType = MessageType.STATUS.value[0]
 
     def __init__(self, value: str or int = None):
         super().__init__()
@@ -24,11 +24,13 @@ class StatusData(CommunicationData):
             self.setData(value)
 
     def getMessageType(self):
-        return MessageType(self.getDataType())
+        # print("Status Data messageType:", self.getDataType())
+        return MessageType.intToMessageType(self.getDataType())
 
     def serialize(self, buffer: Buffer, verbose: bool) -> bool:
         if self.serializeState == 0:
             buffer.setBufferContentSize(StatusData.headerSize)
+            # print("This dataSize = " + str(self.dataSize))
             buffer.setInt(self.dataSize, 0)
             if verbose:
                 dataBuffer = buffer.getBuffer()
@@ -70,7 +72,7 @@ class StatusData(CommunicationData):
 
     def reset(self):
         self.dataSize = -1
-        self.dataType = int(MessageType.NOTHING.value[0])  # .value returns a tuple
+        self.dataType = MessageType.NOTHING.value[0]  # .value returns a tuple
 
     def setCommand(self, command: str):
         if command == "_reset":
@@ -79,47 +81,47 @@ class StatusData(CommunicationData):
         elif command == "ping":
             commandData = Messages.PING_MESSAGE
             self.dataSize = Messages.PING_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         elif command == "quit":
             commandData = Messages.QUIT_MESSAGE
             self.dataSize = Messages.QUIT_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         elif command == "start":
             commandData = Messages.START_MESSAGE
             self.dataSize = Messages.START_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         elif command == "stop":
             commandData = Messages.STOP_MESSAGE
             self.dataSize = Messages.STOP_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         elif command == "wait":
             commandData = Messages.WAIT_MESSAGE
             self.dataSize = Messages.WAIT_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         elif command == "accept":
             commandData = Messages.ACCEPT_MESSAGE
             self.dataSize = Messages.ACCEPT_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         elif command == "ready":
             commandData = Messages.READY_MESSAGE
             self.dataSize = Messages.READY_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         elif command == "control":
             commandData = Messages.CONTROL_MESSAGE
             self.dataSize = Messages.CONTROL_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         elif command == "upload":
             commandData = Messages.UPLOAD_MESSAGE
             self.dataSize = Messages.UPLOAD_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         elif command == "select":
             commandData = Messages.SELECT_MESSAGE
             self.dataSize = Messages.SELECT_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         elif command == "reject":
             commandData = Messages.REJECT_MESSAGE
             self.dataSize = Messages.REJECT_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         else:
             raise RuntimeError("Unknown command: " + command)
 
@@ -135,15 +137,15 @@ class StatusData(CommunicationData):
         elif status == "idle":
             statusData = Messages.IDLE_MESSAGE
             self.dataSize = Messages.IDLE_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         elif status == "active":
             statusData = Messages.ACTIVE_MESSAGE
             self.dataSize = Messages.ACTIVE_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         elif status == "done":
             statusData = Messages.DONE_MESSAGE
             self.dataSize = Messages.DONE_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS
+            self.dataType = MessageType.STATUS.value[0]
         else:
             raise RuntimeError("Unknown status: " + status)
 
@@ -158,11 +160,12 @@ class StatusData(CommunicationData):
 
         if isinstance(_data, str):
             _data = bytes(_data, "ascii")
-        if not _data.endswith("\x00"):
+        if not _data.endswith(b"\x00"):
             _data += b"\x00"
         if _dataSize == -1:
             _dataSize = len(_data)
 
+        # print("Setting status data with:", _data, _dataSize)
         self.data, self.dataLength = prepareBuffer(self.data, self.dataLength, _dataSize)
         self.data = memcpy(self.data, 0, _data, 0, _dataSize)
         self.dataSize = _dataSize
@@ -171,11 +174,10 @@ class StatusData(CommunicationData):
     def getData(self) -> Optional[bytes]:
         if self.dataSize < 0:
             return None
-        return self.data
+        return strToCStr(self.data)
 
     def getDataSize(self) -> int:
         return self.dataSize
 
     def getDataType(self) -> int:
         return self.dataType
-

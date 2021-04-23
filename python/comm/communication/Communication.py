@@ -90,7 +90,7 @@ class Communication:
         while not serializeDone:
             serializeDone = data.serialize(self.sendBuffer, verbose)
             self.errorCode = 0
-            if not self.send(type, retries, verbose):
+            if not self.send(socketType, retries, verbose):
                 if self.errorCode == 0:
                     if verbose:
                         print("Socket closed: Can not send data serialized bytes...")
@@ -113,7 +113,7 @@ class Communication:
             if self.errorCode < 1:
                 return True, MessageType.NOTHING
             return False, MessageType.NOTHING
-        return True, MessageType(self.recvBuffer.getChar(0))
+        return True, MessageType.intToMessageType(self.recvBuffer.getChar(0))
 
     def recvData(self, socketType: SocketType, data: CommunicationData, retries: int = 0, verbose: bool = False) \
             -> Tuple[bool, CommunicationData]:
@@ -136,21 +136,26 @@ class Communication:
             if verbose:
                 print("In Communication::recvData: dataLocalDeserializeBuffer =", dataLocalDeserializeBuffer,
                       "expectedSize =", expectedSize, " deserializeState =", deserializeState)
-            if not dataLocalDeserializeBuffer:
+            if dataLocalDeserializeBuffer is not None:
                 receiveResult = self.recv((socketType, dataLocalDeserializeBuffer, expectedSize, expectedSize), retries,
                                           verbose)
                 assert isinstance(receiveResult, tuple)
+                recvSuccess = receiveResult[0]
                 buffer = Buffer()
                 buffer.setData(receiveResult[1], receiveResult[2])
                 if verbose:
                     print("ReceiveResult = ", receiveResult)
             else:
                 self.recvBuffer.setBufferContentSize(expectedSize)
-                receiveResult = self.recv(socketType, retries, verbose)
-                assert isinstance(receiveResult, bool)
+                """
+                print("Expecting " + str(self.recvBuffer.getBufferContentSize()) + "bytes... (expectedSize = " +
+                      str(expectedSize) + ")")
+                # """
+                recvSuccess = self.recv(socketType, retries, verbose)
+                assert isinstance(recvSuccess, bool)
                 buffer = self.recvBuffer
 
-            if not receiveResult[0]:
+            if not recvSuccess:
                 if self.errorCode >= 0:
                     print("Stop loop: Can not recv data serialized bytes... error", self.errorCode,
                           "deserializeState =", deserializeState)
@@ -162,7 +167,7 @@ class Communication:
                     data.resetDeserializeState()
                     return False, data
 
-            assert (receiveResult or self.errorCode == -1)
+            assert (recvSuccess or self.errorCode == -1)
             # if we received something...
             if self.errorCode != -1:
                 if verbose:

@@ -57,7 +57,7 @@ class Buffer:
 
     def setInt(self, data: int, position: int):
         self.checkBufferContentSize(position + 4, True)
-        intToNetworkBytes(self.buffer, position, data)
+        self.buffer = intToNetworkBytes(self.buffer, position, data)
         self.useReferenceBuffer = False
 
     def setLongLong(self, data: int, position: int):

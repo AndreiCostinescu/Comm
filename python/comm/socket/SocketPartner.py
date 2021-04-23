@@ -38,7 +38,7 @@ class SocketPartner:
         return self.getStringAddress()
 
     def getIP(self):
-        return self.partner[0] if self.partner is not None else ""
+        return self.partner[0] if self.partner is not None else "???"
 
     def getPort(self):
         return self.partner[1] if self.partner is not None else 0

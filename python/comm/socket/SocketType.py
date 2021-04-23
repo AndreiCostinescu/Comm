@@ -7,6 +7,17 @@ class SocketType(enum.Enum):
     TCP = 2
 
     @staticmethod
+    def intToMessageType(i: int):
+        if i == 0:
+            return SocketType.UDP
+        elif i == 1:
+            return SocketType.UDP_HEADER
+        elif i == 2:
+            return SocketType.TCP
+        else:
+            raise RuntimeError("Unknown SocketType " + str(i))
+
+    @staticmethod
     def stringToSocketType(s: str):
         if s == "UDP":
             return SocketType.UDP

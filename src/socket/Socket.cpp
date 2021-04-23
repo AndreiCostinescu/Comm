@@ -564,25 +564,23 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                 this->recvAddressLength = sizeof(this->recvAddress);
                 localReceivedBytes = recvfrom(this->socket, this->recvBuffer->getBuffer(), 4 + receiveSize, 0,
                                               (struct sockaddr *) (&this->recvAddress), &this->recvAddressLength);
-                if (localReceivedBytes >= 0) {
-                    if (localReceivedBytes < 4) {
-                        cout << "Wrong protocol for this socket!!!" << endl;
-                        localReceivedBytes = -1;
-                        return false;
-                    }
-                    this->recvBuffer->setBufferContentSize(localReceivedBytes);
-                    localReceivedBytes -= 4;
-                    if (verbose) {
-                        cout << "Should have received " << (unsigned short) this->recvBuffer->getShort(2)
-                             << ", received " << localReceivedBytes << endl;
-                    }
-                }
-                if (verbose) {
-                    printLastError();
-                }
             }
 
+            if (localReceivedBytes >= 0) {
+                if (localReceivedBytes < 4) {
+                    cout << "Wrong protocol for this socket!!!" << endl;
+                    localReceivedBytes = -1;
+                    return false;
+                }
+                this->recvBuffer->setBufferContentSize(localReceivedBytes);
+                localReceivedBytes -= 4;
+                if (verbose) {
+                    cout << "Should have received " << (unsigned short) this->recvBuffer->getShort(2)
+                         << ", received " << localReceivedBytes << endl;
+                }
+            }
             if (verbose) {
+                printLastError();
                 cout << "Post recvfrom... localReceivedBytes = " << localReceivedBytes << "; overwritePartner = "
                      << overwritePartner << endl;
             }

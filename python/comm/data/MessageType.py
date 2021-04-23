@@ -8,6 +8,19 @@ class MessageType(enum.Enum):
     COORDINATE = 3,
 
     @staticmethod
+    def intToMessageType(i: int):
+        if i == 0:
+            return MessageType.NOTHING
+        elif i == 1:
+            return MessageType.STATUS
+        elif i == 2:
+            return MessageType.IMAGE
+        elif i == 3:
+            return MessageType.COORDINATE
+        else:
+            raise RuntimeError("Unknown MessageType " + str(i))
+
+    @staticmethod
     def stringToMessageType(s: str):
         if s == "nothing":
             return MessageType.NOTHING

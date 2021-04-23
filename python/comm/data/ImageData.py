@@ -57,7 +57,7 @@ class ImageData(CommunicationData):
 
     @staticmethod
     def imageDim(imageType: int) -> int:
-        return imageType >> 3
+        return (imageType >> 3) + 1
 
     headerSize = 20
 
@@ -122,6 +122,7 @@ class ImageData(CommunicationData):
             self.imageWidth = buffer.getInt(start + 8)
             self.imageType = buffer.getInt(start + 12)
             self.contentSize = buffer.getInt(start + 16)
+            # print("Deserializing image:", self.imageHeight, self.imageWidth, self.imageType, self.contentSize)
             self.deserializeState = 1
             return False
         elif self.deserializeState == 1:

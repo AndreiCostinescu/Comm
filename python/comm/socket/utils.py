@@ -7,9 +7,17 @@ SOCKET_BUFFER_RECV_SIZE: int = 4 * 1024 * 1024
 SOCKET_BUFFER_SEND_SIZE: int = 4 * 1024 * 1024
 
 
-def strToInt(s: str):
-    index = s.find("\0")
-    return int(s) if index == -1 else int(s[:index])
+def strToCStr(s: str or bytes):
+    if isinstance(s, bytes):
+        to_find = 0
+    else:
+        to_find = "\0"
+    index = s.find(to_find)
+    return s if index == -1 else s[:index]
+
+
+def strToInt(s: str or bytes):
+    return int(strToCStr(s))
 
 
 def strcmp(s1: str or bytes, s2: str or bytes):
@@ -31,15 +39,17 @@ def strcmp(s1: str or bytes, s2: str or bytes):
 
 
 def memcpy(destBuffer: bytes, destStart: int, srcBuffer: bytes, srcStart: int, size: int) -> bytes:
+    """
+    initSize = len(destBuffer)
+    newBuffer = destBuffer[:destStart] + srcBuffer[srcStart:srcStart + size] + destBuffer[destStart + size:]
+    newSize = len(newBuffer)
+    assert (initSize == newSize), "{} vs. {}".format(initSize, newSize)
+    """
     return destBuffer[:destStart] + srcBuffer[srcStart:srcStart + size] + destBuffer[destStart + size:]
 
 
 def memset(destBuffer: bytes, destStart: int, value: int, size: int) -> bytes:
-    res = b""
-    byte_value = charToNetworkBytes(b"", 0, value)
-    for i in range(size):
-        res += byte_value
-    return destBuffer[:destStart] + res + destBuffer[:destStart + size]
+    return destBuffer[:destStart] + bytes([value] * size) + destBuffer[destStart + size:]
 
 
 def charToNetworkBytes(buffer: bytes, start: int, value: int) -> bytes:
