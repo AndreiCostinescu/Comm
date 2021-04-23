@@ -4,7 +4,7 @@ from python.comm.socket.Buffer import Buffer
 
 
 class CoordinateData(CommunicationData):
-    headerSize = 2 * 4 + 2 * 8 + 8
+    headerSize = 2 * 4 + 2 * 8 + 8  # id & (buttonDwn, buttonFwd, touch): int, x & y: double, time: long long
 
     def __init__(self):
         super().__init__()

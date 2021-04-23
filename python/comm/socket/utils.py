@@ -12,17 +12,21 @@ def strToInt(s: str):
     return int(s) if index == -1 else int(s[:index])
 
 
-def strcmp(s1: str, s2: str):
+def strcmp(s1: str or bytes, s2: str or bytes):
+    if isinstance(s1, str):
+        s1 = bytes(s1, "ascii")
+    if isinstance(s2, str):
+        s2 = bytes(s2, "ascii")
     i = 0
     s1_len = len(s1)
     s2_len = len(s2)
     while True:
         if i == s1_len:
-            return 0 if i == s2_len else -ord(s2[i])
+            return 0 if i == s2_len else -s2[i]
         if i == s2_len:
-            return 0 if i == s1_len else ord(s1[i])
+            return 0 if i == s1_len else s1[i]
         if s1[i] != s2[i]:
-            return ord(s1[i]) - ord(s2[i])
+            return s1[i] - s2[i]
         i += 1
 
 

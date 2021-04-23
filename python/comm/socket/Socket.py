@@ -32,7 +32,8 @@ class Socket:
     ]
 
     @staticmethod
-    def Socket(protocol: SocketType, partner: SocketPartner, myPort: int, sendTimeout: int, recvTimeout: int):
+    def Socket(protocol: SocketType, partner: SocketPartner = None, myPort: int = 0, sendTimeout: int = -1,
+               recvTimeout: int = -1):
         new = Socket()
         int(0)
         new.initialize(protocol, partner, myPort, sendTimeout, recvTimeout)
@@ -90,7 +91,7 @@ class Socket:
 
     def initialize_socket(self):
         self.createSocket()
-        self.initMyself(True)
+        self.initMyself()
 
         if self.partner is not None:
             if self.protocol == SocketType.TCP:
@@ -112,8 +113,8 @@ class Socket:
         self.initialized = True
         return True
 
-    def initialize(self, _protocol: SocketType, _partner: SocketPartner, _myPort: int, _sendTimeout: int,
-                   _recvTimeout: int):
+    def initialize(self, _protocol: SocketType, _partner: SocketPartner = None, _myPort: int = 0,
+                   _sendTimeout: int = -1, _recvTimeout: int = -1):
         self.cleanup()
         self.protocol = _protocol
         self.partner = _partner
@@ -126,7 +127,7 @@ class Socket:
         self.initialized = False
         return self.initialize_socket()
 
-    def setSocketTimeouts(self, _sendTimeout: int, _recvTimeout: int, modifySocket: bool):
+    def setSocketTimeouts(self, _sendTimeout: int = -1, _recvTimeout: int = -1, modifySocket: bool = True):
         if _sendTimeout > 0:
             self.sendTimeout = _sendTimeout
 
@@ -163,7 +164,7 @@ class Socket:
     def isInitialized(self):
         return self.initialized
 
-    def accept(self, verbose: bool):
+    def accept(self, verbose: bool = False):
         acceptSocket = Socket.tcp_socket_with_partner(SocketPartner(False, True))
         print("Socket Initialization: accepting tcp connection...", acceptSocket.partner.getPartnerString())
         try:
@@ -183,23 +184,24 @@ class Socket:
         acceptSocket.initialized = True
         return acceptSocket
 
-    def sendBytes(self, buffer: Buffer or Tuple[bytes, int], errorCode: int, retries: int, verbose: bool):
+    def sendBytes(self, buffer: Buffer or Tuple[bytes, int], errorCode: int, retries: int = 0,
+                  verbose: bool = False) -> Tuple[bool, int]:
         if isinstance(buffer, tuple):
             return self._sendBytes(buffer[0], buffer[1], errorCode, retries, verbose)
         else:
             return self._sendBytes(buffer.getBuffer(), buffer.getBufferContentSize(), errorCode, retries, verbose)
 
-    def receiveBytes(self, buffer: Buffer or Tuple[bytes, int, int], errorCode: int, retries: int, verbose: bool) \
-            -> Tuple[bool, Buffer, int] or Tuple[bytes, int, int, int]:
+    def receiveBytes(self, buffer: Buffer or Tuple[bytes, int, int], errorCode: int, retries: int = 0,
+                     verbose: bool = False) -> Tuple[bool, Buffer, int] or Tuple[bytes, Tuple[bytes, int], int]:
         if isinstance(buffer, tuple):
             dataBuffer, bufferLength = prepareBuffer(buffer[0], buffer[1], buffer[2])
-            receiveResult = self._receiveBytes(dataBuffer, buffer[2], errorCode, retries, verbose)
-            return receiveResult[0], receiveResult[1], buffer[1], receiveResult[2]
+            success, dataBuffer, errorCode = self._receiveBytes(dataBuffer, buffer[2], errorCode, retries, verbose)
+            return success, (dataBuffer, bufferLength), errorCode
         else:
-            receiveResult = self._receiveBytes(buffer.getBuffer(), buffer.getBufferContentSize(), errorCode, retries,
-                                               verbose)
-            buffer.buffer = receiveResult[1]
-            return receiveResult[0], buffer, receiveResult[2]
+            success, dataBuffer, errorCode = self._receiveBytes(buffer.getBuffer(), buffer.getBufferContentSize(),
+                                                                errorCode, retries, verbose)
+            buffer.buffer = dataBuffer
+            return success, buffer, errorCode
 
     @staticmethod
     def _setSocketBufferSizes(sock: socket.socket):
@@ -209,7 +211,7 @@ class Socket:
         print("Socket recv buffer size:", sock.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
 
     @staticmethod
-    def _setSocketTimeouts(sock: socket.socket, sendTimeout: int, recvTimeout: int):
+    def _setSocketTimeouts(sock: socket.socket, sendTimeout: int = -1, recvTimeout: int = -1):
         if sendTimeout > 0:
             timeval = struct.pack('ll', 0, 1000 * sendTimeout)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDTIMEO, timeval)
@@ -241,7 +243,7 @@ class Socket:
 
         Socket._setSocketBufferSizes(self.socket)
 
-    def initMyself(self, withBind: bool):
+    def initMyself(self, withBind: bool = True):
         if withBind:
             pass
         print("Socket Initialization: binding socket to local ", self.myself.getPartnerString(), "...", sep="")
@@ -261,7 +263,7 @@ class Socket:
         print("Socket Initialization: bound socket to local ", self.myself.getPartnerString(), "!", sep="")
 
     def performSend(self, buffer: bytes, localBytesSent: int, errorCode: int, sendSize: int, sentBytes: int,
-                    sendIteration: int, verbose: bool) -> Tuple[bool, int, int]:
+                    sendIteration: int, verbose: bool = False) -> Tuple[bool, int, int]:
         if self.protocol == SocketType.UDP:
             toAddress = self.partner.getPartner()
             assert (toAddress is not None)
@@ -319,7 +321,7 @@ class Socket:
         return True, localBytesSent, errorCode
 
     def interpretSendResult(self, buffer: bytes, errorCode: int, localBytesSent: int, retries: int, sendIteration: int,
-                            sendSize: int, sentBytes: int, verbose: bool) -> Tuple[bool, int, int, int, int]:
+                            sendSize: int, sentBytes: int, verbose: bool = False) -> Tuple[bool, int, int, int, int]:
         try:
             success, localBytesSent, errorCode = \
                 self.performSend(buffer, localBytesSent, errorCode, sendSize, sentBytes, sendIteration, verbose)
@@ -352,7 +354,7 @@ class Socket:
 
         return True, errorCode, localBytesSent, retries, sendIteration
 
-    def _sendBytes(self, buffer: bytes, bufferLength: int, errorCode: int, retries: int, verbose: bool) \
+    def _sendBytes(self, buffer: bytes, bufferLength: int, errorCode: int, retries: int = 0, verbose: bool = False) \
             -> Tuple[bool, int]:
         if not self.isInitialized():
             print("Can not send with an uninitialized socket!")
@@ -402,14 +404,14 @@ class Socket:
         return True, overwritePartner
 
     def performReceive(self, buffer: bytes, overwritePartner: bool, receiveSize: int, receivedBytes: int,
-                       recvFirstMessage: bool, verbose: bool) -> Tuple[bool, bytes, int, bool, bool]:
+                       recvFirstMessage: bool, verbose: bool = False) -> Tuple[bool, bytes, int, bool, bool]:
         recvFromCorrectPartner = True
         if self.protocol == SocketType.UDP:
             if verbose:
                 print("Pre recvfrom... already recvBytes =", receivedBytes)
             recvData, self.recvAddress = self.socket.recvfrom(receiveSize)
             localReceivedBytes = len(recvData)
-            memcpy(buffer, receivedBytes, recvData, 0, localReceivedBytes)
+            buffer = memcpy(buffer, receivedBytes, recvData, 0, localReceivedBytes)
 
             if localReceivedBytes >= 0:
                 recvFromCorrectPartner = self.checkCorrectReceivePartner(overwritePartner, recvFirstMessage)
@@ -458,7 +460,7 @@ class Socket:
                         recvFromCorrectPartner, overwritePartner = \
                             self.checkCorrectReceivePartner(overwritePartner, recvFirstMessage)
                         assert recvFromCorrectPartner
-                        memcpy(buffer, receivedBytes, self.recvBuffer.getBuffer(), 4, localReceivedBytes)
+                        buffer = memcpy(buffer, receivedBytes, self.recvBuffer.getBuffer(), 4, localReceivedBytes)
                     # make recvBuffer empty
                     self.recvBuffer.setBufferContentSize(0)
                 else:
@@ -475,7 +477,7 @@ class Socket:
                             self.recvBuffer.setBufferContentSize(0)
 
                     else:
-                        memcpy(buffer, receivedBytes, self.recvBuffer.getBuffer(), 4, localReceivedBytes)
+                        buffer = memcpy(buffer, receivedBytes, self.recvBuffer.getBuffer(), 4, localReceivedBytes)
                         self.recvBuffer.setBufferContentSize(0)
 
             if verbose:
@@ -488,7 +490,7 @@ class Socket:
         elif self.protocol == SocketType.TCP:
             recvData = self.socket.recv(receiveSize)
             localReceivedBytes = len(recvData)
-            memcpy(buffer, receivedBytes, recvData, 0, localReceivedBytes)
+            buffer = memcpy(buffer, receivedBytes, recvData, 0, localReceivedBytes)
         else:
             raise RuntimeError("Unknown protocol: " + str(self.protocol))
 
@@ -496,7 +498,7 @@ class Socket:
 
     def interpretReceiveResult(self, buffer: bytes, errorCode: int, localReceivedBytes: int, receiveSize: int,
                                receivedBytes: int, overwritePartner: bool, recvFirstMessage: bool,
-                               recvFromCorrectPartner: bool, verbose: bool) \
+                               recvFromCorrectPartner: bool, verbose: bool = False) \
             -> Tuple[bool, bytes, int, int, bool, bool, bool]:
         try:
             success, buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner = \
@@ -552,7 +554,7 @@ class Socket:
 
     @staticmethod
     def setRetries(retries: int, maxRetries: int, recvFromCorrectPartner: bool, localReceivedBytes: int,
-                   verbose: bool) -> Tuple[int, bool]:
+                   verbose: bool = False) -> Tuple[int, bool]:
         # retry receiving if received data from someone else or (if received nothing and there are retries left)
         retry = (not recvFromCorrectPartner) or ((localReceivedBytes == -1) and (retries != 0))
         if verbose:
@@ -564,8 +566,8 @@ class Socket:
                 retries = maxRetries
         return retries, retry
 
-    def _receiveBytes(self, buffer: bytes, expectedLength: int, errorCode: int, retries: int, verbose: bool) \
-            -> Tuple[bool, bytes, int]:
+    def _receiveBytes(self, buffer: bytes, expectedLength: int, errorCode: int, retries: int = 0,
+                      verbose: bool = False) -> Tuple[bool, bytes, int]:
         if not self.isInitialized():
             print("Can not receive with an uninitialized socket!")
             return False, buffer, errorCode

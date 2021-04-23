@@ -33,7 +33,7 @@ class Buffer:
 
         return copy
 
-    def setData(self, data: str or bytes, dataSize: int, start: int, offset: int = 0):
+    def setData(self, data: str or bytes, dataSize: int, start: int = 0, offset: int = 0):
         if isinstance(data, str):
             data = bytes(data, "ascii")
         self.setBufferContentSize(dataSize + start)
