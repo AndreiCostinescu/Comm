@@ -15,7 +15,7 @@ using namespace std;
 
 bool udpStopFlag = true;
 bool tcpStopFlag = true;
-int limit = 20;
+int limit = -1;
 
 void udpStreamer(SocketType socketType) {
     Communication p;
@@ -28,7 +28,7 @@ void udpStreamer(SocketType socketType) {
     Mat image;
     ImageData i;
     int id = 0;
-    while (!udpStopFlag && id < limit) {
+    while (!udpStopFlag && (limit < 0 or id < limit)) {
         camera >> image;
         i.setImage(image);
         cout << "image size " << image.size() << " and id " << id << endl;
@@ -67,12 +67,14 @@ void tcpStreamer() {
     cout << "Initialized sender tcp server!" << endl;
 
     cv::VideoCapture camera(0);
+    camera.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+    camera.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
     cv::namedWindow("Camera image");
     // Mat image = cv::imread("../../data/Lena.png");
     Mat image;
     ImageData i;
     int id = 0;
-    while (!tcpStopFlag && id < limit) {
+    while (!tcpStopFlag && (limit < 0 or id < limit)) {
         camera >> image;
         i.setImage(image);
         cout << "image size " << image.size() << " and id " << id << endl;
@@ -86,10 +88,11 @@ void tcpStreamer() {
         }
 
         cv::imshow("Camera image", image);
-        int k = cv::waitKey(20);
+        int k = cv::waitKey(2);
         if (k == 'q' || k == 27) {
             break;
         }
+        this_thread::sleep_for(chrono::milliseconds(25));
         id++;
     }
 
@@ -97,6 +100,7 @@ void tcpStreamer() {
     p.sendData(socketType, &s, true);
 
     camera.release();
+    cv::destroyAllWindows();
     cout << "Streamer finished normally" << endl;
 }
 
