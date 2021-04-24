@@ -39,6 +39,10 @@ SET(COMMUNICATION_STUFF src/communication/Communication.cpp src/communication/TC
 SET(DATA_STUFF src/data/MessageType.cpp src/data/messages.cpp src/data/CommunicationData.cpp src/data/CoordinateData.cpp src/data/ImageData.cpp src/data/StatusData.cpp src/data/dataUtils.cpp src/data/CommunicatorState.cpp src/data/DataCollection.cpp)
 
 set(COMM_LIB "Communication")
+add_library(${COMM_LIB} SHARED ${COMMUNICATION_STUFF} ${DATA_STUFF} ${SOCKET_STUFF})
+target_link_libraries(${COMM_LIB} ${MASTER_LIBRARIES})
+
+set(COMM_LIB "${COMM_LIB}_static")
 add_library(${COMM_LIB} ${COMMUNICATION_STUFF} ${DATA_STUFF} ${SOCKET_STUFF})
 target_link_libraries(${COMM_LIB} ${MASTER_LIBRARIES})
 set(MASTER_LIBRARIES ${COMM_LIB} ${MASTER_LIBRARIES})
