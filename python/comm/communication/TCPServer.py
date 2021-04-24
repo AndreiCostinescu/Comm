@@ -1,10 +1,9 @@
 import select
 import socket
-
-from python.comm.communication.Communication import Communication
-from python.comm.socket.Socket import Socket
-from python.comm.socket.SocketType import SocketType
-from python.comm.socket.utils import SOCKET_ACCEPT_TIMEOUT_SECONDS
+from comm.communication.Communication import Communication
+from comm.comm_socket.Socket import Socket
+from comm.comm_socket.SocketType import SocketType
+from comm.comm_socket.utils import SOCKET_ACCEPT_TIMEOUT_SECONDS
 from typing import Optional
 
 

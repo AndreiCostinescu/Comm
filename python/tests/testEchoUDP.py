@@ -1,4 +1,4 @@
-from python.comm.data.StatusData import StatusData
+from python.comm.comm_data.StatusData import StatusData
 from python.comm.communication.Communication import Communication, SocketType, SocketPartner, MessageType
 from threading import Thread
 

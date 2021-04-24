@@ -1,10 +1,10 @@
 import cv2 as cv
-from python.comm.data.ImageData import ImageData
-from python.comm.data.Messages import Messages
-from python.comm.data.StatusData import StatusData
+from python.comm.comm_data.ImageData import ImageData
+from python.comm.comm_data.Messages import Messages
+from python.comm.comm_data.StatusData import StatusData
 from python.comm.communication.Communication import Communication, SocketType, SocketPartner, MessageType
 from python.comm.communication.TCPServer import TCPServer
-from python.comm.socket.utils import strcmp
+from python.comm.comm_socket.utils import strcmp
 from threading import Thread
 from time import sleep
 

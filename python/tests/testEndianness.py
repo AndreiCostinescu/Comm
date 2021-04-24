@@ -1,6 +1,6 @@
 import socket
 import sys
-from python.comm.socket.utils import *
+from python.comm.comm_socket.utils import *
 
 
 def test():

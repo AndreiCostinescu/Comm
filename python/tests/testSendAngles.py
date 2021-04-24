@@ -1,7 +1,7 @@
 import numpy as np
-from python.comm.data.StatusData import StatusData
+from python.comm.comm_data.StatusData import StatusData
 from python.comm.communication.Communication import Communication, SocketType, SocketPartner, MessageType
-from python.comm.socket.Buffer import Buffer
+from python.comm.comm_socket.Buffer import Buffer
 from threading import Thread
 from time import sleep
 

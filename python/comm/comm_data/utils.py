@@ -1,7 +1,7 @@
-from python.comm.data.MessageType import MessageType
-from python.comm.data.CoordinateData import CoordinateData
-from python.comm.data.ImageData import ImageData
-from python.comm.data.StatusData import StatusData
+from comm.comm_data.MessageType import MessageType
+from comm.comm_data.CoordinateData import CoordinateData
+from comm.comm_data.ImageData import ImageData
+from comm.comm_data.StatusData import StatusData
 
 
 def createCommunicationData(messageType: MessageType):

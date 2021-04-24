@@ -1,9 +1,9 @@
-from python.comm.socket.Buffer import Buffer
-from python.comm.socket.Socket import Socket
-from python.comm.socket.SocketPartner import SocketPartner
-from python.comm.socket.SocketType import SocketType
-from python.comm.data.CommunicationData import CommunicationData
-from python.comm.data.MessageType import MessageType
+from comm.comm_socket.Buffer import Buffer
+from comm.comm_socket.Socket import Socket
+from comm.comm_socket.SocketPartner import SocketPartner
+from comm.comm_socket.SocketType import SocketType
+from comm.comm_data.CommunicationData import CommunicationData
+from comm.comm_data.MessageType import MessageType
 from typing import Dict, Optional, Tuple
 
 

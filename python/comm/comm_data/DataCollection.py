@@ -1,6 +1,6 @@
-from python.comm.data.CommunicationData import CommunicationData
-from python.comm.data.utils import createCommunicationData
-from python.comm.data.MessageType import MessageType
+from comm.comm_data.CommunicationData import CommunicationData
+from comm.comm_data.utils import createCommunicationData
+from comm.comm_data.MessageType import MessageType
 from typing import Dict
 
 

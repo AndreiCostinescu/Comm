@@ -1,11 +1,11 @@
-from python.comm.communication.Communication import Communication
-from python.comm.data.CommunicationData import CommunicationData
-from python.comm.data.CommunicatorState import CommunicatorState
-from python.comm.data.DataCollection import DataCollection
-from python.comm.data.utils import createCommunicationData
-from python.comm.data.MessageType import MessageType
-from python.comm.data.StatusData import StatusData
-from python.comm.socket.SocketType import SocketType
+from comm.communication.Communication import Communication
+from comm.comm_data.CommunicationData import CommunicationData
+from comm.comm_data.CommunicatorState import CommunicatorState
+from comm.comm_data.DataCollection import DataCollection
+from comm.comm_data.utils import createCommunicationData
+from comm.comm_data.MessageType import MessageType
+from comm.comm_data.StatusData import StatusData
+from comm.comm_socket.SocketType import SocketType
 from typing import Optional, Tuple
 
 

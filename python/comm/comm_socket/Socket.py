@@ -1,12 +1,11 @@
-import errno
-import platform
 import socket
 import struct
-from python.comm.socket.SocketPartner import SocketPartner
-from python.comm.socket.SocketType import SocketType
-from python.comm.socket.Buffer import Buffer
-from python.comm.socket.utils import prepareBuffer, SOCKET_BUFFER_RECV_SIZE, SOCKET_BUFFER_SEND_SIZE, \
-    CLIENT_MAX_MESSAGE_BYTES, comparePartners, memcpy, strToCStr
+from comm.comm_socket.SocketPartner import SocketPartner
+from comm.comm_socket.SocketType import SocketType
+from comm.comm_socket.Buffer import Buffer
+from comm.comm_socket.utils import prepareBuffer, SOCKET_BUFFER_RECV_SIZE, SOCKET_BUFFER_SEND_SIZE, \
+    CLIENT_MAX_MESSAGE_BYTES, comparePartners, memcpy
+from comm.comm_socket.network_includes import *
 from typing import Optional, Tuple
 
 
@@ -17,22 +16,6 @@ def printSocketDetails(s: socket.socket):
 
 
 class Socket:
-    connection_refused = [
-        errno.ECONNREFUSED, errno.WSAECONNREFUSED,
-        errno.ENETUNREACH, errno.WSAENETUNREACH,
-    ]
-    connection_errors = [
-        errno.ECONNRESET, errno.WSAECONNRESET,
-        errno.ESHUTDOWN, errno.WSAESHUTDOWN,
-        errno.EPIPE
-    ]
-    timeout_errors = [
-        errno.ETIMEDOUT, errno.WSAETIMEDOUT,
-        errno.EAGAIN,
-        errno.EWOULDBLOCK, errno.WSAEWOULDBLOCK,
-    ]
-    os = platform.system()  # type: str
-
     @staticmethod
     def Socket(protocol: SocketType, partner: SocketPartner = None, myPort: int = 0, sendTimeout: int = -1,
                recvTimeout: int = -1):
@@ -104,7 +87,7 @@ class Socket:
                 except socket.error as se:
                     print("Caught exception:", se.errno, se.strerror, "when connecting to TCP")
                     print("Connection failed due to port and ip problems")
-                    if se.errno in Socket.connection_refused:
+                    if se.errno in connection_refused:
                         # Connection refused
                         raise se
                     print("SocketException : " + str(se))
@@ -218,14 +201,14 @@ class Socket:
     @staticmethod
     def _setSocketTimeouts(sock: socket.socket, sendTimeout: int = -1, recvTimeout: int = -1):
         if sendTimeout > 0:
-            if Socket.os == "Windows":
+            if os == "Windows":
                 timeval = sendTimeout
             else:
                 timeval = struct.pack('ll', 0, 1000 * sendTimeout)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDTIMEO, timeval)
             print("Socket send timeout:", sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDTIMEO))
         if recvTimeout > 0:
-            if Socket.os == "Windows":
+            if os == "Windows":
                 timeval = recvTimeout
             else:
                 timeval = struct.pack('ll', 0, 1000 * recvTimeout)
@@ -343,11 +326,11 @@ class Socket:
                 return False, errorCode, localBytesSent, retries, sendIteration
         except socket.error as se:
             errorCode = se.errno
-            if errorCode in Socket.connection_errors:
+            if errorCode in connection_errors:
                 # Socket closed
                 errorCode = 0
                 return False, errorCode, localBytesSent, retries, sendIteration
-            elif errorCode in Socket.timeout_errors:
+            elif errorCode in timeout_errors:
                 # send timeout
                 errorCode = -1
                 localBytesSent = 0
@@ -521,16 +504,16 @@ class Socket:
                         recvFromCorrectPartner)
         except socket.error as se:
             errorCode = se.errno
-            if errorCode in Socket.connection_errors:
+            if errorCode in connection_errors:
                 # Socket closed
                 errorCode = 0
                 return (False, buffer, errorCode, localReceivedBytes, overwritePartner, recvFirstMessage,
                         recvFromCorrectPartner)
-            elif errorCode in Socket.timeout_errors:
+            elif errorCode in timeout_errors:
                 # recv timeout
                 errorCode = 0
                 localReceivedBytes = -1
-            elif errorCode in [errno.EMSGSIZE, errno.WSAEMSGSIZE]:
+            elif errorCode in memory_size_too_large:
                 # UDP_HEADER might get a too large message from another packet size
                 errorCode = 0
                 localReceivedBytes = -1

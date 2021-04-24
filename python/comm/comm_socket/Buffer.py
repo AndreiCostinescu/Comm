@@ -1,4 +1,4 @@
-from python.comm.socket.utils import memcpy, memset, charToNetworkBytes, shortToNetworkBytes, intToNetworkBytes, \
+from comm.comm_socket.utils import memcpy, memset, charToNetworkBytes, shortToNetworkBytes, intToNetworkBytes, \
     longLongToNetworkBytes, doubleToNetworkBytes, networkBytesToChar, networkBytesToShort, networkBytesToInt, \
     networkBytesToLongLong, networkBytesToDouble, newBuffer
 from typing import Optional

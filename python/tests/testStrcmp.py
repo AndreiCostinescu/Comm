@@ -1,4 +1,4 @@
-from python.comm.socket.utils import strcmp, strToInt
+from python.comm.comm_socket.utils import strcmp, strToInt
 
 
 def test():

@@ -1,8 +1,8 @@
-from python.comm.data.CommunicationData import CommunicationData
-from python.comm.data.MessageType import MessageType
-from python.comm.data.Messages import Messages
-from python.comm.socket.Buffer import Buffer
-from python.comm.socket.utils import prepareBuffer, strcmp, memcpy, strToCStr
+from comm.comm_data.CommunicationData import CommunicationData
+from comm.comm_data.MessageType import MessageType
+from comm.comm_data.Messages import Messages
+from comm.comm_socket.Buffer import Buffer
+from comm.comm_socket.utils import prepareBuffer, strcmp, memcpy, strToCStr
 from typing import Optional
 
 
