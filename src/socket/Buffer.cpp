@@ -83,6 +83,12 @@ void Buffer::setLongLong(long long data, int position) {
     this->useReferenceBuffer = false;
 }
 
+void Buffer::setFloat(float data, int position) {
+    this->checkBufferContentSize(position + sizeof(float), true);
+    floatToNetworkBytes(this->buffer, position, data);
+    this->useReferenceBuffer = false;
+}
+
 void Buffer::setDouble(double data, int position) {
     this->checkBufferContentSize(position + sizeof(double), true);
     doubleToNetworkBytes(this->buffer, position, data);
@@ -107,6 +113,11 @@ int Buffer::getInt(int position) {
 long long Buffer::getLongLong(int position) {
     this->checkBufferContentSize(position + sizeof(long long), false);
     return networkBytesToLongLong(this->buffer, position);
+}
+
+float Buffer::getFloat(int position) {
+    this->checkBufferContentSize(position + sizeof(float), false);
+    return networkBytesToFloat(this->buffer, position);
 }
 
 double Buffer::getDouble(int position) {

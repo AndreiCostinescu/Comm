@@ -30,6 +30,8 @@ namespace comm {
 
         void setLongLong(long long data, int position);
 
+        void setFloat(float data, int position);
+
         void setDouble(double data, int position);
 
         char getChar(int position);
@@ -39,6 +41,8 @@ namespace comm {
         int getInt(int position);
 
         long long getLongLong(int position);
+
+        float getFloat(int position);
 
         double getDouble(int position);
 

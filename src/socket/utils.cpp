@@ -136,6 +136,16 @@ double comm::networkBytesToDouble(const char *buffer, int start) {
     //*/
 }
 
+void comm::floatToNetworkBytes(char *buffer, int start, float value) {
+    memcpy(buffer + start, &value, sizeof(float));
+}
+
+float comm::networkBytesToFloat(const char *buffer, int start) {
+    float a;
+    memcpy(&a, buffer + start, sizeof(float));
+    return a;
+}
+
 void comm::prepareBuffer(char *&buffer, int desiredLength) {
     delete[] buffer;
     // cout << "Initialize new buffer!" << endl;

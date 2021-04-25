@@ -15,6 +15,7 @@ namespace comm {
         STATUS,
         IMAGE,
         COORDINATE,
+        BYTES,
     };
 
     MessageType stringToMessageType(const std::string &s);

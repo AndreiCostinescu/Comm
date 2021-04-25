@@ -45,6 +45,10 @@ namespace comm {
 
     long long networkBytesToLongLong(const char *buffer, int start);
 
+    void floatToNetworkBytes(char *buffer, int start, float value);
+
+    float networkBytesToFloat(const char *buffer, int start);
+
     void doubleToNetworkBytes(char *buffer, int start, double value);
 
     double networkBytesToDouble(const char *buffer, int start);
