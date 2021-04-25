@@ -18,7 +18,7 @@ class BytesData(CommunicationData):
         if self.serializeState == 0:
             buffer.setBufferContentSize(BytesData.headerSize)
             # print("This dataSize = " + str(self.dataSize))
-            buffer.setInt(self.dataSize, 0)
+            buffer.setInt(self.data.getBufferContentSize(), 0)
             if verbose:
                 dataBuffer = buffer.getBuffer()
                 print("buffer int content: ", int(dataBuffer[0]), " ", int(dataBuffer[1]), " ", int(dataBuffer[2]), " ",

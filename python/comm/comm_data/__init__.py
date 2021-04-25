@@ -1,3 +1,4 @@
+from comm.comm_data.BytesData import BytesData
 from comm.comm_data.CommunicationData import CommunicationData
 from comm.comm_data.CommunicatorState import CommunicatorState
 from comm.comm_data.CoordinateData import CoordinateData

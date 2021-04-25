@@ -1,6 +1,6 @@
 from comm.comm_socket.utils import memcpy, memset, charToNetworkBytes, shortToNetworkBytes, intToNetworkBytes, \
-    longLongToNetworkBytes, doubleToNetworkBytes, networkBytesToChar, networkBytesToShort, networkBytesToInt, \
-    networkBytesToLongLong, networkBytesToDouble, newBuffer
+    longLongToNetworkBytes, floatToNetworkBytes, doubleToNetworkBytes, networkBytesToChar, networkBytesToShort, \
+    networkBytesToInt, networkBytesToLongLong, networkBytesToFloat, networkBytesToDouble, newBuffer
 from typing import Optional
 
 
