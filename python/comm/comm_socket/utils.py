@@ -96,6 +96,10 @@ def doubleToNetworkBytes(buffer: bytes, start: int, value: float) -> bytes:
     return memcpy(buffer, start, struct.pack("<d", value), 0, 8)
 
 
+def networkBytesToDouble(buffer: bytes, start: int) -> float:
+    return struct.unpack("<d", buffer[start:start + 8])[0]
+
+
 def newBuffer(desiredLength: int):
     return b"\0" * desiredLength
 
