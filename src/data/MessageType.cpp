@@ -18,6 +18,8 @@ MessageType comm::stringToMessageType(const string &s) {
         return MessageType::IMAGE;
     } else if (s == "coordinate") {
         return MessageType::COORDINATE;
+    } else if (s == "bytes") {
+        return MessageType::BYTES;
     }
     throw runtime_error("Can not convert " + s + " to MessageType enum");
 }
@@ -35,6 +37,9 @@ string comm::messageTypeToString(const MessageType &messageType) {
         }
         case MessageType::COORDINATE: {
             return "coordinate";
+        }
+        case MessageType::BYTES: {
+            return "bytes";
         }
         default: {
             throw runtime_error("Undefined MessageType: " + to_string(int(messageType)));
