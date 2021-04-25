@@ -101,6 +101,21 @@ class Communication:
 
         return True
 
+    def sendRaw(self, socketType: SocketType, data: bytes, dataSize: int, retries: int = 0,
+                verbose: bool = False) -> bool:
+        if not data:
+            return False
+        self.sendBuffer.setData(data, dataSize)
+        self.errorCode = 0
+        if not self.send(socketType, retries, verbose):
+            if self.errorCode == 0:
+                if verbose:
+                    print("Socket closed: Can not send data serialized bytes...")
+            else:
+                print("Can not send data serialized bytes... error", self.errorCode)
+            return False
+        return True
+
     def recvMessageType(self, socketType: SocketType, retries: int = 0, verbose: bool = False) \
             -> Tuple[bool, MessageType]:
         self.errorCode = 0
@@ -291,4 +306,3 @@ class Communication:
         else:
             self.recvBuffer = buffer
             return success
-

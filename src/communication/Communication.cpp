@@ -134,6 +134,26 @@ bool Communication::sendData(SocketType type, CommunicationData *data, bool with
     return true;
 }
 
+bool Communication::sendRaw(SocketType type, const char *data, int dataSize, int retries, bool verbose) {
+    if (data == nullptr) {
+        return false;
+    }
+    this->sendBuffer.setData(data, dataSize);
+    this->errorCode = 0;
+    if (!this->send(type, retries, verbose)) {
+        if (this->errorCode == 0) {
+            if (verbose) {
+                cout << "Socket closed: Can not send data serialized bytes..." << endl;
+            }
+        } else {
+            printLastError();
+            (*cerror) << "Can not send data serialized bytes... error " << this->errorCode << endl;
+        }
+        return false;
+    }
+    return true;
+}
+
 bool Communication::recvMessageType(SocketType type, MessageType *messageType, int retries, bool verbose) {
     this->errorCode = 0;
     this->recvBuffer.setBufferContentSize(1);

@@ -37,6 +37,8 @@ namespace comm {
         bool sendData(SocketType type, CommunicationData *data, bool withMessageType, int retries = 0,
                       bool verbose = false);
 
+        bool sendRaw(SocketType type, const char *data, int dataSize, int retries = 0, bool verbose = false);
+
         bool recvMessageType(SocketType type, MessageType *messageType, int retries = 0, bool verbose = false);
 
         bool recvData(SocketType type, CommunicationData *data, int retries = 0, bool verbose = false);
