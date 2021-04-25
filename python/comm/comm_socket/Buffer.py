@@ -65,6 +65,11 @@ class Buffer:
         self.buffer = longLongToNetworkBytes(self.buffer, position, data)
         self.useReferenceBuffer = False
 
+    def setFloat(self, data: float, position: int):
+        self.checkBufferContentSize(position + 4, True)
+        self.buffer = floatToNetworkBytes(self.buffer, position, data)
+        self.useReferenceBuffer = False
+
     def setDouble(self, data: float, position: int):
         self.checkBufferContentSize(position + 8, True)
         self.buffer = doubleToNetworkBytes(self.buffer, position, data)
@@ -85,6 +90,10 @@ class Buffer:
     def getLongLong(self, position: int):
         self.checkBufferContentSize(position + 8, False)
         return networkBytesToLongLong(self.buffer, position)
+
+    def getFloat(self, position: int):
+        self.checkBufferContentSize(position + 4, False)
+        return networkBytesToFloat(self.buffer, position)
 
     def getDouble(self, position: int):
         self.checkBufferContentSize(position + 8, False)

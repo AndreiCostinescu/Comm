@@ -84,12 +84,16 @@ def networkBytesToLongLong(buffer: bytes, start: int) -> int:
     return int.from_bytes(buffer[start:start + 8], 'big')
 
 
+def floatToNetworkBytes(buffer: bytes, start: int, value: float) -> bytes:
+    return memcpy(buffer, start, struct.pack("<f", value), 0, 4)
+
+
+def networkBytesToFloat(buffer: bytes, start: int) -> float:
+    return struct.unpack("<f", buffer[start:start + 4])[0]
+
+
 def doubleToNetworkBytes(buffer: bytes, start: int, value: float) -> bytes:
     return memcpy(buffer, start, struct.pack("<d", value), 0, 8)
-
-
-def networkBytesToDouble(buffer: bytes, start: int) -> float:
-    return struct.unpack("<d", buffer[start:start + 8])[0]
 
 
 def newBuffer(desiredLength: int):

@@ -65,7 +65,20 @@ def test():
 
     for factor in range(2, 5):
         z = 1.0
-        while z > 1e-31:
+        while z > 1e-46:
+            print(z)
+            buffer, bufferSize = prepareBuffer(buffer, bufferSize, 4)
+            buffer = floatToNetworkBytes(buffer, 0, z)
+            resF = networkBytesToFloat(buffer, 0)
+            if resF != z:
+                print("Error at z = ", z, ", res = ", resF, sep="")
+            assert (resF == z)
+            z /= factor
+    print("Finished float-tests")
+
+    for factor in range(2, 5):
+        z = 1.0
+        while z > 1e-301:
             print(z)
             buffer, bufferSize = prepareBuffer(buffer, bufferSize, 8)
             buffer = doubleToNetworkBytes(buffer, 0, z)
@@ -74,6 +87,8 @@ def test():
                 print("Error at z = ", z, ", res = ", resD, sep="")
             assert (resD == z)
             z /= factor
+    print("Finished double-tests")
+
 
 if __name__ == "__main__":
     test()
