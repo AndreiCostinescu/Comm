@@ -74,6 +74,20 @@ int main() {
         assert(resS == y);
     }
 
+    double resF;
+    for (int factor = 2; factor <= 5; factor++) {
+        for (float z = 1.0; z > 0; z /= factor) {
+            cout << z << endl;
+            prepareBuffer(buffer, bufferSize, sizeof(float));
+            floatToNetworkBytes(buffer, 0, z);
+            resF = networkBytesToFloat(buffer, 0);
+            if (resF != z) {
+                cout << "Error at z = " << z << ", res = " << resF << endl;
+            }
+            assert(resF == z);
+        }
+    }
+
     double resD;
     for (int factor = 2; factor <= 5; factor++) {
         for (double z = 1.0; z > 0; z /= factor) {
