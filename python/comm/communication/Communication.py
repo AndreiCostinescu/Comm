@@ -96,7 +96,7 @@ class Communication:
                         print("Socket closed: Can not send data serialized bytes...")
                 else:
                     print("Can not send data serialized bytes... error", self.errorCode)
-                    data.resetSerializeState()
+                data.resetSerializeState()
                 return False
 
         return True

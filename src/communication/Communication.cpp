@@ -126,8 +126,8 @@ bool Communication::sendData(SocketType type, CommunicationData *data, bool with
             } else {
                 printLastError();
                 (*cerror) << "Can not send data serialized bytes... error " << this->errorCode << endl;
-                data->resetSerializeState();
             }
+            data->resetSerializeState();
             return false;
         }
     }
