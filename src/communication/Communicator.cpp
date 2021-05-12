@@ -89,7 +89,7 @@ bool Communicator::syphon(Communication *comm, SocketType type, MessageType &mes
             while (!this->quit && localSyphonRetries > 0) {
                 if (!comm->recvData(type, data, retries, verbose)) {
                     if (comm->getErrorCode() == -1) {
-			localSyphonRetries--;
+                        localSyphonRetries--;
                         continue;
                     }
                     // it shouldn't be possible to receive nothing if we already have received the header!!!
@@ -120,8 +120,10 @@ bool Communicator::listen(Communication *comm, SocketType type, MessageType &mes
     }
 
     CommunicationData *data = _dataCollection.get(messageType);
+    MessageType receivedMessageType = messageType;
     if (!this->syphon(comm, type, messageType, data)) {
-        (*cerror) << "Error when syphoning data " << messageTypeToString(messageType) << "... setting \"quit\"" << endl;
+        (*cerror) << "Error when syphoning data " << messageTypeToString(receivedMessageType)
+                  << "... setting \"quit\"" << endl;
         messageType = MessageType::STATUS;
         auto *status = (StatusData *) _dataCollection.get(messageType);
         status->setCommand("quit");
@@ -129,7 +131,8 @@ bool Communicator::listen(Communication *comm, SocketType type, MessageType &mes
     return true;
 }
 
-bool Communicator::listenFor(Communication *comm, SocketType type, CommunicationData *data, bool onlyFirstMessage) {
+bool Communicator::listenFor(Communication *comm, SocketType type, CommunicationData *data, int countIgnoreOther,
+                             int countIgnore) {
     assert(data != nullptr);
     MessageType messageType;
     while (!this->quit) {
@@ -152,7 +155,13 @@ bool Communicator::listenFor(Communication *comm, SocketType type, Communication
             }
             delete syphonData;
             // it can happen that messageType becomes NOTHING because we don't receive any data in this->syphon!
-            if (messageType != MessageType::NOTHING && onlyFirstMessage) {
+            if (messageType != MessageType::NOTHING && countIgnoreOther > 0) {
+                countIgnoreOther--;
+            }
+            if (countIgnore > 0) {
+                countIgnore--;
+            }
+            if (countIgnoreOther == 0 || countIgnore == 0) {
                 return false;
             }
         } else {

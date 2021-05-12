@@ -37,7 +37,8 @@ namespace comm {
 
         bool listen(Communication *comm, SocketType type, MessageType &messageType, DataCollection &_dataCollection);
 
-        bool listenFor(Communication *comm, SocketType type, CommunicationData *data, bool onlyFirstMessage = false);
+        bool listenFor(Communication *comm, SocketType type, CommunicationData *data, int countIgnoreOther = -1,
+                       int countOther = -1);
 
         virtual void _preMain();
 

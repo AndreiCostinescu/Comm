@@ -104,7 +104,7 @@ class Communicator:
         return True, messageType, _dataCollection
 
     def listenFor(self, comm: Communication, socketType: SocketType, data: CommunicationData,
-                  onlyFirstMessage: bool = False) -> Tuple[bool, CommunicationData]:
+                  countIgnoreOtherMessages: int = -1, countIgnoreMessages: int = -1) -> Tuple[bool, CommunicationData]:
         assert data
         messageType = MessageType.NOTHING
         while not self.quit:
@@ -123,7 +123,11 @@ class Communicator:
                 if syphonResult:
                     return False, data
                 # it can happen that messageType becomes NOTHING because we receive noting in Communicator::syphon!
-                if messageType != MessageType.NOTHING and onlyFirstMessage:
+                if messageType != MessageType.NOTHING and countIgnoreOtherMessages > 0:
+                    countIgnoreOtherMessages -= 1
+                if countIgnoreMessages > 0:
+                    countIgnoreMessages -= 1
+                if countIgnoreOtherMessages == 0 or countIgnoreMessages == 0:
                     return False, data
             else:
                 break
