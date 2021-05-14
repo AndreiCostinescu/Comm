@@ -237,10 +237,11 @@ bool Communication::recvData(SocketType type, CommunicationData *data, int retri
         }
     }
     if (receivedSomething && !deserializeDone) {
-        cout << "After loop: Could not recv data serialized bytes... error " << this->errorCode
-             << "; deserializeState = " << deserializeState << endl;
-        (*cerror) << "After loop: Could not recv data serialized bytes... error " << this->errorCode
-                  << "; deserializeState = " << deserializeState << endl;
+        cout << "After loop: Could not recv " << messageTypeToString(data->getMessageType())
+             << " serialized bytes... error " << this->errorCode << "; deserializeState = " << deserializeState << endl;
+        (*cerror) << "After loop: Could not recv " << messageTypeToString(data->getMessageType())
+                  << " serialized bytes... error " << this->errorCode << "; deserializeState = " << deserializeState
+                  << endl;
         data->resetDeserializeState();
         return false;
     } else if (!receivedSomething) {

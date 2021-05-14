@@ -198,10 +198,10 @@ class Communication:
                 localRetries -= 1
 
         if receivedSomething and not deserializeDone:
-            print("After loop: Could not recv data serialized bytes... error", self.errorCode, "deserializeState =",
-                  deserializeState)
-            print("After loop: Could not recv data serialized bytes... error", self.errorCode, "deserializeState =",
-                  deserializeState)
+            print("After loop: Could not recv", MessageType.messageTypeToString(data.getMessageType()),
+                  "serialized bytes... error", self.errorCode, "deserializeState =", deserializeState)
+            print("After loop: Could not recv", MessageType.messageTypeToString(data.getMessageType()),
+                  "serialized bytes... error", self.errorCode, "deserializeState =", deserializeState)
             data.resetDeserializeState()
             return False, data
         elif not receivedSomething:
