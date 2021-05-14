@@ -8,6 +8,7 @@
 #include <comm/data/CommunicationData.h>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace comm {
     class DataCollection {
@@ -16,10 +17,13 @@ namespace comm {
 
         ~DataCollection();
 
+        void reset();
+
         CommunicationData *get(const MessageType &messageType);
 
     private:
         std::map<std::string, CommunicationData *> data;
+        std::vector<std::string> dataKeys;
     };
 }
 

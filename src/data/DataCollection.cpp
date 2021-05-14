@@ -10,20 +10,35 @@
 using namespace comm;
 using namespace std;
 
-DataCollection::DataCollection() : data() {}
+DataCollection::DataCollection() : data(), dataKeys() {}
 
 DataCollection::~DataCollection() {
+    cout << "In DataCollection destructor: " << endl;
+    this->reset();
+}
+
+void DataCollection::reset() {
     for (const auto &_data : this->data) {
+        cout << "\tDelete " << _data.first << ": " << _data.second << endl;
         delete _data.second;
     }
     this->data.clear();
+    this->dataKeys.clear();
 }
 
 CommunicationData *DataCollection::get(const MessageType &messageType) {
     CommunicationData *commData;
-    if (!mapGetIfContains(this->data, messageTypeToString(messageType), commData)) {
+    string stringMessageType = messageTypeToString(messageType);
+    if (!mapGetIfContains(this->data, stringMessageType, commData)) {
+        for (const auto &dataKey : this->dataKeys) {
+            if (dataKey == stringMessageType) {
+                (*cerror) << "The data key assertion will fail for key = " << stringMessageType << endl;
+            }
+            assert (dataKey != stringMessageType);
+        }
         commData = createCommunicationDataPtr(messageType);
-        this->data[messageTypeToString(messageType)] = commData;
+        this->data[stringMessageType] = commData;
+        this->dataKeys.push_back(stringMessageType);
     }
     return commData;
 }

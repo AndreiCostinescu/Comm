@@ -8,6 +8,9 @@ class DataCollection:
     def __init__(self):
         self.data = {}  # type: Dict[str, CommunicationData]
 
+    def reset(self):
+        self.data.clear()
+
     def get(self, messageType: MessageType):
         communicationData = self.data.get(MessageType.messageTypeToString(messageType), None)
         if messageType != MessageType.NOTHING and communicationData is None:
