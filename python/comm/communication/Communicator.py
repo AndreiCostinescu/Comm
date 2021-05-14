@@ -6,7 +6,7 @@ from comm.comm_data.utils import createCommunicationData
 from comm.comm_data.MessageType import MessageType
 from comm.comm_data.StatusData import StatusData
 from comm.comm_socket.SocketType import SocketType
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Callable
 
 
 class Communicator:
@@ -28,18 +28,6 @@ class Communicator:
         self.quit = True
 
     @staticmethod
-    def isReceiveErrorOk(errorCode: int, messageType: MessageType, nothingOk: bool) -> Tuple[bool, MessageType]:
-        if errorCode < 0:
-            # nothing received
-            messageType = MessageType.NOTHING
-            return nothingOk, messageType
-        elif errorCode == 0:
-            print("Socket closed.")
-        else:
-            print("An actual error occurred... " + str(errorCode))
-        return False, messageType
-
-    @staticmethod
     def send(comm: Communication, socketType: SocketType, data: CommunicationData or MessageType, retries: int = 0,
              verbose: bool = False) -> bool:
         if isinstance(data, CommunicationData):
@@ -58,16 +46,70 @@ class Communicator:
                     return False
             return True
 
+    @staticmethod
+    def syphonComm(comm: Communication, socketType: SocketType, messageType: MessageType,
+                   data: Optional[CommunicationData], quitFlag: bool, retries: int = 0, verbose: bool = False,
+                   syphonRetries: int = 10):
+        return Communicator._syphon(comm, socketType, messageType, data, lambda: not quitFlag, retries, verbose,
+                                    syphonRetries)
+
+    @staticmethod
+    def listenComm(comm: Communication, socketType: SocketType, _dataCollection: DataCollection, quitFlag: bool):
+        return Communicator._listen(comm, socketType, _dataCollection, lambda: not quitFlag)
+
+    @staticmethod
+    def listenForComm(comm: Communication, socketType: SocketType, data: CommunicationData, quitFlag: bool,
+                      countIgnoreOtherMessages: int = -1, countIgnoreMessages: int = -1):
+        return Communicator._listenFor(comm, socketType, data, lambda: not quitFlag, countIgnoreOtherMessages,
+                                       countIgnoreMessages)
+
     def syphon(self, comm: Communication, socketType: SocketType, messageType: MessageType,
                data: Optional[CommunicationData], retries: int = 0, verbose: bool = False,
                syphonRetries: int = 10) -> Tuple[bool, MessageType]:
+        return Communicator._syphon(comm, socketType, messageType, data, lambda: not self.quit, retries, verbose,
+                                    syphonRetries)
+
+    def listen(self, comm: Communication, socketType: SocketType, _dataCollection: DataCollection) \
+            -> Tuple[bool, MessageType, DataCollection]:
+        return Communicator._listen(comm, socketType, _dataCollection, lambda: not self.quit)
+
+    def listenFor(self, comm: Communication, socketType: SocketType, data: CommunicationData,
+                  countIgnoreOtherMessages: int = -1, countIgnoreMessages: int = -1) -> Tuple[bool, CommunicationData]:
+        return Communicator._listenFor(comm, socketType, data, lambda: not self.quit, countIgnoreOtherMessages,
+                                       countIgnoreMessages)
+
+    def _preMain(self):
+        pass
+
+    def _main(self):
+        pass
+
+    def _postMain(self):
+        pass
+
+    @staticmethod
+    def isReceiveErrorOk(errorCode: int, messageType: MessageType, nothingOk: bool) -> Tuple[bool, MessageType]:
+        if errorCode < 0:
+            # nothing received
+            messageType = MessageType.NOTHING
+            return nothingOk, messageType
+        elif errorCode == 0:
+            print("Socket closed.")
+        else:
+            print("An actual error occurred... " + str(errorCode))
+        return False, messageType
+
+    @staticmethod
+    def _syphon(comm: Communication, socketType: SocketType, messageType: MessageType,
+                data: Optional[CommunicationData], notQuit: Callable[[], bool], retries: int = 0, verbose: bool = False,
+                syphonRetries: int = 10) -> Tuple[bool, MessageType]:
         if messageType == MessageType.NOTHING:
             return True, messageType
         if messageType in [MessageType.COORDINATE, MessageType.IMAGE, MessageType.STATUS]:
             if not data:
                 data = createCommunicationData(messageType)
             localRetriesBeforeFail = 1 if (syphonRetries < 1) else syphonRetries
-            while not self.quit and localRetriesBeforeFail > 0:
+            while notQuit() and localRetriesBeforeFail > 0:
                 if not comm.recvData(socketType, data, retries, verbose):
                     if comm.getErrorCode() == -1:
                         localRetriesBeforeFail -= 1
@@ -80,8 +122,9 @@ class Communicator:
         else:
             raise RuntimeError("Unknown message type: " + str(messageType))
 
-    def listen(self, comm: Communication, socketType: SocketType, _dataCollection: DataCollection) \
-            -> Tuple[bool, MessageType, DataCollection]:
+    @staticmethod
+    def _listen(comm: Communication, socketType: SocketType, _dataCollection: DataCollection,
+                notQuit: Callable[[], bool]) -> Tuple[bool, MessageType, DataCollection]:
         recvSuccess, messageType = comm.recvMessageType(socketType)
         if not recvSuccess:
             recvErrorOk, messageType = Communicator.isReceiveErrorOk(comm.getErrorCode(), messageType, True)
@@ -94,7 +137,7 @@ class Communicator:
             return True, messageType, _dataCollection
 
         data = _dataCollection.get(messageType)
-        syphonResult, messageType = self.syphon(comm, socketType, messageType, data)
+        syphonResult, messageType = Communicator._syphon(comm, socketType, messageType, data, notQuit)
         if not syphonResult:
             print("Error when syphoning data " + MessageType.messageTypeToString(messageType) + "... setting \"quit\"")
             messageType = MessageType.STATUS
@@ -103,11 +146,12 @@ class Communicator:
 
         return True, messageType, _dataCollection
 
-    def listenFor(self, comm: Communication, socketType: SocketType, data: CommunicationData,
-                  countIgnoreOtherMessages: int = -1, countIgnoreMessages: int = -1) -> Tuple[bool, CommunicationData]:
+    @staticmethod
+    def _listenFor(comm: Communication, socketType: SocketType, data: CommunicationData, notQuit: Callable[[], bool],
+                   countIgnoreOtherMessages: int = -1, countIgnoreMessages: int = -1) -> Tuple[bool, CommunicationData]:
         assert data
         messageType = MessageType.NOTHING
-        while not self.quit:
+        while notQuit():
             recvResult, messageType = comm.recvMessageType(socketType)
             if not recvResult:
                 recvErrorOk, messageType = Communicator.isReceiveErrorOk(comm.getErrorCode(), messageType, True)
@@ -119,7 +163,7 @@ class Communicator:
                 if messageType != MessageType.NOTHING:
                     print("Wrong messageType... expected", MessageType.messageTypeToString(data.getMessageType()),
                           "got", MessageType.messageTypeToString(messageType))
-                syphonResult, messageType = self.syphon(comm, socketType, messageType, None)
+                syphonResult, messageType = Communicator._syphon(comm, socketType, messageType, None, notQuit)
                 if syphonResult:
                     return False, data
                 # it can happen that messageType becomes NOTHING because we receive noting in Communicator::syphon!
@@ -132,24 +176,15 @@ class Communicator:
             else:
                 break
 
-        if self.quit:
+        if not notQuit():
             return False, data
 
-        while not self.quit:
-            syphonResult, messageType = self.syphon(comm, socketType, messageType, data)
+        while notQuit():
+            syphonResult, messageType = Communicator._syphon(comm, socketType, messageType, data, notQuit)
             if not syphonResult:
                 if comm.getErrorCode() < 0:
                     continue
                 return False, data
             break
 
-        return not self.quit, data
-
-    def _preMain(self):
-        pass
-
-    def _main(self):
-        pass
-
-    def _postMain(self):
-        pass
+        return notQuit(), data
