@@ -100,27 +100,6 @@ bool Communicator::listenFor(Communication *comm, SocketType type, Communication
                                     countIgnoreOther, countOther, retries, verbose);
 }
 
-// protected methods
-
-bool Communicator::syphon(Communication *comm, SocketType type, MessageType &messageType, CommunicationData *data,
-                          int retries, bool verbose, int syphonRetries) {
-    return Communicator::_syphon(comm, type, messageType, data, [this]() { return !this->quit; }, retries, verbose,
-                                 syphonRetries);
-}
-
-bool Communicator::listen(Communication *comm, SocketType type, MessageType &messageType,
-                          DataCollection &_dataCollection, int retries, bool verbose) {
-    return Communicator::_listen(comm, type, messageType, _dataCollection, [this]() { return !this->quit; }, retries, verbose);
-}
-
-bool Communicator::listenFor(Communication *comm, SocketType type, CommunicationData *data, bool *timeoutResult,
-                             int countIgnoreOther, int countIgnore, int retries, bool verbose) {
-    return Communicator::_listenFor(comm, type, data, [this]() { return !this->quit; }, timeoutResult,
-                                    countIgnoreOther, countIgnore, retries, verbose);
-}
-
-// private methods
-
 bool Communicator::isReceiveErrorOk(int errorCode, MessageType *messageType, bool nothingOk) {
     if (errorCode < 0) {
         // nothing received
