@@ -7,7 +7,6 @@
 
 #include <atomic>
 #include <comm/communication/Communication.h>
-#include <comm/data/CommunicatorState.h>
 #include <comm/data/DataCollection.h>
 #include <functional>
 #include <map>
@@ -16,19 +15,17 @@
 namespace comm {
     class Communicator {
     public:
-        Communicator();
-
-        virtual ~Communicator();
-
-        virtual void main();
-
-        virtual void stop();
-
         static bool send(Communication *comm, SocketType type, CommunicationData *data, int retries = 0,
                          bool verbose = false);
 
         static bool send(Communication *comm, SocketType type, MessageType *messageType, CommunicationData *data,
                          int retries = 0, bool verbose = false);
+
+        static bool send(Communication *comm, SocketType type, const char *data, int dataSize, int retries = 0,
+                         bool verbose = false);
+
+        static bool syphon(Communication *comm, SocketType type, MessageType &messageType, CommunicationData *data,
+                           const bool *quitFlag, int retries = 0, bool verbose = false, int syphonRetries = 10);
 
         static bool syphon(Communication *comm, SocketType type, MessageType &messageType, CommunicationData *data,
                            bool &quitFlag, int retries = 0, bool verbose = false, int syphonRetries = 10);
@@ -37,36 +34,27 @@ namespace comm {
                            std::atomic<bool> &quitFlag, int retries = 0, bool verbose = false, int syphonRetries = 10);
 
         static bool listen(Communication *comm, SocketType type, MessageType &messageType,
-                           DataCollection &_dataCollection, bool &quitFlag);
+                           DataCollection &_dataCollection, const bool *quitFlag, int retries = -1,
+                           bool verbose = false);
 
         static bool listen(Communication *comm, SocketType type, MessageType &messageType,
-                           DataCollection &_dataCollection, std::atomic<bool> &quitFlag);
+                           DataCollection &_dataCollection, bool &quitFlag, int retries = -1, bool verbose = false);
+
+        static bool listen(Communication *comm, SocketType type, MessageType &messageType,
+                           DataCollection &_dataCollection, std::atomic<bool> &quitFlag, int retries = -1,
+                           bool verbose = false);
+
+        static bool listenFor(Communication *comm, SocketType type, CommunicationData *data, const bool *quitFlag,
+                              bool *timeoutResult = nullptr, int countIgnoreOther = -1, int countOther = -1,
+                              int retries = -1, bool verbose = false);
 
         static bool listenFor(Communication *comm, SocketType type, CommunicationData *data, bool &quitFlag,
-                              bool *timeoutResult = nullptr, int countIgnoreOther = -1, int countOther = -1);
+                              bool *timeoutResult = nullptr, int countIgnoreOther = -1, int countOther = -1,
+                              int retries = -1, bool verbose = false);
 
         static bool listenFor(Communication *comm, SocketType type, CommunicationData *data,
                               std::atomic<bool> &quitFlag, bool *timeoutResult = nullptr, int countIgnoreOther = -1,
-                              int countOther = -1);
-
-    protected:
-        bool syphon(Communication *comm, SocketType type, MessageType &messageType, CommunicationData *data,
-                    int retries = 0, bool verbose = false, int syphonRetries = 10);
-
-        bool listen(Communication *comm, SocketType type, MessageType &messageType, DataCollection &_dataCollection);
-
-        bool listenFor(Communication *comm, SocketType type, CommunicationData *data, bool *timeoutResult = nullptr,
-                       int countIgnoreOther = -1, int countOther = -1);
-
-        virtual void _preMain();
-
-        virtual void _main();
-
-        virtual void _postMain();
-
-        std::atomic<bool> quit;
-        CommunicatorState state;
-        DataCollection dataCollection;
+                              int countOther = -1, int retries = -1, bool verbose = false);
 
     private:
         static bool isReceiveErrorOk(int errorCode, MessageType *messageType, bool nothingOk);
@@ -76,11 +64,12 @@ namespace comm {
                             int syphonRetries = 10);
 
         static bool _listen(Communication *comm, SocketType type, MessageType &messageType,
-                            DataCollection &_dataCollection, const std::function<bool()> &notQuit);
+                            DataCollection &_dataCollection, const std::function<bool()> &notQuit, int retries = -1,
+                            bool verbose = false);
 
         static bool _listenFor(Communication *comm, SocketType type, CommunicationData *data,
                                const std::function<bool()> &notQuit, bool *timeoutResult = nullptr,
-                               int countIgnoreOther = -1, int countOther = -1);
+                               int countIgnoreOther = -1, int countOther = -1, int retries = -1, bool verbose = false);
     };
 }
 
