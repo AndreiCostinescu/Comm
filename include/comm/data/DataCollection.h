@@ -19,6 +19,8 @@ namespace comm {
 
         void reset();
 
+        void set(const MessageType &messageType, CommunicationData *commData);
+
         CommunicationData *get(const MessageType &messageType);
 
     private:

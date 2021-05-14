@@ -26,6 +26,14 @@ void DataCollection::reset() {
     this->dataKeys.clear();
 }
 
+void DataCollection::set(const MessageType &messageType, CommunicationData *commData) {
+    string stringMessageType = messageTypeToString(messageType);
+    if (!mapContains(this->data, stringMessageType)) {
+        this->dataKeys.push_back(stringMessageType);
+    }
+    this->data[stringMessageType] = commData;
+}
+
 CommunicationData *DataCollection::get(const MessageType &messageType) {
     CommunicationData *commData;
     string stringMessageType = messageTypeToString(messageType);
