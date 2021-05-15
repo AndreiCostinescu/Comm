@@ -149,22 +149,28 @@ bool Communicator::_syphon(Communication *comm, SocketType type, MessageType &me
 bool Communicator::_listen(Communication *comm, SocketType type, MessageType &messageType,
                            DataCollection &_dataCollection, const std::function<bool()> &notQuit, int retries,
                            bool verbose) {
+    // cout << "Entering _listen function..." << endl;
     if (!comm->recvMessageType(type, &messageType, retries, verbose)) {
         if (Communicator::isReceiveErrorOk(comm->getErrorCode(), &messageType, true)) {
+            // cout << "Received NOTHING" << endl;
             return true;
         }
         (*cerror) << "Error when receiving message type... setting \"quit\"" << endl;
         messageType = MessageType::STATUS;
         auto *status = (StatusData *) _dataCollection.get(messageType);
         status->setCommand("quit");
+        // cout << "Received NOTHING, set quit!" << endl;
         return true;
     }
+    // cout << "Received messageType: " << messageTypeToString(messageType) << endl;
 
     CommunicationData *data = _dataCollection.get(messageType);
     MessageType receivedMessageType = messageType;
     if (!Communicator::_syphon(comm, type, messageType, data, notQuit, retries, verbose)) {
-        (*cerror) << "Error when syphoning data " << messageTypeToString(receivedMessageType)
-                  << "... setting \"quit\"" << endl;
+        if (notQuit()) {
+            (*cerror) << "Error when syphoning data " << messageTypeToString(receivedMessageType)
+                      << "... setting \"quit\"" << endl;
+        }
         messageType = MessageType::STATUS;
         auto *status = (StatusData *) _dataCollection.get(messageType);
         status->setCommand("quit");

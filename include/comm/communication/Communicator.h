@@ -34,27 +34,27 @@ namespace comm {
                            std::atomic<bool> &quitFlag, int retries = 0, bool verbose = false, int syphonRetries = 10);
 
         static bool listen(Communication *comm, SocketType type, MessageType &messageType,
-                           DataCollection &_dataCollection, const bool *quitFlag, int retries = -1,
+                           DataCollection &_dataCollection, const bool *quitFlag, int retries = 0,
                            bool verbose = false);
 
         static bool listen(Communication *comm, SocketType type, MessageType &messageType,
-                           DataCollection &_dataCollection, bool &quitFlag, int retries = -1, bool verbose = false);
+                           DataCollection &_dataCollection, bool &quitFlag, int retries = 0, bool verbose = false);
 
         static bool listen(Communication *comm, SocketType type, MessageType &messageType,
-                           DataCollection &_dataCollection, std::atomic<bool> &quitFlag, int retries = -1,
+                           DataCollection &_dataCollection, std::atomic<bool> &quitFlag, int retries = 0,
                            bool verbose = false);
 
         static bool listenFor(Communication *comm, SocketType type, CommunicationData *data, const bool *quitFlag,
                               bool *timeoutResult = nullptr, int countIgnoreOther = -1, int countOther = -1,
-                              int retries = -1, bool verbose = false);
+                              int retries = 0, bool verbose = false);
 
         static bool listenFor(Communication *comm, SocketType type, CommunicationData *data, bool &quitFlag,
                               bool *timeoutResult = nullptr, int countIgnoreOther = -1, int countOther = -1,
-                              int retries = -1, bool verbose = false);
+                              int retries = 0, bool verbose = false);
 
         static bool listenFor(Communication *comm, SocketType type, CommunicationData *data,
                               std::atomic<bool> &quitFlag, bool *timeoutResult = nullptr, int countIgnoreOther = -1,
-                              int countOther = -1, int retries = -1, bool verbose = false);
+                              int countOther = -1, int retries = 0, bool verbose = false);
 
     private:
         static bool isReceiveErrorOk(int errorCode, MessageType *messageType, bool nothingOk);
@@ -64,12 +64,12 @@ namespace comm {
                             int syphonRetries = 10);
 
         static bool _listen(Communication *comm, SocketType type, MessageType &messageType,
-                            DataCollection &_dataCollection, const std::function<bool()> &notQuit, int retries = -1,
+                            DataCollection &_dataCollection, const std::function<bool()> &notQuit, int retries = 0,
                             bool verbose = false);
 
         static bool _listenFor(Communication *comm, SocketType type, CommunicationData *data,
                                const std::function<bool()> &notQuit, bool *timeoutResult = nullptr,
-                               int countIgnoreOther = -1, int countOther = -1, int retries = -1, bool verbose = false);
+                               int countIgnoreOther = -1, int countOther = -1, int retries = 0, bool verbose = false);
     };
 }
 
