@@ -41,7 +41,7 @@ void server_1() {
 
     status.setData("start");
     cout << x << ": Starting start status data..." << endl;
-    assert(p->sendData(SocketType::TCP, &status, false, -1, true));
+    assert(p->transmitData(SocketType::TCP, &status, false, false, -1, true));
 
     this_thread::sleep_for(std::chrono::seconds(3));
 
@@ -63,7 +63,7 @@ void server_1() {
     }
 
     status.setData("stop");
-    assert(p->sendData(SocketType::TCP, &status, false));
+    assert(p->transmitData(SocketType::TCP, &status, false, false));
 
     delete p;
 
@@ -85,7 +85,7 @@ void test_1() {
 
     tcpStatus.setData("Robot 1");
     cout << x << ": Created tcpStatus data" << endl;
-    assert(p.sendData(SocketType::TCP, &tcpStatus, false, -1, true));
+    assert(p.transmitData(SocketType::TCP, &tcpStatus, false, false, -1, true));
     cout << x << ": Sent tcpStatus data" << endl;
     assert(p.recvData(SocketType::TCP, &tcpStatus, -1, true));
     cout << x << ": Received tcpStatus data \"" << tcpStatus.getData() << "\" from partner" << endl;
@@ -98,7 +98,7 @@ void test_1() {
     while (true) {
         udpStatus.setData("Message " + to_string(id++));
         // cout << x << ": set data for udp transmission" << endl;
-        assert(p.sendData(SocketType::UDP, &udpStatus, false));
+        assert(p.transmitData(SocketType::UDP, &udpStatus, false, false));
         cout << x << ": sent udp data: " << udpStatus.getData() << endl;
         assert(p.recvData(SocketType::TCP, &tcpStatus, 0) || p.getErrorCode() == -1);
         // cout << x << ": after tcp listen/recv" << endl;
@@ -139,7 +139,7 @@ void server_2() {
 
     status.setData("start");
     cout << x << ": Starting start status data..." << endl;
-    assert(p->sendData(SocketType::TCP, &status, false, -1, true));
+    assert(p->transmitData(SocketType::TCP, &status, false, false, -1, true));
 
     cout << x << ": Starting receive tcp status data..." << endl;
     assert(p->recvData(SocketType::TCP, &status, -1, true));
@@ -166,7 +166,7 @@ void test_2() {
 
     tcpStatus.setData("Robot 1");
     cout << x << ": Created tcpStatus data" << endl;
-    assert(p.sendData(SocketType::TCP, &tcpStatus, false, -1, true));
+    assert(p.transmitData(SocketType::TCP, &tcpStatus, false, false, -1, true));
     cout << x << ": Sent tcpStatus data" << endl;
 
     cout << x << ": test_2 finished normally!" << endl;

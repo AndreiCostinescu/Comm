@@ -19,7 +19,7 @@ namespace comm {
 
         MessageType getMessageType() override;
 
-        bool serialize(Buffer *buffer, bool verbose) override;
+        bool serialize(Buffer *buffer, int start, bool forceCopy, bool verbose) override;
 
         [[nodiscard]] int getExpectedDataSize() const override;
 
@@ -59,7 +59,7 @@ namespace comm {
 
         [[nodiscard]] bool empty() const;
 
-        [[nodiscard]] char *getBuffer();
+        [[nodiscard]] const char *getBuffer();
 
         [[nodiscard]] unsigned long long int getBufferSize() const;
 

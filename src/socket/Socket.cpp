@@ -6,7 +6,6 @@
 #include <comm/socket/utils.h>
 #include <cassert>
 #include <csignal>
-#include <cstring>
 #include <iostream>
 #include <thread>
 
@@ -39,14 +38,14 @@ Socket::Socket(SocketType protocol, const SocketPartner &partner, int myPort, in
 }
 
 Socket::~Socket() {
-    this->cleanup();
+    this->cleanup(true);
 }
 
 SOCKET Socket::getSocket() const {
     return this->socket;
 }
 
-void Socket::cleanup() {
+void Socket::cleanup(bool withBuffers) {
     this->close();
     if (this->deletePartner) {
         delete this->partner;
@@ -56,10 +55,12 @@ void Socket::cleanup() {
     this->myself = nullptr;
     this->isCopy = false;
     this->initialized = false;
-    delete this->sendBuffer;
-    delete this->recvBuffer;
-    this->sendBuffer = nullptr;
-    this->recvBuffer = nullptr;
+    if (withBuffers) {
+        delete this->sendBuffer;
+        delete this->recvBuffer;
+        this->sendBuffer = nullptr;
+        this->recvBuffer = nullptr;
+    }
 }
 
 void Socket::close() {
@@ -139,20 +140,8 @@ bool Socket::initialize(SocketType _protocol, SocketPartner *_partner, int _myPo
 
 bool Socket::initialize(SocketType _protocol, const SocketPartner &_partner, int _myPort, int _sendTimeout,
                         int _recvTimeout) {
-    this->cleanup();
-    this->protocol = _protocol;
-    this->partner = new SocketPartner(_partner.getIP(), _partner.getPort(), _partner.getOverwrite());
-    if (_myPort < 0 || _myPort >= (1u << 16u)) {
-        _myPort = 0;
-    }
-    // this->myself = new SocketPartner("127.0.0.1", _myPort, false);
-    this->myself = new SocketPartner("0.0.0.0", _myPort, false);
-    this->sendTimeout = _sendTimeout;
-    this->recvTimeout = _recvTimeout;
-    this->isCopy = false;
-    this->initialized = false;
-    this->deletePartner = true;
-    return this->initialize();
+    return this->initialize(_protocol, new SocketPartner(_partner.getIP(), _partner.getPort(), _partner.getOverwrite()),
+                            _myPort, _sendTimeout, _recvTimeout);
 }
 
 void Socket::setSocketTimeouts(int _sendTimeout, int _recvTimeout, bool modifySocket) {
@@ -245,13 +234,13 @@ void Socket::accept(Socket *&acceptSocket, bool verbose) const {
     acceptSocket->initialized = true;
 }
 
-bool Socket::sendBytes(const char *buffer, unsigned long long int bufferLength, int &errorCode, int retries,
-                       bool verbose) {
-    return this->_sendBytes(buffer, bufferLength, errorCode, retries, verbose);
+bool Socket::sendBytes(const char *buffer, unsigned long long int bufferLength, int &errorCode,
+                       SerializationHeader *header, int retries, bool verbose) {
+    return this->_sendBytes(buffer, bufferLength, errorCode, header, retries, verbose);
 }
 
-bool Socket::sendBytes(Buffer &buffer, int &errorCode, int retries, bool verbose) {
-    return this->_sendBytes(buffer.getBuffer(), buffer.getBufferContentSize(), errorCode, retries, verbose);
+bool Socket::sendBytes(Buffer &buffer, int &errorCode, SerializationHeader *header, int retries, bool verbose) {
+    return this->_sendBytes(buffer.getBuffer(), buffer.getBufferContentSize(), errorCode, header, retries, verbose);
 }
 
 bool Socket::receiveBytes(char *&buffer, unsigned long long int &bufferLength, unsigned long long int expectedLength,
@@ -294,8 +283,9 @@ void Socket::_setSocketTimeouts(SOCKET socket, int sendTimeout, int recvTimeout)
 
 Socket::Socket() : protocol(SocketType::UDP), socket(INVALID_SOCKET), partner(nullptr), myself(nullptr),
                    sendTimeout(-1), recvTimeout(-1), isCopy(false), initialized(false), deletePartner(true),
-                   recvAddress(), recvAddressLength(sizeof(this->recvAddress)), sendBuffer(nullptr),
-                   recvBuffer(nullptr) {}
+                   recvAddress(), recvAddressLength(sizeof(this->recvAddress)), recvBuffer(nullptr) {
+    this->sendBuffer = new Buffer(CLIENT_MAX_MESSAGE_BYTES + 4);
+}
 
 Socket::Socket(const SocketPartner &partner) : Socket() {
     this->protocol = SocketType::TCP;
@@ -354,11 +344,24 @@ void Socket::initMyself(bool withBind) {
     cout << "Socket Initialization: bound socket to local " << this->myself->getPartnerString() << "!" << endl;
 }
 
-bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode, const int sendSize,
-                         const int sentBytes, const char sendIteration, const bool verbose) {
+bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode, SerializationHeader *header,
+                         const int sendSize, const int sentBytes, const char sendIteration, const bool verbose) {
+    if (header != nullptr || this->protocol == UDP_HEADER) {
+        if (header != nullptr) {
+            this->sendBuffer->setChar((char) header->getSerializationIteration(), 0);
+        } else {
+            this->sendBuffer->setChar((char) (sendIteration != 0), 0);
+        }
+        this->sendBuffer->setChar(sendIteration, 1);
+        this->sendBuffer->setShort((short) sendSize, 2);
+        this->sendBuffer->setData(buffer + sentBytes, sendSize, 4);
+    } else {
+        this->sendBuffer->setConstReferenceToData(buffer + sentBytes, sendSize);
+    }
     setErrnoZero();
     switch (this->protocol) {
-        case UDP: {
+        case UDP:
+        case UDP_HEADER: {
             SocketAddress *&toAddress = this->partner->getPartner();
             assert(toAddress != nullptr);
             if (toAddress == nullptr) {
@@ -369,8 +372,9 @@ bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode
             if (verbose) {
                 cout << "Pre sendto: already sentBytes = " << sentBytes << endl;
             }
-            localBytesSent = sendto(this->socket, buffer + sentBytes, sendSize, 0, (struct sockaddr *) (toAddress),
-                                    sizeof(*toAddress));
+            localBytesSent = sendto(this->socket, this->sendBuffer->getConstBuffer(),
+                                    (int) this->sendBuffer->getBufferContentSize(),
+                                    0, (struct sockaddr *) (toAddress), sizeof(*toAddress));
             if (verbose) {
                 cout << "Post sendto: managed to send (UDP) localBytesSent = " << localBytesSent << endl;
                 /*
@@ -382,44 +386,12 @@ bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode
             }
             break;
         }
-        case UDP_HEADER: {
-            SocketAddress *&toAddress = this->partner->getPartner();
-            assert(toAddress != nullptr);
-            if (toAddress == nullptr) {
-                (*cerror) << "UDP_HEADER send partner is null!" << endl;
-                errorCode = 0;
-                return false;
-            }
-            if (verbose) {
-                cout << "Pre sendto: already sentBytes = " << sentBytes << endl;
-            }
-
-            this->sendBuffer->setChar((char) (sendIteration != 0), 0);
-            this->sendBuffer->setChar(sendIteration, 1);
-            this->sendBuffer->setShort((short) sendSize, 2);
-            this->sendBuffer->setData(buffer + sentBytes, sendSize, 4);
-            localBytesSent = sendto(this->socket, this->sendBuffer->getBuffer(),
-                                    (int) this->sendBuffer->getBufferContentSize(),
-                                    0, (struct sockaddr *) (toAddress), sizeof(*toAddress));
-            if (localBytesSent >= 4) {
-                localBytesSent -= 4;
-            }
-            if (verbose) {
-                cout << "Post sendto: managed to send (UDP_HEADER) localBytesSent = " << localBytesSent << endl;
-                //*
-                for (int i = 0; i < 4; i++) {
-                    cout << (unsigned short) this->sendBuffer->getBuffer()[i] << ", ";
-                }
-                cout << endl;
-                //*/
-            }
-            break;
-        }
         case TCP: {
             if (verbose) {
                 cout << "Pre send: sending " << sendSize << "B to " << this->socket << endl;
             }
-            localBytesSent = send(this->socket, buffer + sentBytes, sendSize, 0);
+            localBytesSent = send(this->socket, this->sendBuffer->getConstBuffer(),
+                                  (int) this->sendBuffer->getBufferContentSize(), 0);
             if (verbose) {
                 cout << "Post send: managed to send (TCP) localBytesSent = " << localBytesSent << endl;
             }
@@ -428,6 +400,9 @@ bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode
         default : {
             throw runtime_error("Unknown protocol: " + to_string(this->protocol));
         }
+    }
+    if ((header != nullptr || this->protocol == UDP_HEADER) && localBytesSent >= 4) {
+        localBytesSent -= 4;
     }
     return true;
 }
@@ -468,8 +443,9 @@ bool Socket::interpretSendResult(int &errorCode, int &localBytesSent, int &retri
     return true;
 }
 
-bool Socket::_sendBytes(const char *buffer, unsigned long long int bufferLength, int &errorCode, int retries,
-                        bool verbose) {
+bool Socket::_sendBytes(const char *buffer, unsigned long long int bufferLength, int &errorCode,
+                        SerializationHeader *header, int retries, bool verbose) {
+    assert(this->sendBuffer != nullptr);
     if (!this->isInitialized()) {
         (*cerror) << "Can not send with an uninitialized socket!" << endl;
         return false;
@@ -483,12 +459,10 @@ bool Socket::_sendBytes(const char *buffer, unsigned long long int bufferLength,
     int sentBytes = 0, localBytesSent;
     char sendIteration = 0;
     unsigned long long int maxSendPerRound = CLIENT_MAX_MESSAGE_BYTES;
-    if (this->protocol == SocketType::UDP_HEADER && this->sendBuffer == nullptr) {
-        this->sendBuffer = new Buffer(maxSendPerRound + 4);
-    }
     while (sentBytes < bufferLength) {
         int sendSize = (int) min(maxSendPerRound, bufferLength - sentBytes);
-        if (!this->performSend(buffer, localBytesSent, errorCode, sendSize, sentBytes, sendIteration, verbose)) {
+        if (!this->performSend(buffer, localBytesSent, errorCode, header, sendSize, sentBytes, sendIteration,
+                               verbose)) {
             return false;
         }
 

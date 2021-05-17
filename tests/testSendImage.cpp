@@ -34,7 +34,7 @@ void udpStreamer(SocketType socketType) {
         cout << "image size " << image.size() << " and id " << id << endl;
         i.setID(id);
 
-        if (!p.sendData(socketType, &i, true, 0, false)) {
+        if (!p.transmitData(socketType, &i, false, true, 0, false)) {
             cout << "Error: " << p.getErrorCode() << "; " << p.getErrorString() << "; " << getLastErrorString() << endl;
             break;
         } else {
@@ -80,7 +80,7 @@ void tcpStreamer() {
         cout << "image size " << image.size() << " and id " << id << endl;
         i.setID(id);
 
-        if (!p.sendData(socketType, &i, true, 0, false)) {
+        if (!p.transmitData(socketType, &i, false, true, 0, false)) {
             cout << "Error: " << p.getErrorCode() << "; " << p.getErrorString() << "; " << getLastErrorString() << endl;
             break;
         } else {
@@ -97,7 +97,7 @@ void tcpStreamer() {
     }
 
     StatusData s("quit");
-    p.sendData(socketType, &s, true);
+    p.transmitData(socketType, &s, false, true);
 
     camera.release();
     cv::destroyAllWindows();

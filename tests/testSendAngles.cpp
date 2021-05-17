@@ -15,7 +15,7 @@
 using namespace comm;
 using namespace std;
 
- bool quit = false;
+bool quit = false;
 
 double angle(const cv::Point3f &p1, const cv::Point3f &p2) {
     double angle_cos = p1.dot(p2) / (cv::norm(p1) * cv::norm(p2));
@@ -23,8 +23,8 @@ double angle(const cv::Point3f &p1, const cv::Point3f &p2) {
 }
 
 bool calculateAngle(Buffer &buffer, bool verbose = false) {
-    vector<double> angle_vector = {CV_PI/6, CV_PI/4, CV_PI/3, CV_PI/2, CV_PI/1, 2 * CV_PI,
-                                   CV_PI/6, CV_PI/4, CV_PI/3, CV_PI/2, CV_PI/1, 2 * CV_PI};
+    vector<double> angle_vector = {CV_PI / 6, CV_PI / 4, CV_PI / 3, CV_PI / 2, CV_PI / 1, 2 * CV_PI,
+                                   CV_PI / 6, CV_PI / 4, CV_PI / 3, CV_PI / 2, CV_PI / 1, 2 * CV_PI};
     if (verbose) {
         char outputBuffer[108];
         sprintf(outputBuffer, "%08.3f %08.3f %08.3f %08.3f %08.3f %08.3f", angle_vector[0], angle_vector[1],
@@ -50,7 +50,7 @@ void sendAngles(int argc, char **argv) {
     while (!quit) {
         if (calculateAngle(buffer, true)) {
             angleData.setData(buffer.getBuffer(), (int) buffer.getBufferContentSize());
-            if (!comm.sendData(SocketType::UDP, &angleData, false)) {
+            if (!comm.transmitData(SocketType::UDP, &angleData, false, false)) {
                 cout << "Could not send udp data... " << comm.getErrorString() << endl;
             }
             this_thread::sleep_for(chrono::milliseconds(500));

@@ -25,24 +25,24 @@ MessageType ImageData::getMessageType() {
     return MessageType::IMAGE;
 }
 
-bool ImageData::serialize(Buffer *buffer, bool verbose) {
+bool ImageData::serialize(Buffer *buffer, int start, bool forceCopy, bool verbose) {
     switch (this->serializeState) {
         case 0: {
-            buffer->setBufferContentSize(ImageData::headerSize);
+            buffer->setBufferContentSize(start + ImageData::headerSize);
             if (verbose) {
                 cout << "Serialize: " << this->image.rows << ", " << this->image.cols << ", " << this->image.type()
                      << ", " << this->contentSize << endl;
             }
-            buffer->setInt(this->id, 0);
-            buffer->setInt(this->image.rows, 4);
-            buffer->setInt(this->image.cols, 8);
-            buffer->setInt(this->image.type(), 12);
-            buffer->setInt(this->contentSize, 16);
+            buffer->setInt(this->id, start);
+            buffer->setInt(this->image.rows, start + 4);
+            buffer->setInt(this->image.cols, start + 8);
+            buffer->setInt(this->image.type(), start + 12);
+            buffer->setInt(this->contentSize, start + 16);
             if (verbose) {
                 char *dataBuffer = buffer->getBuffer();
                 cout << "Serialized content: ";
                 for (int i = 0; i < ImageData::headerSize; i++) {
-                    cout << ((int) dataBuffer[i]) << " ";
+                    cout << ((int) dataBuffer[start + i]) << " ";
                 }
                 cout << endl;
             }
@@ -50,7 +50,14 @@ bool ImageData::serialize(Buffer *buffer, bool verbose) {
             return false;
         }
         case 1: {
-            buffer->setReferenceToData((char *) this->image.data, this->contentSize);
+            if (forceCopy) {
+                buffer->setData((char *) this->image.data, this->contentSize, start);
+            } else {
+                if (start != 0) {
+                    throw runtime_error("Can not set a reference to data not starting at the first position!");
+                }
+                buffer->setConstReferenceToData((const char *) this->image.data, this->contentSize);
+            }
             this->serializeState = 0;
             return true;
         }

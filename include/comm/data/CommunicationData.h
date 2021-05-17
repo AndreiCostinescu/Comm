@@ -19,7 +19,7 @@ namespace comm {
 
         void resetSerializeState();
 
-        virtual bool serialize(Buffer *buffer, bool verbose) = 0;
+        virtual bool serialize(Buffer *buffer, int start, bool forceCopy, bool verbose) = 0;
 
         [[nodiscard]] virtual int getExpectedDataSize() const = 0;
 

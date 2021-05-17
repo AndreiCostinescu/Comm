@@ -22,7 +22,7 @@ SocketType socketType = SocketType::TCP;
 
 void createUDPServer() {
     TCPServer s(port);
-    Communication comm, *sendComm = nullptr;
+    Communication comm, *sendComm;
     comm.createSocket(SocketType::UDP, SocketPartner(true, false), port, 2000, 50);
 
     Mat lena = cv::imread("../../data/Lena.png");
@@ -65,8 +65,8 @@ void createUDPServer() {
             image.setImage(toSendImage);
             image.setID(1);
             while (image.getID() <= 10) {
-                this_thread::sleep_for(chrono::milliseconds(1000));
-                if (!sendComm->sendData(socketType, &image, true)) {
+                this_thread::sleep_for(chrono::milliseconds(800));
+                if (!sendComm->transmitData(socketType, &image, false, true)) {
                     cout << "Error when sendData (image): " << comm.getErrorCode() << ", " << comm.getErrorString()
                          << endl;
                     break;
@@ -88,41 +88,49 @@ void createUDPServer() {
 void createUDPClient() {
     this_thread::sleep_for(chrono::seconds(1));
     Communication comm;
-    comm.createSocket(SocketType::UDP, SocketPartner("127.0.0.1", port, false), 0, 2000, 50);
+    comm.createSocket(SocketType::UDP, SocketPartner("127.0.0.1", port, false), 0, 2000, 1000);
 
     ImageData image;
-    StatusData status("start");
+    StatusData status;
     MessageType messageType;
+    status.setData("UDP");
 
-    if (!comm.sendData(SocketType::UDP, &status, true)) {
+    if (!comm.transmitData(SocketType::UDP, &status, false, true, 0, true)) {
         cout << "Error when sendData (status): " << comm.getErrorCode() << ", " << comm.getErrorString() << endl;
         quit = true;
         return;
     }
-    if (!comm.recvMessageType(SocketType::UDP, &messageType)) {
-        cout << "Error when recvMessageType: " << comm.getErrorCode() << ", " << comm.getErrorString() << endl;
-        quit = true;
-        return;
+
+    namedWindow("Received UDP image");
+    int i=0;
+    while (i <= 10) {
+        cout << "At i = " << i << endl;
+        if (!comm.recvMessageType(SocketType::UDP, &messageType)) {
+            cout << "Error when recvMessageType: " << comm.getErrorCode() << ", " << comm.getErrorString() << endl;
+            quit = true;
+            break;
+        }
+        if (messageType != MessageType::IMAGE) {
+            cout << "Expected image but received " << messageTypeToString(messageType) << endl;
+            break;
+        }
+        if (!comm.recvData(SocketType::UDP, &image)) {
+            cout << "Error when recvData (status): " << comm.getErrorCode() << ", " << comm.getErrorString() << endl;
+            quit = true;
+            break;
+        } else if (!image.isImageDeserialized()) {
+            cout << "Image is not completely deserialized..." << endl;
+            break;
+        } else if (image.getImage().empty()) {
+            cout << "Received image is empty!" << endl;
+            break;
+        } else {
+            cv::imshow("Received UDP image", image.getImage());
+            cv::waitKey(10);
+        }
+        i++;
     }
-    if (messageType != MessageType::IMAGE) {
-        cout << "Expected image but received " << messageTypeToString(messageType) << endl;
-        return;
-    }
-    if (!comm.recvData(SocketType::UDP, &image)) {
-        cout << "Error when recvData (status): " << comm.getErrorCode() << ", " << comm.getErrorString() << endl;
-        quit = true;
-        return;
-    } else if (!image.isImageDeserialized()) {
-        cout << "Image is not completely deserialized..." << endl;
-        return;
-    } else if (image.getImage().empty()) {
-        cout << "Received image is empty!" << endl;
-        return;
-    } else {
-        cv::imshow("Received UDP image", image.getImage());
-        cv::waitKey(0);
-        destroyWindow("Received UDP image");
-    }
+    destroyWindow("Received UDP image");
 }
 
 int main() {

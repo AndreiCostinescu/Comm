@@ -33,7 +33,7 @@ void server_1() {
             cout << x << ": Received: \"" << status.getData() << "\" from partner" << endl;
             assert (strcmp(status.getData(), "Ce faci?") == 0);
             status.setData("Bine!");
-            assert (p->sendData(SocketType::TCP, &status, false, -1, true));
+            assert (p->transmitData(SocketType::TCP, &status, false, false, -1, true));
             break;
         }
     }
@@ -51,7 +51,7 @@ void test_1() {
     cout << x << ": Created partner communication" << endl;
     status.setData("Ce faci?");
     cout << x << ": Created status data" << endl;
-    assert(p.sendData(SocketType::TCP, &status, false, -1, true));
+    assert(p.transmitData(SocketType::TCP, &status, false, false, -1, true));
     cout << x << ": Sent status data" << endl;
     assert(p.recvData(SocketType::TCP, &status, -1, true));
     cout << x << ": Received status data" << endl;

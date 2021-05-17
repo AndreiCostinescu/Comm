@@ -10,6 +10,7 @@
 #include <comm/data/MessageType.h>
 #include <comm/socket/Socket.h>
 #include <comm/utils/Buffer.h>
+#include <comm/utils/SerializationHeader.h>
 
 namespace comm {
     class Communication {
@@ -22,6 +23,18 @@ namespace comm {
 
         [[nodiscard]] virtual Communication *copy() const;
 
+        bool transmitData(SocketType type, CommunicationData *data, bool withHeader, bool withMessageType = true,
+                          int retries = 0, bool verbose = false);
+
+        bool sendRaw(SocketType type, const char *data, int dataSize, int retries = 0, bool verbose = false);
+
+        bool recvMessageType(SocketType type, MessageType *messageType, int retries = 0, bool verbose = false);
+
+        bool recvData(SocketType type, CommunicationData *data, int retries = 0, bool verbose = false);
+
+        bool receiveData(SocketType type, CommunicationData *data, bool withHeader = false, int retries = 0,
+                         bool verbose = false);
+
         void createSocket(SocketType socketType, SocketPartner *partner = nullptr, int myPort = 0, int sendTimeout = -1,
                           int recvTimeout = -1);
 
@@ -31,17 +44,6 @@ namespace comm {
         void setSocketTimeouts(int sendTimeout = -1, int recvTimeout = -1);
 
         void setSocketTimeouts(SocketType type, int sendTimeout = -1, int recvTimeout = -1);
-
-        bool sendMessageType(SocketType type, const MessageType *messageType, int retries = 0, bool verbose = false);
-
-        bool sendData(SocketType type, CommunicationData *data, bool withMessageType, int retries = 0,
-                      bool verbose = false);
-
-        bool sendRaw(SocketType type, const char *data, int dataSize, int retries = 0, bool verbose = false);
-
-        bool recvMessageType(SocketType type, MessageType *messageType, int retries = 0, bool verbose = false);
-
-        bool recvData(SocketType type, CommunicationData *data, int retries = 0, bool verbose = false);
 
         void setSocket(SocketType type, Socket *socket);
 
@@ -70,9 +72,10 @@ namespace comm {
 
         virtual void _cleanup();
 
-        virtual bool send(SocketType type, int retries, bool verbose);
+        virtual bool send(SocketType type, bool withHeader, int retries, bool verbose);
 
-        virtual bool send(SocketType type, char *buffer, unsigned long long int contentSize, int retries, bool verbose);
+        virtual bool send(SocketType type, const char *buffer, unsigned long long int contentSize,
+                          SerializationHeader *header, int retries, bool verbose);
 
         virtual bool recv(SocketType type, int retries, bool verbose);
 
@@ -84,6 +87,7 @@ namespace comm {
         bool isCopy;
         int errorCode;
         DataCollection dataCollection;
+        SerializationHeader sendHeader, recvHeader;
 
     private:
         void _cleanupData();

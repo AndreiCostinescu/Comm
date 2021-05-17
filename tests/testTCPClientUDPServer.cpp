@@ -41,11 +41,11 @@ void tcpServer() {
     cout << "Client: UDP sendTo: " << partner->getPartnerString(SocketType::UDP) << endl;
     cout << "Client: UDP myself: " << partner->getMyAddressString(SocketType::UDP) << endl;
     s.setData("Hello!");
-    partner->sendData(SocketType::UDP, &s, false, 0, false);
+    partner->transmitData(SocketType::UDP, &s, false, false, 0, false);
     cout << "Client: UDP sendTo: " << partner->getPartnerString(SocketType::UDP) << endl;
     cout << "Client: UDP myself: " << partner->getMyAddressString(SocketType::UDP) << endl;
     s.setData(partner->getMyAddressString(SocketType::UDP));
-    partner->sendData(SocketType::UDP, &s, false, 0, false);
+    partner->transmitData(SocketType::UDP, &s, false, false, 0, false);
     cout << "Sent my address" << endl;
     cout << "UDP Server finished normally" << endl;
 }
@@ -60,7 +60,7 @@ void tcpClient() {
     cout << "Initialized client!" << endl;
     StatusData s;
     s.setData(to_string(udpPort).c_str());
-    assert(p.sendData(SocketType::TCP, &s, false));
+    assert(p.transmitData(SocketType::TCP, &s, false, false));
     cout << "Sent udp port: " << udpPort << endl;
     this_thread::sleep_for(std::chrono::seconds(2));
 

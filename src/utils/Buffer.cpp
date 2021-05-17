@@ -13,7 +13,8 @@ using namespace comm;
 using namespace std;
 
 Buffer::Buffer(unsigned long long int bufferSize) :
-        buffer(nullptr), bufferSize(0), bufferContentSize(0), referenceBuffer(nullptr), useReferenceBuffer(false) {
+        buffer(nullptr), bufferSize(0), bufferContentSize(0), referenceBuffer(nullptr), constReferenceBuffer(nullptr),
+        bufferType(BufferType::BUFFER_LOCAL) {
     this->prepareBuffer(bufferSize);
 }
 
@@ -27,7 +28,8 @@ void Buffer::reset() {
     this->bufferSize = 0;
     this->bufferContentSize = 0;
     this->referenceBuffer = nullptr;
-    this->useReferenceBuffer = false;
+    this->constReferenceBuffer = nullptr;
+    this->bufferType = BufferType::BUFFER_LOCAL;
 }
 
 Buffer *Buffer::copy() const {
@@ -39,7 +41,8 @@ Buffer *Buffer::copy() const {
     copy->bufferContentSize = this->bufferContentSize;
 
     copy->referenceBuffer = this->referenceBuffer;
-    copy->useReferenceBuffer = this->useReferenceBuffer;
+    copy->constReferenceBuffer = this->constReferenceBuffer;
+    copy->bufferType = this->bufferType;
 
     return copy;
 }
@@ -51,49 +54,55 @@ void Buffer::setData(char *data, unsigned int dataSize, int start) {
 void Buffer::setData(const char *data, unsigned int dataSize, int start) {
     this->setBufferContentSize(dataSize + start);
     memcpy(this->buffer + start, data, dataSize);
-    this->useReferenceBuffer = false;
+    this->bufferType = BufferType::BUFFER_LOCAL;
 }
 
 void Buffer::setReferenceToData(char *data, unsigned int dataSize) {
     this->referenceBuffer = data;
     this->bufferContentSize = dataSize;
-    this->useReferenceBuffer = true;
+    this->bufferType = BufferType::BUFFER_REFERENCE;
+}
+
+void Buffer::setConstReferenceToData(const char *data, unsigned int dataSize) {
+    this->constReferenceBuffer = data;
+    this->bufferContentSize = dataSize;
+    this->bufferType = BufferType::BUFFER_CONST_REFERENCE;
 }
 
 void Buffer::setChar(char data, int position) {
     this->checkBufferContentSize(position + sizeof(char), true);
     this->buffer[position] = data;
-    this->useReferenceBuffer = false;
+    this->bufferType = BufferType::BUFFER_LOCAL;
 }
 
 void Buffer::setShort(short data, int position) {
     this->checkBufferContentSize(position + sizeof(short), true);
     NetworkData::shortToNetworkBytes(this->buffer, position, data);
-    this->useReferenceBuffer = false;
+    this->bufferType = BufferType::BUFFER_LOCAL;
 }
 
 void Buffer::setInt(int data, int position) {
     this->checkBufferContentSize(position + sizeof(int), true);
     NetworkData::intToNetworkBytes(this->buffer, position, data);
-    this->useReferenceBuffer = false;
+    this->bufferType = BufferType::BUFFER_LOCAL;
 }
 
 void Buffer::setLongLong(long long data, int position) {
     this->checkBufferContentSize(position + sizeof(long long), true);
     NetworkData::longLongToNetworkBytes(this->buffer, position, data);
-    this->useReferenceBuffer = false;
+    this->bufferType = BufferType::BUFFER_LOCAL;
 }
 
 void Buffer::setFloat(float data, int position) {
     this->checkBufferContentSize(position + sizeof(float), true);
     NetworkData::floatToNetworkBytes(this->buffer, position, data);
-    this->useReferenceBuffer = false;
+    this->bufferType = BufferType::BUFFER_LOCAL;
 }
 
 void Buffer::setDouble(double data, int position) {
     this->checkBufferContentSize(position + sizeof(double), true);
     NetworkData::doubleToNetworkBytes(this->buffer, position, data);
-    this->useReferenceBuffer = false;
+    this->bufferType = BufferType::BUFFER_LOCAL;
 }
 
 char Buffer::getChar(int position) {
@@ -131,8 +140,41 @@ bool Buffer::empty() const {
 }
 
 char *Buffer::getBuffer() {
-    char *result = (this->useReferenceBuffer) ? this->referenceBuffer : this->buffer;
-    this->useReferenceBuffer = false;
+    char *result;
+    switch (this->bufferType) {
+        case BUFFER_LOCAL: {
+            result = this->buffer;
+            break;
+        }
+        case BUFFER_REFERENCE: {
+            result = this->referenceBuffer;
+            break;
+        }
+        case BUFFER_CONST_REFERENCE: {
+            throw runtime_error("The const reference buffer is a const buffer, call getConstBuffer()");
+        }
+    }
+    this->bufferType = BufferType::BUFFER_LOCAL;
+    return result;
+}
+
+const char *Buffer::getConstBuffer() {
+    const char *result;
+    switch (this->bufferType) {
+        case BUFFER_LOCAL: {
+            result = this->buffer;
+            break;
+        }
+        case BUFFER_REFERENCE: {
+            result = this->referenceBuffer;
+            break;
+        }
+        case BUFFER_CONST_REFERENCE: {
+            result = this->constReferenceBuffer;
+            break;
+        }
+    }
+    this->bufferType = BufferType::BUFFER_LOCAL;
     return result;
 }
 
@@ -174,8 +216,9 @@ void Buffer::checkBufferContentSize(unsigned long long size, bool modifySize) {
             this->prepareBuffer(size);
             this->bufferContentSize = size;
         } else {
-            (*cerror) << "Size of " << size << " is greater than the current buffer content size " << this->bufferContentSize
-                 << "! The next assertion will fail..." << endl;
+            (*cerror) << "Size of " << size << " is greater than the current buffer content size "
+                      << this->bufferContentSize
+                      << "! The next assertion will fail..." << endl;
         }
     }
     if (size > this->bufferContentSize) {

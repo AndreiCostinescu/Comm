@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <comm/socket/utils.h>
+#include <comm/utils/NetworkData.h>
 #include <iostream>
 
 using namespace comm;
@@ -11,7 +12,7 @@ using namespace std;
 
 int main() {
     cout << "Hello World!" << endl;
-    cout << "Am I big endian? " << isBigEndian() << endl;
+    cout << "Am I big endian? " << NetworkData::isBigEndian() << endl;
     cout << sizeof(char) << " " << sizeof(short) << " " << sizeof(int) << " " << sizeof(long) << " "
          << sizeof(long long) << endl;
 
@@ -32,8 +33,8 @@ int main() {
             }
             cout << "y = " << y << endl;
             prepareBuffer(buffer, bufferSize, sizeof(long long));
-            longLongToNetworkBytes(buffer, 0, y);
-            resLL = networkBytesToLongLong(buffer, 0);
+            NetworkData::longLongToNetworkBytes(buffer, 0, y);
+            resLL = NetworkData::networkBytesToLongLong(buffer, 0);
             if (resLL != y) {
                 cout << "Error at y = " << y << ", res = " << resLL << endl;
             }
@@ -44,14 +45,14 @@ int main() {
 
     cout << x << endl;
     prepareBuffer(buffer, bufferSize, sizeof(long long));
-    longLongToNetworkBytes(buffer, 0, x);
-    assert(networkBytesToLongLong(buffer, 0) == x);
+    NetworkData::longLongToNetworkBytes(buffer, 0, x);
+    assert(NetworkData::networkBytesToLongLong(buffer, 0) == x);
 
     int res = 0;
     for (int y = 0; y < 1 << 20; y++) {
         prepareBuffer(buffer, bufferSize, sizeof(int));
-        intToNetworkBytes(buffer, 0, y);
-        res = networkBytesToInt(buffer, 0);
+        NetworkData::intToNetworkBytes(buffer, 0, y);
+        res = NetworkData::networkBytesToInt(buffer, 0);
         if (res != y) {
             cout << "Error at y = " << y << ", res = " << res << endl;
         }
@@ -60,14 +61,14 @@ int main() {
     int yI = 1 << 31;
     cout << yI << endl;
     prepareBuffer(buffer, bufferSize, sizeof(int));
-    intToNetworkBytes(buffer, 0, yI);
-    assert(networkBytesToInt(buffer, 0) == yI);
+    NetworkData::intToNetworkBytes(buffer, 0, yI);
+    assert(NetworkData::networkBytesToInt(buffer, 0) == yI);
 
     short resS = 0;
     for (short y = 0; y < 1 << 13; y++) {
         prepareBuffer(buffer, bufferSize, sizeof(short));
-        shortToNetworkBytes(buffer, 0, y);
-        resS = networkBytesToShort(buffer, 0);
+        NetworkData::shortToNetworkBytes(buffer, 0, y);
+        resS = NetworkData::networkBytesToShort(buffer, 0);
         if (resS != y) {
             cout << "Error at y = " << y << ", res = " << resS << endl;
         }
@@ -79,8 +80,8 @@ int main() {
         for (float z = 1.0; z > 0; z /= factor) {
             cout << z << endl;
             prepareBuffer(buffer, bufferSize, sizeof(float));
-            floatToNetworkBytes(buffer, 0, z);
-            resF = networkBytesToFloat(buffer, 0);
+            NetworkData::floatToNetworkBytes(buffer, 0, z);
+            resF = NetworkData::networkBytesToFloat(buffer, 0);
             if (resF != z) {
                 cout << "Error at z = " << z << ", res = " << resF << endl;
             }
@@ -93,8 +94,8 @@ int main() {
         for (double z = 1.0; z > 0; z /= factor) {
             cout << z << endl;
             prepareBuffer(buffer, bufferSize, sizeof(double));
-            doubleToNetworkBytes(buffer, 0, z);
-            resD = networkBytesToDouble(buffer, 0);
+            NetworkData::doubleToNetworkBytes(buffer, 0, z);
+            resD = NetworkData::networkBytesToDouble(buffer, 0);
             if (resD != z) {
                 cout << "Error at z = " << z << ", res = " << resD << endl;
             }

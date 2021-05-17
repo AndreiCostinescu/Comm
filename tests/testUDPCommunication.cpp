@@ -35,7 +35,7 @@ void server_1(SocketType udpSocketType) {
             cout << x << ": Received: \"" << status.getData() << "\" from partner" << endl;
             assert (strcmp(status.getData(), "Ce faci?") == 0);
             status.setData("Bine!");
-            assert (p.sendData(udpSocketType, &status, false, -1, verbose));
+            assert (p.transmitData(udpSocketType, &status, false, false, -1, verbose));
             break;
         }
         this_thread::sleep_for(chrono::milliseconds(500));
@@ -54,7 +54,7 @@ void test_1(SocketType udpSocketType) {
     cout << x << ": Created partner communication" << endl;
     status.setData("Ce faci?");
     cout << x << ": Created status data" << endl;
-    assert (p.sendData(udpSocketType, &status, false, -1, verbose));
+    assert (p.transmitData(udpSocketType, &status, false, false, -1, verbose));
     cout << x << ": Sent status data" << endl;
     assert (p.recvData(udpSocketType, &status, -1, verbose));
     cout << x << ": Received status data" << endl;

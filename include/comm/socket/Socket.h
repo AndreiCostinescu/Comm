@@ -9,6 +9,7 @@
 #include <comm/socket/SocketType.h>
 #include <comm/utils/Buffer.h>
 #include <comm/utils/NetworkIncludes.h>
+#include <comm/utils/SerializationHeader.h>
 #include <string>
 
 namespace comm {
@@ -24,7 +25,7 @@ namespace comm {
 
         [[nodiscard]] SOCKET getSocket() const;
 
-        void cleanup();
+        void cleanup(bool withBuffers = false);
 
         void close();
 
@@ -56,10 +57,11 @@ namespace comm {
 
         void accept(Socket *&acceptSocket, bool verbose = false) const;
 
-        bool sendBytes(const char *buffer, unsigned long long int bufferLength, int &errorCode, int retries = 0,
-                       bool verbose = false);
+        bool sendBytes(const char *buffer, unsigned long long int bufferLength, int &errorCode,
+                       SerializationHeader *header, int retries = 0, bool verbose = false);
 
-        bool sendBytes(Buffer &buffer, int &errorCode, int retries = 0, bool verbose = false);
+        bool sendBytes(Buffer &buffer, int &errorCode, SerializationHeader *header, int retries = 0,
+                       bool verbose = false);
 
         bool receiveBytes(char *&buffer, unsigned long long int &bufferLength, unsigned long long int expectedLength,
                           int &errorCode, int retries = 0, bool verbose = false);
@@ -79,14 +81,14 @@ namespace comm {
 
         void initMyself(bool withBind = true);
 
-        bool performSend(const char *buffer, int &localBytesSent, int &errorCode, int sendSize, int sentBytes,
-                         char sendIteration, bool verbose = false);
+        bool performSend(const char *buffer, int &localBytesSent, int &errorCode, SerializationHeader *header,
+                         int sendSize, int sentBytes, char sendIteration, bool verbose = false);
 
         static bool interpretSendResult(int &errorCode, int &localBytesSent, int &retries, char &sendIteration,
                                         bool verbose = false);
 
-        bool _sendBytes(const char *buffer, unsigned long long int bufferLength, int &errorCode, int retries = 0,
-                        bool verbose = false);
+        bool _sendBytes(const char *buffer, unsigned long long int bufferLength, int &errorCode,
+                        SerializationHeader *header, int retries = 0, bool verbose = false);
 
         bool checkCorrectReceivePartner(bool &overwritePartner, bool recvFirstMessage);
 

@@ -13,25 +13,12 @@
 using namespace comm;
 using namespace std;
 
-bool Communicator::send(Communication *comm, SocketType type, CommunicationData *data, int retries, bool verbose) {
+bool Communicator::send(Communication *comm, SocketType type, CommunicationData *data, bool withHeader,
+                        bool withMessageType, int retries, bool verbose) {
     if (data == nullptr) {
         return true;
     }
-    if (!comm->sendData(type, data, true, retries, verbose)) {
-        if (comm->getErrorCode() > 0) {
-            (*cerror) << "When sending data... error: " << getLastErrorString(comm->getErrorCode()) << endl;
-        }
-        return false;
-    }
-    return true;
-}
-
-bool Communicator::send(Communication *comm, SocketType type, MessageType *messageType, CommunicationData *data,
-                        int retries, bool verbose) {
-    if (messageType == nullptr || data != nullptr) {
-        return Communicator::send(comm, type, data, retries, verbose);
-    }
-    if (!comm->sendMessageType(type, messageType, retries, verbose)) {
+    if (!comm->transmitData(type, data, withHeader, withMessageType, retries, verbose)) {
         if (comm->getErrorCode() > 0) {
             (*cerror) << "When sending data... error: " << getLastErrorString(comm->getErrorCode()) << endl;
         }

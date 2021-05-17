@@ -18,7 +18,7 @@ MessageType CoordinateData::getMessageType() {
     return MessageType::COORDINATE;
 }
 
-bool CoordinateData::serialize(Buffer *buffer, bool verbose) {
+bool CoordinateData::serialize(Buffer *buffer, int start, bool, bool verbose) {
     switch (this->serializeState) {
         case 0: {
             buffer->setBufferContentSize(CoordinateData::headerSize);
@@ -26,11 +26,11 @@ bool CoordinateData::serialize(Buffer *buffer, bool verbose) {
                 cout << "Serialize: " << this->id << ", " << this->time << ", " << this->x << ", " << this->y << ", "
                      << this->touch << ", " << this->buttonFwd << ", " << this->buttonDwn << ", " << endl;
             }
-            buffer->setInt(this->id, 0);
-            buffer->setLongLong(this->time, 4);
-            buffer->setDouble(this->x, 12);
-            buffer->setDouble(this->y, 20);
-            buffer->setInt((this->buttonDwn << 2) + (this->buttonFwd << 1) + this->touch, 28);
+            buffer->setInt(this->id, start);
+            buffer->setLongLong(this->time, start + 4);
+            buffer->setDouble(this->x, start + 12);
+            buffer->setDouble(this->y, start + 20);
+            buffer->setInt((this->buttonDwn << 2) + (this->buttonFwd << 1) + this->touch, start + 28);
             this->serializeState = 0;
             return true;
         }

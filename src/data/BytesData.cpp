@@ -20,23 +20,29 @@ MessageType BytesData::getMessageType() {
     return MessageType::BYTES;
 }
 
-bool BytesData::serialize(Buffer *buffer, bool verbose) {
+bool BytesData::serialize(Buffer *buffer, int start, bool forceCopy, bool verbose) {
     switch (this->serializeState) {
         case 0: {
             // header
-            buffer->setBufferContentSize(BytesData::headerSize);
-            buffer->setInt((int) this->data.getBufferContentSize(), 0);
+            buffer->setBufferContentSize(start + BytesData::headerSize);
+            buffer->setInt((int) this->data.getBufferContentSize(), start);
             if (verbose) {
-                char *dataBuffer = buffer->getBuffer();
-                cout << "buffer int content: " << (int) dataBuffer[0] << " " << (int) dataBuffer[1] << " "
-                     << (int) dataBuffer[2] << " " << (int) dataBuffer[3] << endl;
+                const char *dataBuffer = buffer->getBuffer();
+                cout << "buffer int content: " << (int) dataBuffer[start] << " " << (int) dataBuffer[start + 1] << " "
+                     << (int) dataBuffer[start + 2] << " " << (int) dataBuffer[start + 3] << endl;
             }
             this->serializeState = 1;
             return false;
         }
         case 1: {
-            // data
-            buffer->setReferenceToData(this->data.getBuffer(), this->data.getBufferContentSize());
+            if (forceCopy) {
+                buffer->setData(this->getBuffer(), this->getBufferSize());
+            } else {
+                if (start != 0) {
+                    throw runtime_error("Can not set a reference to data not starting at the first position!");
+                }
+                buffer->setConstReferenceToData(this->getBuffer(), this->getBufferSize());
+            }
             this->serializeState = 0;
             return true;
         }
@@ -152,7 +158,7 @@ bool BytesData::empty() const {
     return this->data.empty();
 }
 
-char *BytesData::getBuffer() {
+const char *BytesData::getBuffer() {
     return this->data.getBuffer();
 }
 

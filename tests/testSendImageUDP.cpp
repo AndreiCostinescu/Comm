@@ -28,13 +28,13 @@ void sender(SocketType udpSocketType) {
     cout << "Initialized sender udp server!" << endl;
     StatusData s;
     s.setData(to_string(udpPort).c_str());
-    assert(p.sendData(SocketType::TCP, &s, false));
+    assert(p.transmitData(SocketType::TCP, &s, false, false));
     assert(p.recvData(udpSocketType, &s));
     assert(strcmp(s.getData(), "hello") == 0);
 
     Mat image = cv::imread("../../data/Lena.png");
     ImageData i(image, 1);
-    if (!p.sendData(udpSocketType, &i, false, 0, true)) {
+    if (!p.transmitData(udpSocketType, &i, false, false, 0, true)) {
         cout << "Error: " << p.getErrorCode() << "; " << p.getErrorString() << "; " << getLastErrorString() << endl;
     } else {
         cout << "Sent image data " << endl;
@@ -64,7 +64,7 @@ void receiver(SocketType udpSocketType) {
     comm->createSocket(udpSocketType, p, -1, 2000, 500);
 
     s.setData("hello");
-    assert(comm->sendData(udpSocketType, &s, false));
+    assert(comm->transmitData(udpSocketType, &s, false, false));
 
     this_thread::sleep_for(chrono::seconds(2));
     cout << "\n\n";

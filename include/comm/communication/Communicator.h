@@ -15,11 +15,8 @@
 namespace comm {
     class Communicator {
     public:
-        static bool send(Communication *comm, SocketType type, CommunicationData *data, int retries = 0,
-                         bool verbose = false);
-
-        static bool send(Communication *comm, SocketType type, MessageType *messageType, CommunicationData *data,
-                         int retries = 0, bool verbose = false);
+        static bool send(Communication *comm, SocketType type, CommunicationData *data, bool withHeader,
+                         bool withMessageType = true, int retries = 0, bool verbose = false);
 
         static bool send(Communication *comm, SocketType type, const char *data, int dataSize, int retries = 0,
                          bool verbose = false);

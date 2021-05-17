@@ -8,71 +8,119 @@
 using namespace comm;
 // using namespace std;
 
-SerializationHeader::SerializationHeader() : serializationIteration(0), sendIteration(0), sendSize(0) {}
+SerializationHeader::SerializationHeader(bool create) : localBuffer(nullptr), passedBuffer(nullptr), created(create) {
+    if (this->created) {
+        this->localBuffer = new char[4];
+    }
+}
+
+SerializationHeader::SerializationHeader(char *buffer) : SerializationHeader(false) {
+    this->localBuffer = buffer;
+}
+
+SerializationHeader::SerializationHeader(Buffer &buffer) : SerializationHeader(false) {
+    this->passedBuffer = &buffer;
+}
 
 SerializationHeader::SerializationHeader(int header) : SerializationHeader() {
-    this->fromInt(header);
+    this->setInt(header);
 }
 
 SerializationHeader::SerializationHeader(unsigned char serializationIteration, unsigned char sendIteration,
                                          unsigned short sendSize) : SerializationHeader() {
-    this->fromData(serializationIteration, sendIteration, sendSize);
+    this->setData(serializationIteration, sendIteration, sendSize);
+}
+
+SerializationHeader::~SerializationHeader() {
+    if (this->created) {
+        delete[] this->localBuffer;
+    }
 }
 
 void SerializationHeader::reset() {
-    this->serializationIteration = 0;
-    this->sendIteration = 0;
-    this->sendSize = 0;
+    this->setInt(0);
 }
 
-void SerializationHeader::fromInt(int header, bool local) {
-    if (local) {
-        this->sendSize = (unsigned short) (header & 65535);  // mod 2^16
+void SerializationHeader::setInt(int header, bool local) {
+    this->setSendSize((unsigned short) (header & 65535), local);  // mod 2^16
+    header >>= 16;  // div 2^16
+    this->setSendIteration((unsigned char) (header & 255));  // mod 2^8
+    this->setSerializationIteration((unsigned char) (header >> 8));  // div 2^8
+}
+
+void SerializationHeader::setData(unsigned char _serializationIteration, unsigned char _sendIteration,
+                                  unsigned short _sendSize, bool local) {
+    this->setSerializationIteration(_serializationIteration);
+    this->setSendIteration(_sendIteration);
+    this->setSendSize(_sendSize, local);
+}
+
+void SerializationHeader::setSerializationIteration(unsigned char _serializationIteration) {
+    if (this->passedBuffer != nullptr) {
+        this->localBuffer[0] = (char) _serializationIteration;
     } else {
-        this->sendSize = ntohs((unsigned short) (header & 65535));  // mod 2^16
+        this->passedBuffer->setChar((char) _serializationIteration, 0);
     }
-    header >>= 16;
-    this->sendIteration = (unsigned char) (header & 255);  // mod 2^8
-    this->serializationIteration = (unsigned char) (header >> 8);  // div 2^8
 }
 
-void SerializationHeader::fromData(unsigned char _serializationIteration, unsigned char _sendIteration,
-                                   unsigned short _sendSize, bool local) {
-    this->serializationIteration = _serializationIteration;
-    this->sendIteration = _sendIteration;
-    this->sendSize = (local) ? _sendSize : ntohs(_sendSize);
+void SerializationHeader::setSendIteration(unsigned char _sendIteration) {
+    if (this->passedBuffer != nullptr) {
+        this->localBuffer[1] = (char) _sendIteration;
+    } else {
+        this->passedBuffer->setChar((char) _sendIteration, 1);
+    }
+}
+
+void SerializationHeader::setSendSize(unsigned short _sendSize, bool setLocal) {
+    auto sendSize = (short) ((setLocal) ? _sendSize : ntohs(_sendSize));
+    if (this->passedBuffer != nullptr) {
+        memcpy(this->localBuffer + 2, &sendSize, 2);
+    } else {
+        this->passedBuffer->setShort(sendSize, 2);
+    }
 }
 
 void SerializationHeader::setBuffer(char *buffer, bool setLocal, int start) const {
-    buffer[start] = (char) this->serializationIteration;
-    buffer[start + 1] = (char) this->sendIteration;
+    buffer[start] = (char) this->getSerializationIteration();
+    buffer[start + 1] = (char) this->getSendIteration();
     auto x = this->getSendSize(setLocal);
     memcpy(buffer + start + 2, &x, 2);
 }
 
-void SerializationHeader::setBuffer(Buffer buffer, bool setLocal, int start) const {
-    buffer.setChar((char) this->serializationIteration, start);
-    buffer.setChar((char) this->sendIteration, start + 1);
-    buffer.setShort((short) this->getSendSize(setLocal), start + 1);
+void SerializationHeader::setBuffer(Buffer &buffer, bool setLocal, int start) const {
+    buffer.setInt(this->getInt(setLocal), start);
 }
 
 unsigned char SerializationHeader::getSerializationIteration() const {
-    return this->serializationIteration;
+    if (this->passedBuffer != nullptr) {
+        return this->localBuffer[0];
+    } else {
+        return this->passedBuffer->getChar(0);
+    }
 }
 
 unsigned char SerializationHeader::getSendIteration() const {
-    return this->sendIteration;
+    if (this->passedBuffer != nullptr) {
+        return this->localBuffer[1];
+    } else {
+        return this->passedBuffer->getChar(1);
+    }
 }
 
 unsigned short SerializationHeader::getSendSize(bool getLocal) const {
-    if (getLocal) {
-        return this->sendSize;
+    unsigned short sendSize;
+    if (this->passedBuffer != nullptr) {
+        memcpy(&sendSize, this->localBuffer + 2, 2);
     } else {
-        return htons(this->sendSize);
+        sendSize = this->passedBuffer->getShort(2);
+    }
+    if (getLocal) {
+        return sendSize;
+    } else {
+        return htons(sendSize);
     }
 }
 
 int SerializationHeader::getInt(bool getLocal) const {
-    return (this->serializationIteration << 24) + (this->sendIteration << 16) +
-           ((getLocal) ? this->sendSize : htons(this->sendSize));
+    return (this->getSerializationIteration() << 24) + (this->getSendIteration() << 16) + this->getSendSize(getLocal);
 }

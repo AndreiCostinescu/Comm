@@ -11,7 +11,8 @@
 using namespace comm;
 using namespace std;
 
-Communication::Communication() : sockets(), sendBuffer(), recvBuffer(), isCopy(false), errorCode(0), dataCollection() {}
+Communication::Communication() : sockets(), sendBuffer(), recvBuffer(), isCopy(false), errorCode(0), dataCollection(),
+                                 sendHeader(), recvHeader() {}
 
 Communication::~Communication() {
     this->_cleanupData();
@@ -29,96 +30,28 @@ Communication *Communication::copy() const {
     return copy;
 }
 
-void Communication::createSocket(SocketType socketType, SocketPartner *partner, int myPort, int sendTimeout,
-                                 int recvTimeout) {
-    Socket *&socket = this->getSocket(socketType);
-    delete socket;
-    socket = new Socket(socketType, partner, myPort, sendTimeout, recvTimeout);
-}
-
-void Communication::createSocket(SocketType socketType, const SocketPartner &partner, int myPort, int sendTimeout,
-                                 int recvTimeout) {
-    Socket *&socket = this->getSocket(socketType);
-    delete socket;
-    socket = new Socket(socketType, partner, myPort, sendTimeout, recvTimeout);
-}
-
-void Communication::setSocketTimeouts(int _sendTimeout, int _recvTimeout) {
-    for (auto &socketData : this->sockets) {
-        this->setSocketTimeouts(socketData.first, _sendTimeout, _recvTimeout);
-    }
-}
-
-void Communication::setSocketTimeouts(SocketType type, int _sendTimeout, int _recvTimeout) {
-    Socket *&socket = this->getSocket(type);
-    if (socket == nullptr) {
-        return;
-    }
-    socket->setSocketTimeouts(_sendTimeout, _recvTimeout);
-}
-
-bool Communication::sendMessageType(SocketType type, const MessageType *messageType, int retries, bool verbose) {
-    if (messageType == nullptr) {
-        return false;
-    }
-    this->errorCode = 0;
-    this->sendBuffer.setBufferContentSize(1);
-    this->sendBuffer.setChar(char(*messageType), 0);
-    if (verbose) {
-        cout << "Before sending message type..." << endl;
-    }
-    if (!this->send(type, retries, verbose)) {
-        if (this->errorCode == 0) {
-            if (verbose) {
-                cout << "Socket closed: Can not send messageType... " << messageTypeToString(*messageType) << endl;
-            }
-        } else {
-            (*cerror) << "Can not send messageType... " << messageTypeToString(*messageType) << endl;
-            if (verbose) {
-                cout << "Can not send messageType... " << messageTypeToString(*messageType) << endl;
-            }
-        }
-        return false;
-    }
-    return true;
-}
-
-bool Communication::sendData(SocketType type, CommunicationData *data, bool withMessageType, int retries,
-                             bool verbose) {
+bool Communication::transmitData(SocketType type, CommunicationData *data, bool withHeader, bool withMessageType,
+                                 int retries, bool verbose) {
     if (data == nullptr) {
         return false;
     }
     this->errorCode = 0;
 
-    if (withMessageType) {
-        if (verbose) {
-            cout << "Before sending message type..." << endl;
-        }
-        auto x = data->getMessageType();
-        if (verbose) {
-            cout << "Message type = " << messageTypeToString(x) << endl;
-        }
-        if (!this->sendMessageType(type, &x, retries, verbose)) {
-            if (this->errorCode == 0) {
-                if (verbose) {
-                    cout << "Socket closed: Can not send data message type bytes..." << endl;
-                }
-            } else {
-                printLastError();
-                (*cerror) << "Can not send data message type bytes... error " << this->errorCode << endl;
-            }
-            return false;
-        }
-        if (verbose) {
-            cout << "Sent message type!!!" << endl;
-        }
-    }
-
     bool serializeDone = false;
+    int dataStart = (withHeader) ? 4 : 0, serializationState = 0;
     while (!serializeDone) {
-        serializeDone = data->serialize(&(this->sendBuffer), verbose);
+        if (withHeader) {
+            // sets internally the sendBuffer, because sendHeader was initialized this way
+            this->sendHeader.setData(serializationState, 0, 0);
+        }
+        if (serializationState == 0 && withMessageType) {
+            this->sendBuffer.setBufferContentSize(dataStart + 1);
+            this->sendBuffer.setChar(char(data->getMessageType()), dataStart);
+        } else {
+            serializeDone = data->serialize(&(this->sendBuffer), dataStart, withHeader, verbose);
+        }
         this->errorCode = 0;
-        if (!this->send(type, retries, verbose)) {
+        if (!this->send(type, withHeader, retries, verbose)) {
             if (this->errorCode == 0) {
                 if (verbose) {
                     cout << "Socket closed: Can not send data serialized bytes..." << endl;
@@ -130,6 +63,7 @@ bool Communication::sendData(SocketType type, CommunicationData *data, bool with
             data->resetSerializeState();
             return false;
         }
+        serializationState++;
     }
     return true;
 }
@@ -140,7 +74,7 @@ bool Communication::sendRaw(SocketType type, const char *data, int dataSize, int
     }
     this->sendBuffer.setData(data, dataSize);
     this->errorCode = 0;
-    if (!this->send(type, retries, verbose)) {
+    if (!this->send(type, false, retries, verbose)) {
         if (this->errorCode == 0) {
             if (verbose) {
                 cout << "Socket closed: Can not send data serialized bytes..." << endl;
@@ -255,6 +189,34 @@ bool Communication::recvData(SocketType type, CommunicationData *data, int retri
     return true;
 }
 
+void Communication::createSocket(SocketType socketType, SocketPartner *partner, int myPort, int sendTimeout,
+                                 int recvTimeout) {
+    Socket *&socket = this->getSocket(socketType);
+    delete socket;
+    socket = new Socket(socketType, partner, myPort, sendTimeout, recvTimeout);
+}
+
+void Communication::createSocket(SocketType socketType, const SocketPartner &partner, int myPort, int sendTimeout,
+                                 int recvTimeout) {
+    Socket *&socket = this->getSocket(socketType);
+    delete socket;
+    socket = new Socket(socketType, partner, myPort, sendTimeout, recvTimeout);
+}
+
+void Communication::setSocketTimeouts(int _sendTimeout, int _recvTimeout) {
+    for (auto &socketData : this->sockets) {
+        this->setSocketTimeouts(socketData.first, _sendTimeout, _recvTimeout);
+    }
+}
+
+void Communication::setSocketTimeouts(SocketType type, int _sendTimeout, int _recvTimeout) {
+    Socket *&socket = this->getSocket(type);
+    if (socket == nullptr) {
+        return;
+    }
+    socket->setSocketTimeouts(_sendTimeout, _recvTimeout);
+}
+
 void Communication::setSocket(SocketType socketType, Socket *socket) {
     if (mapGet(this->sockets, socketType)) {
         this->sockets[socketType]->cleanup();
@@ -348,16 +310,19 @@ void Communication::_cleanup() {
     this->_cleanupData();
 }
 
-bool Communication::send(SocketType type, int retries, bool verbose) {
-    return this->send(type, this->sendBuffer.getBuffer(), this->sendBuffer.getBufferContentSize(), retries, verbose);
+bool Communication::send(SocketType type, bool withHeader, int retries, bool verbose) {
+    return this->send(type, this->sendBuffer.getConstBuffer(), this->sendBuffer.getBufferContentSize(),
+                      (withHeader) ? &this->sendHeader : nullptr, retries, verbose);
 }
 
-bool Communication::send(SocketType type, char *buffer, unsigned long long int contentSize, int retries, bool verbose) {
+bool Communication::send(SocketType type, const char *buffer, unsigned long long int contentSize,
+                         SerializationHeader *header,
+                         int retries, bool verbose) {
     Socket *&socket = this->getSocket(type);
     if (socket == nullptr) {
         return false;
     }
-    return socket->sendBytes(buffer, contentSize, this->errorCode, retries, verbose);
+    return socket->sendBytes(buffer, contentSize, this->errorCode, header, retries, verbose);
 }
 
 bool Communication::recv(SocketType type, int retries, bool verbose) {

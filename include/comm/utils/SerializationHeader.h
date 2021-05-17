@@ -10,23 +10,35 @@
 namespace comm {
     class SerializationHeader {
     public:
-        SerializationHeader();
+        explicit SerializationHeader(bool create = true);
+
+        explicit SerializationHeader(char *buffer);
+
+        explicit SerializationHeader(Buffer &buffer);
 
         explicit SerializationHeader(int header);
 
         explicit SerializationHeader(unsigned char serializationIteration, unsigned char sendIteration,
                                      unsigned short sendSize);
 
+        virtual ~SerializationHeader();
+
         void reset();
 
-        void fromInt(int header, bool local = true);
+        void setInt(int header, bool local = true);
 
-        void fromData(unsigned char _serializationIteration, unsigned char _sendIteration, unsigned short _sendSize,
-                      bool local = true);
+        void setData(unsigned char _serializationIteration, unsigned char _sendIteration, unsigned short _sendSize,
+                     bool local = true);
+
+        void setSerializationIteration(unsigned char _serializationIteration);
+
+        void setSendIteration(unsigned char _sendIteration);
+
+        void setSendSize(unsigned short _sendSize, bool setLocal = true);
 
         void setBuffer(char *buffer, bool setLocal, int start = 0) const;
 
-        void setBuffer(Buffer buffer, bool setLocal, int start = 0) const;
+        void setBuffer(Buffer &buffer, bool setLocal, int start = 0) const;
 
         [[nodiscard]] unsigned char getSerializationIteration() const;
 
@@ -37,9 +49,9 @@ namespace comm {
         [[nodiscard]] int getInt(bool getLocal = true) const;
 
     private:
-        unsigned char serializationIteration;
-        unsigned char sendIteration;
-        unsigned short sendSize;
+        char *localBuffer;
+        bool created;
+        Buffer *passedBuffer;
     };
 }
 

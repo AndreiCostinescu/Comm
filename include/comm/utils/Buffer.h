@@ -22,6 +22,8 @@ namespace comm {
 
         void setReferenceToData(char *data, unsigned int dataSize);
 
+        void setConstReferenceToData(const char *data, unsigned int dataSize);
+
         void setChar(char data, int position);
 
         void setShort(short data, int position);
@@ -50,6 +52,8 @@ namespace comm {
 
         [[nodiscard]] char *getBuffer();
 
+        [[nodiscard]] const char *getConstBuffer();
+
         [[nodiscard]] unsigned long long int getBufferSize() const;
 
         [[nodiscard]] unsigned long long int getBufferContentSize() const;
@@ -57,13 +61,20 @@ namespace comm {
         void setBufferContentSize(unsigned long long int _bufferContentSize);
 
     private:
+        enum BufferType {
+            BUFFER_LOCAL = 0,
+            BUFFER_REFERENCE = 1,
+            BUFFER_CONST_REFERENCE = 2,
+        };
+
         void prepareBuffer(unsigned long long int desiredSize);
 
         void checkBufferContentSize(unsigned long long int size, bool modifySize);
 
         char *buffer, *referenceBuffer;
+        const char *constReferenceBuffer;
         unsigned long long int bufferSize, bufferContentSize;
-        bool useReferenceBuffer;
+        BufferType bufferType;
     };
 }
 

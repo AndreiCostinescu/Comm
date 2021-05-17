@@ -29,21 +29,28 @@ MessageType StatusData::getMessageType() {
     return MessageType(this->getDataType());
 }
 
-bool StatusData::serialize(Buffer *buffer, bool verbose) {
+bool StatusData::serialize(Buffer *buffer, int start, bool forceCopy, bool verbose) {
     switch (this->serializeState) {
         case 0: {
-            buffer->setBufferContentSize(StatusData::headerSize);
-            buffer->setInt(this->dataSize, 0);
+            buffer->setBufferContentSize(start + StatusData::headerSize);
+            buffer->setInt(this->dataSize, start);
             if (verbose) {
-                char *dataBuffer = buffer->getBuffer();
-                cout << "buffer int content: " << (int) dataBuffer[0] << " " << (int) dataBuffer[1] << " "
-                     << (int) dataBuffer[2] << " " << (int) dataBuffer[3] << endl;
+                const char *dataBuffer = buffer->getBuffer();
+                cout << "buffer int content: " << (int) dataBuffer[start] << " " << (int) dataBuffer[start + 1] << " "
+                     << (int) dataBuffer[start + 2] << " " << (int) dataBuffer[start + 3] << endl;
             }
             this->serializeState = 1;
             return false;
         }
         case 1: {
-            buffer->setReferenceToData(this->data, this->dataSize);
+            if (forceCopy) {
+                buffer->setData(this->data, this->dataSize, start);
+            } else {
+                if (start != 0) {
+                    throw runtime_error("Can not set a reference to data not starting at the first position!");
+                }
+                buffer->setConstReferenceToData(this->data, this->dataSize);
+            }
             this->serializeState = 0;
             return true;
         }
