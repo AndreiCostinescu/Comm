@@ -5,10 +5,10 @@
 #ifndef PINAKOTHEKDRAWING_SOCKET_H
 #define PINAKOTHEKDRAWING_SOCKET_H
 
-#include <comm/socket/Buffer.h>
-#include <comm/socket/NetworkIncludes.h>
 #include <comm/socket/SocketPartner.h>
 #include <comm/socket/SocketType.h>
+#include <comm/utils/Buffer.h>
+#include <comm/utils/NetworkIncludes.h>
 #include <string>
 
 namespace comm {

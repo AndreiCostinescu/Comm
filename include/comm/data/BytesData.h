@@ -6,7 +6,7 @@
 #define COMMUNICATION_BYTESDATA_H
 
 #include <comm/data/CommunicationData.h>
-#include <comm/socket/Buffer.h>
+#include <comm/utils/Buffer.h>
 
 namespace comm {
     class BytesData : public CommunicationData {

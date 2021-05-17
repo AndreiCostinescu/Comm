@@ -30,6 +30,8 @@ typedef int SocketAddressLength;
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <cstring>
+#include <string.h>
 
 /*
 #define	EADDRINUSE      98	// Address already in use

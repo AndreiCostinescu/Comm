@@ -2,7 +2,7 @@
 // Created by andrei on 21.04.21.
 //
 
-#include <comm/socket/NetworkIncludes.h>
+#include <comm/utils/NetworkIncludes.h>
 
 using namespace comm;
 using namespace std;

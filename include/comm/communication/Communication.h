@@ -8,8 +8,8 @@
 #include <comm/data/CommunicationData.h>
 #include <comm/data/DataCollection.h>
 #include <comm/data/MessageType.h>
-#include <comm/socket/Buffer.h>
 #include <comm/socket/Socket.h>
+#include <comm/utils/Buffer.h>
 
 namespace comm {
     class Communication {

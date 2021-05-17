@@ -5,7 +5,7 @@
 #ifndef PINAKOTHEKDRAWING_SOCKETPARTNER_H
 #define PINAKOTHEKDRAWING_SOCKETPARTNER_H
 
-#include <comm/socket/NetworkIncludes.h>
+#include <comm/utils/NetworkIncludes.h>
 #include <string>
 
 namespace comm {

@@ -5,8 +5,8 @@
 #ifndef PINAKOTHEKDRAWING_COMMUNICATIONDATA_H
 #define PINAKOTHEKDRAWING_COMMUNICATIONDATA_H
 
-#include <comm/socket/Buffer.h>
 #include <comm/data/MessageType.h>
+#include <comm/utils/Buffer.h>
 
 namespace comm {
     class CommunicationData {

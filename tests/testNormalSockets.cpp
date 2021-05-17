@@ -5,8 +5,8 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
-#include <comm/socket/NetworkIncludes.h>
 #include <comm/socket/utils.h>
+#include <comm/utils/NetworkIncludes.h>
 #include <thread>
 
 using namespace comm;

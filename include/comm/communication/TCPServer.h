@@ -6,8 +6,8 @@
 #define PINAKOTHEKDRAWING_TCPSERVER_H
 
 #include <comm/communication/Communication.h>
-#include <comm/socket/NetworkIncludes.h>
 #include <comm/socket/Socket.h>
+#include <comm/utils/NetworkIncludes.h>
 
 namespace comm {
     class TCPServer {

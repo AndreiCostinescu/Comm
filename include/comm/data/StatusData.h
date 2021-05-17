@@ -6,7 +6,7 @@
 #define PINAKOTHEKDRAWING_STATUSDATA_H
 
 #include <comm/data/CommunicationData.h>
-#include <comm/socket/Buffer.h>
+#include <comm/utils/Buffer.h>
 #include <string>
 
 namespace comm {

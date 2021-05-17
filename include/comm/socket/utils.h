@@ -5,12 +5,10 @@
 #ifndef PINAKOTHEKDRAWING_UTILS_H
 #define PINAKOTHEKDRAWING_UTILS_H
 
-#include <comm/socket/NetworkIncludes.h>
+#include <comm/utils/NetworkIncludes.h>
 #include <string>
 
 namespace comm {
-    extern int bigEndian;
-
     extern const int SOCKET_ACCEPT_TIMEOUT_SECONDS;
 
     extern const unsigned long long int CLIENT_MAX_MESSAGE_BYTES;
@@ -28,30 +26,6 @@ namespace comm {
     int getAddressPort(SocketAddress address);
 
     std::string getStringAddress(SocketAddress address);
-
-    bool isBigEndian();
-
-    bool isLittleEndian();
-
-    void shortToNetworkBytes(char *buffer, int start, short value);
-
-    short networkBytesToShort(const char *buffer, int start);
-
-    void intToNetworkBytes(char *buffer, int start, int value);
-
-    int networkBytesToInt(const char *buffer, int start);
-
-    void longLongToNetworkBytes(char *buffer, int start, long long value);
-
-    long long networkBytesToLongLong(const char *buffer, int start);
-
-    void floatToNetworkBytes(char *buffer, int start, float value);
-
-    float networkBytesToFloat(const char *buffer, int start);
-
-    void doubleToNetworkBytes(char *buffer, int start, double value);
-
-    double networkBytesToDouble(const char *buffer, int start);
 
     void prepareBuffer(char *&buffer, int desiredLength);
 

@@ -2,9 +2,10 @@
 // Created by ga78cat on 24.03.2021.
 //
 
-#include <comm/socket/Buffer.h>
+#include <comm/utils/Buffer.h>
+#include <comm/utils/NetworkData.h>
+#include <comm/utils/NetworkIncludes.h>
 #include <cassert>
-#include <comm/socket/utils.h>
 #include <cstring>
 #include <iostream>
 
@@ -67,31 +68,31 @@ void Buffer::setChar(char data, int position) {
 
 void Buffer::setShort(short data, int position) {
     this->checkBufferContentSize(position + sizeof(short), true);
-    shortToNetworkBytes(this->buffer, position, data);
+    NetworkData::shortToNetworkBytes(this->buffer, position, data);
     this->useReferenceBuffer = false;
 }
 
 void Buffer::setInt(int data, int position) {
     this->checkBufferContentSize(position + sizeof(int), true);
-    intToNetworkBytes(this->buffer, position, data);
+    NetworkData::intToNetworkBytes(this->buffer, position, data);
     this->useReferenceBuffer = false;
 }
 
 void Buffer::setLongLong(long long data, int position) {
     this->checkBufferContentSize(position + sizeof(long long), true);
-    longLongToNetworkBytes(this->buffer, position, data);
+    NetworkData::longLongToNetworkBytes(this->buffer, position, data);
     this->useReferenceBuffer = false;
 }
 
 void Buffer::setFloat(float data, int position) {
     this->checkBufferContentSize(position + sizeof(float), true);
-    floatToNetworkBytes(this->buffer, position, data);
+    NetworkData::floatToNetworkBytes(this->buffer, position, data);
     this->useReferenceBuffer = false;
 }
 
 void Buffer::setDouble(double data, int position) {
     this->checkBufferContentSize(position + sizeof(double), true);
-    doubleToNetworkBytes(this->buffer, position, data);
+    NetworkData::doubleToNetworkBytes(this->buffer, position, data);
     this->useReferenceBuffer = false;
 }
 
@@ -102,27 +103,27 @@ char Buffer::getChar(int position) {
 
 short Buffer::getShort(int position) {
     this->checkBufferContentSize(position + sizeof(short), false);
-    return networkBytesToShort(this->buffer, position);
+    return NetworkData::networkBytesToShort(this->buffer, position);
 }
 
 int Buffer::getInt(int position) {
     this->checkBufferContentSize(position + sizeof(int), false);
-    return networkBytesToInt(this->buffer, position);
+    return NetworkData::networkBytesToInt(this->buffer, position);
 }
 
 long long Buffer::getLongLong(int position) {
     this->checkBufferContentSize(position + sizeof(long long), false);
-    return networkBytesToLongLong(this->buffer, position);
+    return NetworkData::networkBytesToLongLong(this->buffer, position);
 }
 
 float Buffer::getFloat(int position) {
     this->checkBufferContentSize(position + sizeof(float), false);
-    return networkBytesToFloat(this->buffer, position);
+    return NetworkData::networkBytesToFloat(this->buffer, position);
 }
 
 double Buffer::getDouble(int position) {
     this->checkBufferContentSize(position + sizeof(double), false);
-    return networkBytesToDouble(this->buffer, position);
+    return NetworkData::networkBytesToDouble(this->buffer, position);
 }
 
 bool Buffer::empty() const {

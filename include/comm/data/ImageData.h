@@ -6,7 +6,7 @@
 #define PINAKOTHEKDRAWING_IMAGEDATA_H
 
 #include <comm/data/CommunicationData.h>
-#include <comm/socket/Buffer.h>
+#include <comm/utils/Buffer.h>
 #include <opencv2/opencv.hpp>
 
 namespace comm {
