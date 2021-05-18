@@ -94,8 +94,11 @@ bool Communication::recvMessageType(SocketType socketType, MessageType &messageT
     uint64_t expectedSize;
     int dataStart = (withHeader) ? 4 : 0;
     this->errorCode = 0;
+    if (withHeader) {
+        this->recvHeader.setData(0, 0, 0);
+    }
     this->preReceiveMessageType(dataLocalDeserializeBuffer, expectedSize, dataStart);
-    receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, retries, verbose);
+    receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries, verbose);
     return this->postReceiveMessageType(messageType, receiveResult, dataStart);
 }
 
@@ -109,13 +112,16 @@ bool Communication::recvData(SocketType socketType, CommunicationData *data, boo
     MessageType messageType = data->getMessageType();
     while (!deserializationDone && localRetries >= 0) {
         this->errorCode = 0;
+        if (withHeader) {
+            this->recvHeader.setData(deserializeState, 0, 0);
+        }
         this->preReceiveData(dataLocalDeserializeBuffer, expectedSize, dataStart, data, withHeader);
-        receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, retries, verbose);
+        receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries,
+                                        verbose);
         if (!this->postReceiveData(data, deserializeState, localRetries, receivedSomething, deserializationDone,
                                    messageType, dataStart, localRetriesThreshold, receiveResult, withHeader, verbose)) {
             return false;
         }
-        deserializeState++;
     }
     if (receivedSomething && !deserializationDone) {
         cout << "After loop: Could not recv " << messageTypeToString(messageType)
@@ -167,7 +173,8 @@ bool Communication::receiveData(SocketType socketType, DataCollection *data, boo
         }
 
         // do receive
-        receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, retries, verbose);
+        receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries,
+                                        verbose);
 
         // post receive
         if (deserializeState == 0 && withMessageType) {
