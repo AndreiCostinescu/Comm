@@ -102,9 +102,9 @@ bool Communication::recvMessageType(SocketType socketType, MessageType &messageT
 
 bool Communication::recvData(SocketType socketType, CommunicationData *data, bool withHeader, bool gotMessageType,
                              int retries, bool verbose) {
-    bool receiveResult, deserializationDone, receivedSomething;
-    int deserializeState = (int) gotMessageType, localRetries, localRetriesThreshold = 0;
-    char *dataLocalDeserializeBuffer;
+    bool receiveResult, deserializationDone = false, receivedSomething = false;
+    int deserializeState = (int) gotMessageType, localRetriesThreshold = 0, localRetries = localRetriesThreshold;
+    char *dataLocalDeserializeBuffer = nullptr;
     unsigned long long int expectedSize;
     int dataStart = (withHeader) ? 4 : 0;
     MessageType messageType = data->getMessageType();
