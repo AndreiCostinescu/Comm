@@ -23,10 +23,10 @@ namespace comm {
 
         [[nodiscard]] virtual Communication *copy() const;
 
-        bool transmitData(SocketType type, CommunicationData *data, bool withHeader, bool withMessageType = true,
+        bool transmitData(SocketType socketType, CommunicationData *data, bool withHeader, bool withMessageType = true,
                           int retries = 0, bool verbose = false);
 
-        bool sendRaw(SocketType type, const char *data, int dataSize, int retries = 0, bool verbose = false);
+        bool sendRaw(SocketType socketType, const char *data, int dataSize, int retries = 0, bool verbose = false);
 
         bool recvMessageType(SocketType socketType, MessageType &messageType, bool withHeader, int retries = 0,
                              bool verbose = false);
@@ -34,7 +34,7 @@ namespace comm {
         bool recvData(SocketType socketType, CommunicationData *data, bool withHeader, bool gotMessageType = true,
                       int retries = 0, bool verbose = false);
 
-        bool receiveData(SocketType type, DataCollection *data, bool withHeader, bool withMessageType = true,
+        bool receiveData(SocketType socketType, DataCollection *data, bool withHeader, bool withMessageType = true,
                          int retries = 0, bool verbose = false);
 
         void createSocket(SocketType socketType, SocketPartner *partner = nullptr, int myPort = 0, int sendTimeout = -1,
@@ -45,25 +45,25 @@ namespace comm {
 
         void setSocketTimeouts(int sendTimeout = -1, int recvTimeout = -1);
 
-        void setSocketTimeouts(SocketType type, int sendTimeout = -1, int recvTimeout = -1);
+        void setSocketTimeouts(SocketType socketType, int sendTimeout = -1, int recvTimeout = -1);
 
-        void setSocket(SocketType type, Socket *socket);
+        void setSocket(SocketType socketType, Socket *socket);
 
-        void setPartner(SocketType type, SocketAddress _partner, bool overwrite);
+        void setPartner(SocketType socketType, SocketAddress _partner, bool overwrite);
 
-        void setPartner(SocketType type, const std::string &partnerIP, int partnerPort, bool overwrite);
+        void setPartner(SocketType socketType, const std::string &partnerIP, int partnerPort, bool overwrite);
 
-        void setOverwritePartner(SocketType type, bool overwrite);
+        void setOverwritePartner(SocketType socketType, bool overwrite);
 
         Socket *&getSocket(SocketType socketType);
 
-        SocketPartner *getMyself(SocketType type);
+        SocketPartner *getMyself(SocketType socketType);
 
-        std::string getMyAddressString(SocketType type);
+        std::string getMyAddressString(SocketType socketType);
 
-        SocketPartner *&getPartner(SocketType type);
+        SocketPartner *&getPartner(SocketType socketType);
 
-        std::string getPartnerString(SocketType type);
+        std::string getPartnerString(SocketType socketType);
 
         [[nodiscard]] int getErrorCode() const;
 
@@ -74,19 +74,19 @@ namespace comm {
 
         virtual void _cleanup();
 
-        virtual bool send(SocketType type, bool withHeader, int retries, bool verbose);
+        virtual bool send(SocketType socketType, bool withHeader, int retries, bool verbose);
 
-        virtual bool send(SocketType type, const char *buffer, unsigned long long int contentSize,
+        virtual bool send(SocketType socketType, const char *buffer, uint64_t contentSize,
                           SerializationHeader *header, int retries, bool verbose);
 
-        void preReceiveMessageType(char *&dataLocalDeserializeBuffer, unsigned long long int &expectedSize,
+        void preReceiveMessageType(char *&dataLocalDeserializeBuffer, uint64_t &expectedSize,
                                    int dataStart);
 
-        void preReceiveData(char *&dataLocalDeserializeBuffer, unsigned long long int &expectedSize, int dataStart,
+        void preReceiveData(char *&dataLocalDeserializeBuffer, uint64_t &expectedSize, int dataStart,
                             CommunicationData *recvData, bool withHeader);
 
-        bool doReceive(SocketType socketType, char *&dataLocalDeserializeBuffer, unsigned long long int &expectedSize,
-                       int retries, bool verbose);
+        bool doReceive(SocketType socketType, char *&dataLocalDeserializeBuffer, uint64_t &expectedSize,
+                       bool withHeader, int retries, bool verbose);
 
         bool postReceiveMessageType(MessageType &messageType, bool receiveResult, int dataStart);
 
@@ -94,10 +94,11 @@ namespace comm {
                              bool &receivedSomething, bool &deserializationDone, MessageType messageType, int dataStart,
                              int localRetriesThreshold, bool receiveResult, bool withHeader, bool verbose);
 
-        virtual bool recv(SocketType type, int retries, bool verbose);
+        virtual bool recv(SocketType socketType, bool withHeader, int retries, bool verbose);
 
-        virtual bool recv(SocketType type, char *&buffer, unsigned long long int &bufferSize,
-                          unsigned long long int expectedBytes, int retries, bool verbose);
+        virtual bool recv(SocketType socketType, char *&buffer, uint64_t &bufferSize,
+                          uint64_t expectedBytes, SerializationHeader *expectedHeader, int retries,
+                          bool verbose);
 
         std::map<SocketType, Socket *> sockets;
         Buffer sendBuffer, recvBuffer;

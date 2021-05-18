@@ -13,12 +13,12 @@
 using namespace comm;
 using namespace std;
 
-bool Communicator::send(Communication *comm, SocketType type, CommunicationData *data, bool withHeader,
+bool Communicator::send(Communication *comm, SocketType socketType, CommunicationData *data, bool withHeader,
                         bool withMessageType, int retries, bool verbose) {
     if (data == nullptr) {
         return true;
     }
-    if (!comm->transmitData(type, data, withHeader, withMessageType, retries, verbose)) {
+    if (!comm->transmitData(socketType, data, withHeader, withMessageType, retries, verbose)) {
         if (comm->getErrorCode() > 0) {
             (*cerror) << "When sending data... error: " << getLastErrorString(comm->getErrorCode()) << endl;
         }
@@ -27,63 +27,66 @@ bool Communicator::send(Communication *comm, SocketType type, CommunicationData 
     return true;
 }
 
-bool Communicator::send(Communication *comm, SocketType type, const char *data, int dataSize, int retries,
+bool Communicator::send(Communication *comm, SocketType socketType, const char *data, int dataSize, int retries,
                         bool verbose) {
-    return comm->sendRaw(type, data, dataSize, retries, verbose);
+    return comm->sendRaw(socketType, data, dataSize, retries, verbose);
 }
 
-bool Communicator::syphon(Communication *comm, SocketType type, MessageType &messageType, CommunicationData *data,
+bool Communicator::syphon(Communication *comm, SocketType socketType, MessageType &messageType, CommunicationData *data,
                           const bool *quitFlag, int retries, bool verbose, int syphonRetries) {
-    return Communicator::_syphon(comm, type, messageType, data,
+    return Communicator::_syphon(comm, socketType, messageType, data,
                                  [quitFlag]() { return quitFlag == nullptr || !(*quitFlag); }, retries, verbose,
                                  syphonRetries);
 }
 
-bool Communicator::syphon(Communication *comm, SocketType type, MessageType &messageType, CommunicationData *data,
+bool Communicator::syphon(Communication *comm, SocketType socketType, MessageType &messageType, CommunicationData *data,
                           bool &quitFlag, int retries, bool verbose, int syphonRetries) {
-    return Communicator::_syphon(comm, type, messageType, data, [quitFlag]() { return !quitFlag; }, retries, verbose,
+    return Communicator::_syphon(comm, socketType, messageType, data, [quitFlag]() { return !quitFlag; }, retries,
+                                 verbose,
                                  syphonRetries);
 }
 
-bool Communicator::syphon(Communication *comm, SocketType type, MessageType &messageType, CommunicationData *data,
+bool Communicator::syphon(Communication *comm, SocketType socketType, MessageType &messageType, CommunicationData *data,
                           std::atomic<bool> &quitFlag, int retries, bool verbose, int syphonRetries) {
-    return Communicator::_syphon(comm, type, messageType, data, [&quitFlag]() { return !quitFlag; }, retries,
+    return Communicator::_syphon(comm, socketType, messageType, data, [&quitFlag]() { return !quitFlag; }, retries,
                                  verbose, syphonRetries);
 }
 
-bool Communicator::listen(Communication *comm, SocketType type, MessageType &messageType,
+bool Communicator::listen(Communication *comm, SocketType socketType, MessageType &messageType,
                           DataCollection &_dataCollection, const bool *quitFlag, int retries, bool verbose) {
-    return Communicator::_listen(comm, type, messageType, _dataCollection,
+    return Communicator::_listen(comm, socketType, messageType, _dataCollection,
                                  [quitFlag]() { return quitFlag == nullptr || !(*quitFlag); }, retries, verbose);
 }
 
-bool Communicator::listen(Communication *comm, SocketType type, MessageType &messageType,
+bool Communicator::listen(Communication *comm, SocketType socketType, MessageType &messageType,
                           DataCollection &_dataCollection, bool &quitFlag, int retries, bool verbose) {
-    return Communicator::_listen(comm, type, messageType, _dataCollection, [quitFlag]() { return !quitFlag; },
+    return Communicator::_listen(comm, socketType, messageType, _dataCollection, [quitFlag]() { return !quitFlag; },
                                  retries, verbose);
 }
 
-bool Communicator::listen(Communication *comm, SocketType type, MessageType &messageType,
+bool Communicator::listen(Communication *comm, SocketType socketType, MessageType &messageType,
                           DataCollection &_dataCollection, std::atomic<bool> &quitFlag, int retries, bool verbose) {
-    return Communicator::_listen(comm, type, messageType, _dataCollection, [&quitFlag]() { return !quitFlag; },
+    return Communicator::_listen(comm, socketType, messageType, _dataCollection, [&quitFlag]() { return !quitFlag; },
                                  retries, verbose);
 }
 
-bool Communicator::listenFor(Communication *comm, SocketType type, CommunicationData *data, const bool *quitFlag,
+bool Communicator::listenFor(Communication *comm, SocketType socketType, CommunicationData *data, const bool *quitFlag,
                              bool *timeoutResult, int countIgnoreOther, int countOther, int retries, bool verbose) {
-    return Communicator::_listenFor(comm, type, data, [quitFlag]() { return quitFlag == nullptr || !(*quitFlag); },
+    return Communicator::_listenFor(comm, socketType, data,
+                                    [quitFlag]() { return quitFlag == nullptr || !(*quitFlag); },
                                     timeoutResult, countIgnoreOther, countOther, retries, verbose);
 }
 
-bool Communicator::listenFor(Communication *comm, SocketType type, CommunicationData *data, bool &quitFlag,
+bool Communicator::listenFor(Communication *comm, SocketType socketType, CommunicationData *data, bool &quitFlag,
                              bool *timeoutResult, int countIgnoreOther, int countOther, int retries, bool verbose) {
-    return Communicator::_listenFor(comm, type, data, [quitFlag]() { return !quitFlag; }, timeoutResult,
+    return Communicator::_listenFor(comm, socketType, data, [quitFlag]() { return !quitFlag; }, timeoutResult,
                                     countIgnoreOther, countOther, retries, verbose);
 }
 
-bool Communicator::listenFor(Communication *comm, SocketType type, CommunicationData *data, std::atomic<bool> &quitFlag,
-                             bool *timeoutResult, int countIgnoreOther, int countOther, int retries, bool verbose) {
-    return Communicator::_listenFor(comm, type, data, [&quitFlag]() { return !quitFlag; }, timeoutResult,
+bool Communicator::listenFor(Communication *comm, SocketType socketType, CommunicationData *data,
+                             std::atomic<bool> &quitFlag, bool *timeoutResult, int countIgnoreOther, int countOther,
+                             int retries, bool verbose) {
+    return Communicator::_listenFor(comm, socketType, data, [&quitFlag]() { return !quitFlag; }, timeoutResult,
                                     countIgnoreOther, countOther, retries, verbose);
 }
 
@@ -103,8 +106,9 @@ bool Communicator::isReceiveErrorOk(int errorCode, MessageType *messageType, boo
     return false;
 }
 
-bool Communicator::_syphon(Communication *comm, SocketType type, MessageType &messageType, CommunicationData *data,
-                           const std::function<bool()> &notQuit, int retries, bool verbose, int syphonRetries) {
+bool Communicator::_syphon(Communication *comm, SocketType socketType, MessageType &messageType,
+                           CommunicationData *data, const std::function<bool()> &notQuit, int retries, bool verbose,
+                           int syphonRetries) {
     switch (messageType) {
         case MessageType::NOTHING: {
             return true;
@@ -114,7 +118,7 @@ bool Communicator::_syphon(Communication *comm, SocketType type, MessageType &me
         case MessageType::STATUS: {
             int localSyphonRetries = (syphonRetries < 1) ? 1 : syphonRetries;
             while (notQuit() && localSyphonRetries > 0) {
-                if (!comm->recvData(type, data, false, true, retries, verbose)) {
+                if (!comm->recvData(socketType, data, false, true, retries, verbose)) {
                     if (comm->getErrorCode() == -1) {
                         localSyphonRetries--;
                         continue;
@@ -133,11 +137,11 @@ bool Communicator::_syphon(Communication *comm, SocketType type, MessageType &me
     }
 }
 
-bool Communicator::_listen(Communication *comm, SocketType type, MessageType &messageType,
+bool Communicator::_listen(Communication *comm, SocketType socketType, MessageType &messageType,
                            DataCollection &_dataCollection, const std::function<bool()> &notQuit, int retries,
                            bool verbose) {
     // cout << "Entering _listen function..." << endl;
-    if (!comm->recvMessageType(type, messageType, false, retries, verbose)) {
+    if (!comm->recvMessageType(socketType, messageType, false, retries, verbose)) {
         if (Communicator::isReceiveErrorOk(comm->getErrorCode(), &messageType, true)) {
             // cout << "Received NOTHING" << endl;
             return true;
@@ -153,7 +157,7 @@ bool Communicator::_listen(Communication *comm, SocketType type, MessageType &me
 
     CommunicationData *data = _dataCollection.get(messageType);
     MessageType receivedMessageType = messageType;
-    if (!Communicator::_syphon(comm, type, messageType, data, notQuit, retries, verbose)) {
+    if (!Communicator::_syphon(comm, socketType, messageType, data, notQuit, retries, verbose)) {
         if (notQuit()) {
             (*cerror) << "Error when syphoning data " << messageTypeToString(receivedMessageType)
                       << "... setting \"quit\"" << endl;
@@ -165,13 +169,13 @@ bool Communicator::_listen(Communication *comm, SocketType type, MessageType &me
     return true;
 }
 
-bool Communicator::_listenFor(Communication *comm, SocketType type, CommunicationData *data,
+bool Communicator::_listenFor(Communication *comm, SocketType socketType, CommunicationData *data,
                               const std::function<bool()> &notQuit, bool *timeoutResult, int countIgnoreOther,
                               int countIgnore, int retries, bool verbose) {
     assert(data != nullptr);
     MessageType messageType;
     while (notQuit()) {
-        if (!comm->recvMessageType(type, messageType, false, retries, verbose)) {
+        if (!comm->recvMessageType(socketType, messageType, false, retries, verbose)) {
             if (Communicator::isReceiveErrorOk(comm->getErrorCode(), &messageType, true)) {
                 continue;
             }
@@ -184,7 +188,7 @@ bool Communicator::_listenFor(Communication *comm, SocketType type, Communicatio
                           << messageTypeToString(messageType) << endl;
             }
             CommunicationData *syphonData = createCommunicationDataPtr(messageType);
-            if (!Communicator::_syphon(comm, type, messageType, syphonData, notQuit, retries, verbose)) {
+            if (!Communicator::_syphon(comm, socketType, messageType, syphonData, notQuit, retries, verbose)) {
                 delete syphonData;
                 return false;
             }
@@ -210,7 +214,7 @@ bool Communicator::_listenFor(Communication *comm, SocketType type, Communicatio
         return false;
     }
     while (notQuit()) {
-        if (!Communicator::_syphon(comm, type, messageType, data, notQuit, retries, verbose)) {
+        if (!Communicator::_syphon(comm, socketType, messageType, data, notQuit, retries, verbose)) {
             if (comm->getErrorCode() < 0) {
                 continue;
             }

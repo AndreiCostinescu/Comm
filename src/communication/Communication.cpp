@@ -30,7 +30,7 @@ Communication *Communication::copy() const {
     return copy;
 }
 
-bool Communication::transmitData(SocketType type, CommunicationData *data, bool withHeader, bool withMessageType,
+bool Communication::transmitData(SocketType socketType, CommunicationData *data, bool withHeader, bool withMessageType,
                                  int retries, bool verbose) {
     if (data == nullptr) {
         return false;
@@ -41,7 +41,6 @@ bool Communication::transmitData(SocketType type, CommunicationData *data, bool 
     int dataStart = (withHeader) ? 4 : 0, serializationState = 0;
     while (!serializeDone) {
         if (withHeader) {
-            // sets internally the sendBuffer, because sendHeader was initialized this way
             this->sendHeader.setData(serializationState, 0, 0);
         }
         if (serializationState == 0 && withMessageType) {
@@ -51,7 +50,7 @@ bool Communication::transmitData(SocketType type, CommunicationData *data, bool 
             serializeDone = data->serialize(&(this->sendBuffer), dataStart, withHeader, verbose);
         }
         this->errorCode = 0;
-        if (!this->send(type, withHeader, retries, verbose)) {
+        if (!this->send(socketType, withHeader, retries, verbose)) {
             if (this->errorCode == 0) {
                 if (verbose) {
                     cout << "Socket closed: Can not send data serialized bytes..." << endl;
@@ -68,20 +67,20 @@ bool Communication::transmitData(SocketType type, CommunicationData *data, bool 
     return true;
 }
 
-bool Communication::sendRaw(SocketType type, const char *data, int dataSize, int retries, bool verbose) {
+bool Communication::sendRaw(SocketType socketType, const char *data, int dataSize, int retries, bool verbose) {
     if (data == nullptr) {
         return false;
     }
     this->sendBuffer.setData(data, dataSize);
     this->errorCode = 0;
-    if (!this->send(type, false, retries, verbose)) {
+    if (!this->send(socketType, false, retries, verbose)) {
         if (this->errorCode == 0) {
             if (verbose) {
-                cout << "Socket closed: Can not send data serialized bytes..." << endl;
+                cout << "Socket closed: Can not raw data serialized bytes..." << endl;
             }
         } else {
             printLastError();
-            (*cerror) << "Can not send data serialized bytes... error " << this->errorCode << endl;
+            (*cerror) << "Can not send raw serialized bytes... error " << this->errorCode << endl;
         }
         return false;
     }
@@ -234,8 +233,8 @@ void Communication::setSocketTimeouts(int _sendTimeout, int _recvTimeout) {
     }
 }
 
-void Communication::setSocketTimeouts(SocketType type, int _sendTimeout, int _recvTimeout) {
-    Socket *&socket = this->getSocket(type);
+void Communication::setSocketTimeouts(SocketType socketType, int _sendTimeout, int _recvTimeout) {
+    Socket *&socket = this->getSocket(socketType);
     if (socket == nullptr) {
         return;
     }
@@ -250,24 +249,24 @@ void Communication::setSocket(SocketType socketType, Socket *socket) {
     this->sockets[socketType] = socket;
 }
 
-void Communication::setPartner(SocketType type, SocketAddress _partner, bool overwrite) {
-    Socket *&socket = this->getSocket(type);
+void Communication::setPartner(SocketType socketType, SocketAddress _partner, bool overwrite) {
+    Socket *&socket = this->getSocket(socketType);
     if (socket == nullptr) {
         return;
     }
     socket->setPartner(_partner, overwrite);
 }
 
-void Communication::setPartner(SocketType type, const string &partnerIP, int partnerPort, bool overwrite) {
-    Socket *&socket = this->getSocket(type);
+void Communication::setPartner(SocketType socketType, const string &partnerIP, int partnerPort, bool overwrite) {
+    Socket *&socket = this->getSocket(socketType);
     if (socket == nullptr) {
         return;
     }
     socket->setPartner(partnerIP, partnerPort, overwrite);
 }
 
-void Communication::setOverwritePartner(SocketType type, bool overwrite) {
-    Socket *&socket = this->getSocket(type);
+void Communication::setOverwritePartner(SocketType socketType, bool overwrite) {
+    Socket *&socket = this->getSocket(socketType);
     if (socket == nullptr) {
         return;
     }
@@ -281,32 +280,32 @@ Socket *&Communication::getSocket(SocketType socketType) {
     return this->sockets[socketType];
 }
 
-SocketPartner *Communication::getMyself(SocketType type) {
-    Socket *&socket = this->getSocket(type);
+SocketPartner *Communication::getMyself(SocketType socketType) {
+    Socket *&socket = this->getSocket(socketType);
     if (socket == nullptr || !socket->isInitialized()) {
-        (*cerror) << socketTypeToString(type) << " socket is not initialized! Can't getMyself..." << endl;
+        (*cerror) << socketTypeToString(socketType) << " socket is not initialized! Can't getMyself..." << endl;
         return nullptr;
     }
     return socket->getMyself();
 }
 
-string Communication::getMyAddressString(SocketType type) {
-    SocketPartner *myself = this->getMyself(type);
+string Communication::getMyAddressString(SocketType socketType) {
+    SocketPartner *myself = this->getMyself(socketType);
     assert (myself != nullptr);
     return myself->getPartnerString();
 }
 
-SocketPartner *&Communication::getPartner(SocketType type) {
-    Socket *&socket = this->getSocket(type);
+SocketPartner *&Communication::getPartner(SocketType socketType) {
+    Socket *&socket = this->getSocket(socketType);
     if (socket == nullptr || !socket->isInitialized()) {
-        (*cerror) << socketTypeToString(type) << " socket is not initialized! Can't getPartner..." << endl;
-        throw runtime_error(socketTypeToString(type) + " socket is not initialized! Can't getPartner...");
+        (*cerror) << socketTypeToString(socketType) << " socket is not initialized! Can't getPartner..." << endl;
+        throw runtime_error(socketTypeToString(socketType) + " socket is not initialized! Can't getPartner...");
     }
     return socket->getPartner();
 }
 
-string Communication::getPartnerString(SocketType type) {
-    SocketPartner *&partner = this->getPartner(type);
+string Communication::getPartnerString(SocketType socketType) {
+    SocketPartner *&partner = this->getPartner(socketType);
     if (partner == nullptr) {
         return "???";
     }
@@ -335,15 +334,14 @@ void Communication::_cleanup() {
     this->_cleanupData();
 }
 
-bool Communication::send(SocketType type, bool withHeader, int retries, bool verbose) {
-    return this->send(type, this->sendBuffer.getConstBuffer(), this->sendBuffer.getBufferContentSize(),
+bool Communication::send(SocketType socketType, bool withHeader, int retries, bool verbose) {
+    return this->send(socketType, this->sendBuffer.getConstBuffer(), this->sendBuffer.getBufferContentSize(),
                       (withHeader) ? &this->sendHeader : nullptr, retries, verbose);
 }
 
-bool Communication::send(SocketType type, const char *buffer, unsigned long long int contentSize,
-                         SerializationHeader *header,
-                         int retries, bool verbose) {
-    Socket *&socket = this->getSocket(type);
+bool Communication::send(SocketType socketType, const char *buffer, uint64_t contentSize,
+                         SerializationHeader *header, int retries, bool verbose) {
+    Socket *&socket = this->getSocket(socketType);
     if (socket == nullptr) {
         return false;
     }
@@ -353,7 +351,7 @@ bool Communication::send(SocketType type, const char *buffer, unsigned long long
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "readability-convert-member-functions-to-static"
 
-void Communication::preReceiveMessageType(char *&dataLocalDeserializeBuffer, unsigned long long int &expectedSize,
+void Communication::preReceiveMessageType(char *&dataLocalDeserializeBuffer, uint64_t &expectedSize,
                                           const int dataStart) {
     dataLocalDeserializeBuffer = nullptr;
     expectedSize = dataStart + 1;
@@ -364,7 +362,7 @@ void Communication::preReceiveMessageType(char *&dataLocalDeserializeBuffer, uns
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "readability-convert-member-functions-to-static"
 
-void Communication::preReceiveData(char *&dataLocalDeserializeBuffer, unsigned long long int &expectedSize,
+void Communication::preReceiveData(char *&dataLocalDeserializeBuffer, uint64_t &expectedSize,
                                    const int dataStart, CommunicationData *const recvData, bool withHeader) {
     dataLocalDeserializeBuffer = recvData->getDeserializeBuffer();
     // don't to the if before, because some CommunicationData depend on calling getDeserializeBuffer!
@@ -376,13 +374,15 @@ void Communication::preReceiveData(char *&dataLocalDeserializeBuffer, unsigned l
 
 #pragma clang diagnostic pop
 
-bool Communication::doReceive(SocketType socketType, char *&dataLocalDeserializeBuffer,
-                              unsigned long long int &expectedSize, int retries, bool verbose) {
+bool Communication::doReceive(SocketType socketType, char *&dataLocalDeserializeBuffer, uint64_t &expectedSize,
+                              bool withHeader, int retries, bool verbose) {
     if (dataLocalDeserializeBuffer != nullptr) {
-        return this->recv(socketType, dataLocalDeserializeBuffer, expectedSize, expectedSize, retries, verbose);
+        assert (!withHeader);
+        return this->recv(socketType, dataLocalDeserializeBuffer, expectedSize, expectedSize, nullptr, retries,
+                          verbose);
     } else {
         this->recvBuffer.setBufferContentSize(expectedSize);
-        return this->recv(socketType, retries, verbose);
+        return this->recv(socketType, withHeader, retries, verbose);
     }
 }
 
@@ -437,21 +437,23 @@ bool Communication::postReceiveData(CommunicationData *&recvData, int &deseriali
     return true;
 }
 
-bool Communication::recv(SocketType type, int retries, bool verbose) {
-    Socket *&socket = this->getSocket(type);
+bool Communication::recv(SocketType socketType, bool withHeader, int retries, bool verbose) {
+    Socket *&socket = this->getSocket(socketType);
     if (socket == nullptr) {
         return false;
     }
-    return socket->receiveBytes(this->recvBuffer, this->errorCode, retries, verbose);
+    return socket->receiveBytes(this->recvBuffer, this->errorCode, (withHeader) ? &(this->recvHeader) : nullptr,
+                                retries, verbose);
 }
 
-bool Communication::recv(SocketType type, char *&buffer, unsigned long long int &bufferSize,
-                         unsigned long long int expectedBytes, int retries, bool verbose) {
-    Socket *&socket = this->getSocket(type);
+bool Communication::recv(SocketType socketType, char *&buffer, uint64_t &bufferSize,
+                         uint64_t expectedBytes, SerializationHeader *expectedHeader, int retries,
+                         bool verbose) {
+    Socket *&socket = this->getSocket(socketType);
     if (socket == nullptr) {
         return false;
     }
-    return socket->receiveBytes(buffer, bufferSize, expectedBytes, this->errorCode, retries, verbose);
+    return socket->receiveBytes(buffer, bufferSize, expectedBytes, this->errorCode, expectedHeader, retries, verbose);
 }
 
 void Communication::_cleanupData() {
