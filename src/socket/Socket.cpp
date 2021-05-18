@@ -349,11 +349,12 @@ void Socket::initMyself(bool withBind) {
 
 bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode, SerializationHeader *header,
                          const int sendSize, const int sentBytes, const char sendIteration, const bool verbose) {
-    if (header != nullptr || this->protocol == UDP_HEADER) {
+    bool withHeader = (header != nullptr || this->protocol == UDP_HEADER);
+    if (withHeader) {
         if (header != nullptr) {
             this->sendBuffer->setChar((char) header->getSerializationIteration(), 0);
         } else {
-            this->sendBuffer->setChar((char) (sendIteration != 0), 0);
+            this->sendBuffer->setChar(0, 0);
         }
         this->sendBuffer->setChar(sendIteration, 1);
         this->sendBuffer->setShort((short) sendSize, 2);
@@ -362,6 +363,10 @@ bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode
         this->sendBuffer->setConstReferenceToData(buffer + sentBytes, sendSize);
     }
     setErrnoZero();
+    if (verbose) {
+        cout << "Pre send: already sentBytes = " << sentBytes << "; sending " << sendSize << "B to " << this->socket
+             << endl;
+    }
     switch (this->protocol) {
         case UDP:
         case UDP_HEADER: {
@@ -372,39 +377,31 @@ bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode
                 errorCode = 0;
                 return false;
             }
-            if (verbose) {
-                cout << "Pre sendto: already sentBytes = " << sentBytes << endl;
-            }
             localBytesSent = sendto(this->socket, this->sendBuffer->getConstBuffer(),
                                     (int) this->sendBuffer->getBufferContentSize(),
                                     0, (struct sockaddr *) (toAddress), sizeof(*toAddress));
-            if (verbose) {
-                cout << "Post sendto: managed to send (UDP) localBytesSent = " << localBytesSent << endl;
-                /*
-                for (int i = 0; i < localBytesSent; i++) {
-                    cout << (int) buffer[i + sentBytes] << ", ";
-                }
-                cout << endl;
-                //*/
-            }
             break;
         }
         case TCP: {
-            if (verbose) {
-                cout << "Pre send: sending " << sendSize << "B to " << this->socket << endl;
-            }
             localBytesSent = send(this->socket, this->sendBuffer->getConstBuffer(),
                                   (int) this->sendBuffer->getBufferContentSize(), 0);
-            if (verbose) {
-                cout << "Post send: managed to send (TCP) localBytesSent = " << localBytesSent << endl;
-            }
             break;
         }
         default : {
             throw runtime_error("Unknown protocol: " + to_string(this->protocol));
         }
     }
-    if ((header != nullptr || this->protocol == UDP_HEADER) && localBytesSent >= 4) {
+    if (verbose) {
+        cout << "Post send: managed to send localBytesSent = " << localBytesSent << endl;
+        /*
+        for (int i = 0; i < localBytesSent; i++) {
+            cout << (int) buffer[i + sentBytes] << ", ";
+        }
+        cout << endl;
+        //*/
+    }
+
+    if (withHeader && localBytesSent >= 4) {
         localBytesSent -= 4;
     }
     return true;
@@ -482,6 +479,10 @@ bool Socket::_sendBytes(const char *buffer, uint64_t bufferLength, int &errorCod
 }
 
 bool Socket::checkCorrectReceivePartner(bool &overwritePartner, const bool recvFirstMessage) {
+    if (this->protocol == SocketType::TCP) {
+        return true;
+    }
+
     assert (overwritePartner || this->partner != nullptr);
     if (overwritePartner) {
         assert (!recvFirstMessage);
@@ -503,127 +504,102 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                             SerializationHeader *expectedHeader, const int receiveSize, const uint64_t receivedBytes,
                             const bool recvFirstMessage, const bool verbose) {
     setErrnoZero();
-    recvFromCorrectPartner = true;
-    switch (this->protocol) {
-        case UDP: {
-            if (verbose) {
-                cout << "Pre recvfrom... already recvBytes = " << receivedBytes << endl;
-            }
-            this->recvAddressLength = sizeof(this->recvAddress);
-            localReceivedBytes = recvfrom(this->socket, buffer + receivedBytes, receiveSize, 0,
-                                          (struct sockaddr *) (&this->recvAddress), &this->recvAddressLength);
-            if (localReceivedBytes >= 0) {
-                recvFromCorrectPartner = this->checkCorrectReceivePartner(overwritePartner, recvFirstMessage);
-            }
-            if (verbose) {
-                cout << "Post recvfrom... managed to receive localReceivedBytes = " << localReceivedBytes
-                     << endl;
-                /*
-                for (int i = 0; i < localReceivedBytes; i++) {
-                    cout << (int) buffer[i + receivedBytes] << ", ";
-                }
-                cout << endl;
-                //*/
-            }
-            break;
-        }
-        case UDP_HEADER: {
-            if (verbose) {
-                cout << "Pre recvfrom... already recvBytes = " << receivedBytes << ", expecting " << 4 + receiveSize
-                     << endl;
-            }
+    recvFromCorrectPartner = true;  // needed because there are return paths before recomputing the value :)
+    if (verbose) {
+        cout << "Pre receive... already recvBytes = " << receivedBytes << endl;
+    }
 
-            if (!recvFirstMessage && !this->recvBuffer->empty()) {
-                localReceivedBytes = (int) this->recvBuffer->getBufferContentSize();
-            } else {
+    bool withHeader = (expectedHeader != nullptr || this->protocol == UDP_HEADER);
+    if (withHeader && !recvFirstMessage && !this->recvBuffer->empty()) {
+        localReceivedBytes = (int) this->recvBuffer->getBufferContentSize();
+    } else {
+        switch (this->protocol) {
+            case UDP:
+            case UDP_HEADER: {
                 assert (this->recvBuffer->empty());
                 assert (this->recvBuffer->getBuffer() != nullptr);
                 this->recvAddressLength = sizeof(this->recvAddress);
                 localReceivedBytes = recvfrom(this->socket, this->recvBuffer->getBuffer(), 4 + receiveSize, 0,
                                               (struct sockaddr *) (&this->recvAddress), &this->recvAddressLength);
+                break;
             }
-
-            if (localReceivedBytes >= 0) {
-                if (localReceivedBytes < 4) {
-                    cout << "Wrong protocol for this socket!!!" << endl;
-                    localReceivedBytes = -1;
-                    return false;
-                }
-                this->recvBuffer->setBufferContentSize(localReceivedBytes);
-                localReceivedBytes -= 4;
-                if (verbose) {
-                    cout << "Should have received " << (unsigned short) this->recvBuffer->getShort(2)
-                         << ", received " << localReceivedBytes << endl;
-                }
+            case TCP: {
+                localReceivedBytes = recv(this->socket, this->recvBuffer->getBuffer(), receiveSize, 0);
+                break;
             }
-            if (verbose) {
-                printLastError();
-                cout << "Post recvfrom... localReceivedBytes = " << localReceivedBytes << "; overwritePartner = "
-                     << overwritePartner << endl;
+            default : {
+                throw runtime_error("Unknown protocol: " + to_string(this->protocol));
             }
-
-            if (localReceivedBytes >= 0) {
-                if (!recvFirstMessage) {
-                    if (this->recvBuffer->getChar(0) != 0) {
-                        // wrong data, ignore, pretend like nothing was received (like recv from wrong partner)
-                        recvFromCorrectPartner = false;
-                    } else {
-                        recvFromCorrectPartner = this->checkCorrectReceivePartner(overwritePartner,
-                                                                                  recvFirstMessage);
-                        assert (recvFromCorrectPartner);
-                        memcpy(buffer + receivedBytes, this->recvBuffer->getBuffer() + 4,
-                               localReceivedBytes * sizeof(char));
-                    }
-                    // make recvBuffer empty
-                    this->recvBuffer->setBufferContentSize(0);
-                } else {
-                    if (this->recvBuffer->getChar(0) == 0) {
-                        // received start of another message...
-                        // check if the partner is the same
-                        recvFromCorrectPartner = this->checkCorrectReceivePartner(overwritePartner,
-                                                                                  recvFirstMessage);
-                        if (recvFromCorrectPartner) {
-                            // if the partner is ok, interrupt receive! and don't reset the recvBuffer
-                            localReceivedBytes = -2;
-                            setErrnoZero();  // <- to ensure that this will be interpreted as a timeout :)
-                        } else {
-                            // if the partner is not ok, ignore message
-                            this->recvBuffer->setBufferContentSize(0);
-                        }
-                    } else {
-                        memcpy(buffer + receivedBytes, this->recvBuffer->getBuffer() + 4,
-                               localReceivedBytes * sizeof(char));
-                        this->recvBuffer->setBufferContentSize(0);
-                    }
-                }
-            }
-
-            /*
-            // in previous if-statement, localReceivedBytes can get changed!
-            if (localReceivedBytes >= 0) {
-                recvFromCorrectPartner = this->checkCorrectReceivePartner(overwritePartner, recvFirstMessage);
-            }
-            //*/
-
-            if (verbose) {
-                cout << "Post recvfrom... managed to receive localReceivedBytes = " << localReceivedBytes
-                     << endl;
-                /*
-                for (int i = 0; i < localReceivedBytes; i++) {
-                    cout << (int) buffer[i + receivedBytes] << ", ";
-                }
-                cout << endl;
-                //*/
-            }
-            break;
         }
-        case TCP: {
-            localReceivedBytes = recv(this->socket, buffer + receivedBytes, receiveSize, 0);
-            break;
+    }
+
+    if (withHeader && localReceivedBytes >= 0) {
+        if (localReceivedBytes < 4) {
+            cout << "Wrong protocol for this socket!!!" << endl;
+            localReceivedBytes = -1;
+            return false;
         }
-        default : {
-            throw runtime_error("Unknown protocol: " + to_string(this->protocol));
+        this->recvBuffer->setBufferContentSize(localReceivedBytes);
+        localReceivedBytes -= 4;
+        if (verbose) {
+            cout << "Should have received " << (unsigned short) this->recvBuffer->getShort(2)
+                 << ", received " << localReceivedBytes << endl;
         }
+    }
+    if (verbose) {
+        printLastError();
+        cout << "Post receive... localReceivedBytes = " << localReceivedBytes << "; overwritePartner = "
+             << overwritePartner << endl;
+    }
+
+    if (localReceivedBytes < 0) {
+        return true;
+    }
+
+    recvFromCorrectPartner = this->checkCorrectReceivePartner(overwritePartner, recvFirstMessage);
+    if (!recvFromCorrectPartner) {
+        this->recvBuffer->setBufferContentSize(0);
+        return true;
+    }
+
+    int dataStart = (withHeader) ? 4 : 0;
+    if (withHeader) {
+        // check serialization iteration
+        if (expectedHeader != nullptr && this->recvBuffer->getChar(0) != expectedHeader->getSerializationIteration()) {
+            // received different serialization state... check if the partner is the same
+            // interrupt receive! and don't reset the recvBuffer to keep data for next recv!
+            localReceivedBytes = -2;
+            setErrnoZero();  // <- to ensure that this will be interpreted as a timeout :)
+            return true;
+        }
+
+        // check send iteration
+        auto sendIteration = (unsigned char) this->recvBuffer->getChar(1);
+        if (recvFirstMessage && sendIteration == 0) {
+            // Received start of another message... interrupt receive!
+            // And don't reset the recvBuffer to keep data for next recv!
+            localReceivedBytes = -2;
+            setErrnoZero();  // <- to ensure that this will be interpreted as a timeout :)
+            return true;
+        }
+        if (!recvFirstMessage && sendIteration > 0) {
+            // wrong data, ignore, pretend like nothing was received (like recv from wrong partner)
+            recvFromCorrectPartner = false;
+        }
+    }
+    if (recvFromCorrectPartner) {
+        memcpy(buffer + receivedBytes, this->recvBuffer->getBuffer() + dataStart, localReceivedBytes * sizeof(char));
+    }
+    this->recvBuffer->setBufferContentSize(0);
+
+    if (verbose) {
+        cout << "Post receive... managed to receive localReceivedBytes = " << localReceivedBytes << endl;
+        /*
+        for (int i = 0; i < localReceivedBytes; i++) {
+            cout << (int) buffer[i + receivedBytes] << ", ";
+        }
+        cout << endl;
+        //*/
     }
     return true;
 }
