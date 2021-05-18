@@ -7,6 +7,7 @@
 #include <comm/utils/utils.hpp>
 #include <cassert>
 #include <iostream>
+#include <stdexcept>
 
 using namespace comm;
 using namespace std;
@@ -214,6 +215,29 @@ bool Communication::receiveData(SocketType socketType, DataCollection *data, boo
         if (verbose) {
             cout << "Did not receive anything although expected " << messageTypeToString(messageType)
                  << endl;
+        }
+        return false;
+    }
+    return true;
+}
+
+bool Communication::receiveRaw(SocketType socketType, char *&data, int dataLength, int retries, bool verbose) {
+    if (data == nullptr) {
+        return false;
+    }
+
+    throw runtime_error("Not Implemented!");
+
+    this->recvBuffer.setReferenceToData(data, 0);
+    this->errorCode = 0;
+    if (!this->recv(socketType, false, retries, verbose)) {
+        if (this->errorCode == 0) {
+            if (verbose) {
+                cout << "Socket closed: Can not receive raw serialized bytes..." << endl;
+            }
+        } else {
+            printLastError();
+            (*cerror) << "Can not receive raw serialized bytes... error " << this->errorCode << endl;
         }
         return false;
     }
