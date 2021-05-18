@@ -91,7 +91,7 @@ bool Communication::recvMessageType(SocketType socketType, MessageType &messageT
                                     bool verbose) {
     bool receiveResult;
     char *dataLocalDeserializeBuffer;
-    unsigned long long int expectedSize;
+    uint64_t expectedSize;
     int dataStart = (withHeader) ? 4 : 0;
     this->errorCode = 0;
     this->preReceiveMessageType(dataLocalDeserializeBuffer, expectedSize, dataStart);
@@ -104,7 +104,7 @@ bool Communication::recvData(SocketType socketType, CommunicationData *data, boo
     bool receiveResult, deserializationDone = false, receivedSomething = false;
     int deserializeState = (int) gotMessageType, localRetriesThreshold = 0, localRetries = localRetriesThreshold;
     char *dataLocalDeserializeBuffer = nullptr;
-    unsigned long long int expectedSize;
+    uint64_t expectedSize;
     int dataStart = (withHeader) ? 4 : 0;
     MessageType messageType = data->getMessageType();
     while (!deserializationDone && localRetries >= 0) {
@@ -143,7 +143,7 @@ bool Communication::receiveData(SocketType socketType, DataCollection *data, boo
     bool deserializationDone = false, receiveResult, receivedSomething = false;
     int deserializeState = 0, dataStart = 0;
     int localRetriesThreshold = 0, localRetries = localRetriesThreshold;  // 10
-    unsigned long long int expectedSize;
+    uint64_t expectedSize;
     char *dataLocalDeserializeBuffer = nullptr;
     MessageType messageType;
     CommunicationData *recvData = nullptr;

@@ -12,7 +12,7 @@
 using namespace comm;
 using namespace std;
 
-Buffer::Buffer(unsigned long long int bufferSize) :
+Buffer::Buffer(uint64_t bufferSize) :
         buffer(nullptr), bufferSize(0), bufferContentSize(0), referenceBuffer(nullptr), constReferenceBuffer(nullptr),
         bufferType(BufferType::BUFFER_LOCAL) {
     this->prepareBuffer(bufferSize);
@@ -178,23 +178,23 @@ const char *Buffer::getConstBuffer() {
     return result;
 }
 
-unsigned long long int Buffer::getBufferSize() const {
+uint64_t Buffer::getBufferSize() const {
     return this->bufferSize;
 }
 
-unsigned long long int Buffer::getBufferContentSize() const {
+uint64_t Buffer::getBufferContentSize() const {
     return this->bufferContentSize;
 }
 
-void Buffer::setBufferContentSize(unsigned long long int _bufferContentSize) {
+void Buffer::setBufferContentSize(uint64_t _bufferContentSize) {
     this->prepareBuffer(_bufferContentSize);
     this->bufferContentSize = _bufferContentSize;
 }
 
-void Buffer::prepareBuffer(unsigned long long int desiredSize) {
+void Buffer::prepareBuffer(uint64_t desiredSize) {
     if (this->bufferSize < desiredSize) {
         char *oldBuffer = this->buffer;
-        unsigned long long int oldSize = this->bufferSize;
+        uint64_t oldSize = this->bufferSize;
 
         // cout << "Initialize new buffer!" << endl;
         this->buffer = new char[desiredSize];

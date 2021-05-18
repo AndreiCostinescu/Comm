@@ -13,7 +13,7 @@ using namespace std;
 
 const int comm::SOCKET_ACCEPT_TIMEOUT_SECONDS = 1;
 
-const unsigned long long int comm::CLIENT_MAX_MESSAGE_BYTES = 65500;
+const uint64_t comm::CLIENT_MAX_MESSAGE_BYTES = 65500;
 
 const int comm::SOCKET_BUFFER_RECV_SIZE = 4 * 1024 * 1024;
 
@@ -67,7 +67,7 @@ void comm::prepareBuffer(char *&buffer, int &bufferLength, int desiredLength) {
     }
 }
 
-void comm::prepareBuffer(char *&buffer, unsigned long long int &bufferLength, unsigned long long int desiredLength) {
+void comm::prepareBuffer(char *&buffer, uint64_t &bufferLength, uint64_t desiredLength) {
     if (bufferLength < desiredLength) {
         delete[] buffer;
         // cout << "Initialize new buffer!" << endl;

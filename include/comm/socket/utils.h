@@ -11,7 +11,7 @@
 namespace comm {
     extern const int SOCKET_ACCEPT_TIMEOUT_SECONDS;
 
-    extern const unsigned long long int CLIENT_MAX_MESSAGE_BYTES;
+    extern const uint64_t CLIENT_MAX_MESSAGE_BYTES;
 
     extern const int SOCKET_BUFFER_RECV_SIZE;
 
@@ -31,7 +31,7 @@ namespace comm {
 
     void prepareBuffer(char *&buffer, int &bufferLength, int desiredLength);
 
-    void prepareBuffer(char *&buffer, unsigned long long int &bufferLength, unsigned long long int desiredLength);
+    void prepareBuffer(char *&buffer, uint64_t &bufferLength, uint64_t desiredLength);
 
     int getLastError();
 

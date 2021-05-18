@@ -61,7 +61,7 @@ namespace comm {
 
         [[nodiscard]] const char *getBuffer();
 
-        [[nodiscard]] unsigned long long int getBufferSize() const;
+        [[nodiscard]] uint64_t getBufferSize() const;
 
     private:
         Buffer data;

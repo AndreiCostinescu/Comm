@@ -234,8 +234,8 @@ void Socket::accept(Socket *&acceptSocket, bool verbose) const {
     acceptSocket->initialized = true;
 }
 
-bool Socket::sendBytes(const char *buffer, unsigned long long int bufferLength, int &errorCode,
-                       SerializationHeader *header, int retries, bool verbose) {
+bool Socket::sendBytes(const char *buffer, uint64_t bufferLength, int &errorCode, SerializationHeader *header,
+                       int retries, bool verbose) {
     return this->_sendBytes(buffer, bufferLength, errorCode, header, retries, verbose);
 }
 
@@ -243,14 +243,16 @@ bool Socket::sendBytes(Buffer &buffer, int &errorCode, SerializationHeader *head
     return this->_sendBytes(buffer.getBuffer(), buffer.getBufferContentSize(), errorCode, header, retries, verbose);
 }
 
-bool Socket::receiveBytes(char *&buffer, unsigned long long int &bufferLength, unsigned long long int expectedLength,
-                          int &errorCode, int retries, bool verbose) {
+bool Socket::receiveBytes(char *&buffer, uint64_t &bufferLength, uint64_t expectedLength, int &errorCode,
+                          SerializationHeader *expectedHeader, int retries, bool verbose) {
     prepareBuffer(buffer, bufferLength, expectedLength);
-    return this->_receiveBytes(buffer, expectedLength, errorCode, retries, verbose);
+    return this->_receiveBytes(buffer, expectedLength, errorCode, expectedHeader, retries, verbose);
 }
 
-bool Socket::receiveBytes(Buffer &buffer, int &errorCode, int retries, bool verbose) {
-    return this->_receiveBytes(buffer.getBuffer(), buffer.getBufferContentSize(), errorCode, retries, verbose);
+bool Socket::receiveBytes(Buffer &buffer, int &errorCode, SerializationHeader *expectedHeader, int retries,
+                          bool verbose) {
+    return this->_receiveBytes(buffer.getBuffer(), buffer.getBufferContentSize(), errorCode, expectedHeader, retries,
+                               verbose);
 }
 
 void Socket::_setSocketBufferSizes(SOCKET socket) {
@@ -283,8 +285,9 @@ void Socket::_setSocketTimeouts(SOCKET socket, int sendTimeout, int recvTimeout)
 
 Socket::Socket() : protocol(SocketType::UDP), socket(INVALID_SOCKET), partner(nullptr), myself(nullptr),
                    sendTimeout(-1), recvTimeout(-1), isCopy(false), initialized(false), deletePartner(true),
-                   recvAddress(), recvAddressLength(sizeof(this->recvAddress)), recvBuffer(nullptr) {
+                   recvAddress(), recvAddressLength(sizeof(this->recvAddress)) {
     this->sendBuffer = new Buffer(CLIENT_MAX_MESSAGE_BYTES + 4);
+    this->recvBuffer = new Buffer(CLIENT_MAX_MESSAGE_BYTES + 4);
 }
 
 Socket::Socket(const SocketPartner &partner) : Socket() {
@@ -443,8 +446,8 @@ bool Socket::interpretSendResult(int &errorCode, int &localBytesSent, int &retri
     return true;
 }
 
-bool Socket::_sendBytes(const char *buffer, unsigned long long int bufferLength, int &errorCode,
-                        SerializationHeader *header, int retries, bool verbose) {
+bool Socket::_sendBytes(const char *buffer, uint64_t bufferLength, int &errorCode, SerializationHeader *header,
+                        int retries, bool verbose) {
     assert(this->sendBuffer != nullptr);
     if (!this->isInitialized()) {
         (*cerror) << "Can not send with an uninitialized socket!" << endl;
@@ -458,7 +461,7 @@ bool Socket::_sendBytes(const char *buffer, unsigned long long int bufferLength,
     }
     int sentBytes = 0, localBytesSent;
     char sendIteration = 0;
-    unsigned long long int maxSendPerRound = CLIENT_MAX_MESSAGE_BYTES;
+    uint64_t maxSendPerRound = CLIENT_MAX_MESSAGE_BYTES;
     while (sentBytes < bufferLength) {
         int sendSize = (int) min(maxSendPerRound, bufferLength - sentBytes);
         if (!this->performSend(buffer, localBytesSent, errorCode, header, sendSize, sentBytes, sendIteration,
@@ -497,7 +500,7 @@ bool Socket::checkCorrectReceivePartner(bool &overwritePartner, const bool recvF
 }
 
 bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwritePartner, bool &recvFromCorrectPartner,
-                            const int receiveSize, const unsigned long long int receivedBytes,
+                            SerializationHeader *expectedHeader, const int receiveSize, const uint64_t receivedBytes,
                             const bool recvFirstMessage, const bool verbose) {
     setErrnoZero();
     recvFromCorrectPartner = true;
@@ -695,8 +698,9 @@ void Socket::setRetries(int &retries, bool &retry, const int maxRetries, const b
     }
 }
 
-bool Socket::_receiveBytes(char *buffer, unsigned long long int expectedLength, int &errorCode, int retries,
-                           bool verbose) {
+bool Socket::_receiveBytes(char *buffer, uint64_t expectedLength, int &errorCode, SerializationHeader *expectedHeader,
+                           int retries, bool verbose) {
+    assert(this->recvBuffer != nullptr);
     if (!this->isInitialized()) {
         (*cerror) << "Can not receive with an uninitialized socket!" << endl;
         return false;
@@ -708,14 +712,11 @@ bool Socket::_receiveBytes(char *buffer, unsigned long long int expectedLength, 
              << "!" << endl;
     }
     int localReceivedBytes, receiveSize, maxRetries = retries;
-    unsigned long long int receivedBytes = 0, maxPossibleReceiveBytes = CLIENT_MAX_MESSAGE_BYTES;
+    uint64_t receivedBytes = 0, maxPossibleReceiveBytes = CLIENT_MAX_MESSAGE_BYTES;
     errorCode = 0;
     bool recvFirstMessage = false, retry, recvFromCorrectPartner = false;
-    bool overwritePartner =
-            (this->partner == nullptr) || (!this->partner->isInitialized()) || (this->partner->getOverwrite());
-    if (this->protocol == SocketType::UDP_HEADER && this->recvBuffer == nullptr) {
-        this->recvBuffer = new Buffer(maxPossibleReceiveBytes + 4);
-    }
+    bool overwritePartner = (this->partner == nullptr || !this->partner->isInitialized() ||
+                             this->partner->getOverwrite());
     while (receivedBytes < expectedLength) {
         receiveSize = (int) min(expectedLength - receivedBytes, maxPossibleReceiveBytes);
         // wait to receive data from socket (and retry when timeout occurs)
@@ -723,8 +724,8 @@ bool Socket::_receiveBytes(char *buffer, unsigned long long int expectedLength, 
             if (!checkErrno(errorCode, "Socket::_receiveBytes - begin do-while")) {
                 assert (false);
             }
-            if (!this->performReceive(buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner, receiveSize,
-                                      receivedBytes, recvFirstMessage, verbose)) {
+            if (!this->performReceive(buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner,
+                                      expectedHeader, receiveSize, receivedBytes, recvFirstMessage, verbose)) {
                 return false;
             }
             if (!checkErrno(errorCode, "Socket::_receiveBytes - after actual receive")) {

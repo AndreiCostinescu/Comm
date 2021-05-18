@@ -162,8 +162,8 @@ const char *BytesData::getBuffer() {
     return this->data.getBuffer();
 }
 
-unsigned long long int BytesData::getBufferSize() const {
-    unsigned long long int size = this->data.getBufferContentSize();
+uint64_t BytesData::getBufferSize() const {
+    uint64_t size = this->data.getBufferContentSize();
     assert (this->deserializeState != 1 || size == this->expectedDataSize);
     return size;
 }

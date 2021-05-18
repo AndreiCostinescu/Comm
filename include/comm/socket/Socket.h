@@ -57,16 +57,17 @@ namespace comm {
 
         void accept(Socket *&acceptSocket, bool verbose = false) const;
 
-        bool sendBytes(const char *buffer, unsigned long long int bufferLength, int &errorCode,
+        bool sendBytes(const char *buffer, uint64_t bufferLength, int &errorCode,
                        SerializationHeader *header, int retries = 0, bool verbose = false);
 
         bool sendBytes(Buffer &buffer, int &errorCode, SerializationHeader *header, int retries = 0,
                        bool verbose = false);
 
-        bool receiveBytes(char *&buffer, unsigned long long int &bufferLength, unsigned long long int expectedLength,
-                          int &errorCode, int retries = 0, bool verbose = false);
+        bool receiveBytes(char *&buffer, uint64_t &bufferLength, uint64_t expectedLength,
+                          int &errorCode, SerializationHeader *expectedHeader, int retries = 0, bool verbose = false);
 
-        bool receiveBytes(Buffer &buffer, int &errorCode, int retries = 0, bool verbose = false);
+        bool receiveBytes(Buffer &buffer, int &errorCode, SerializationHeader *expectedHeader, int retries = 0,
+                          bool verbose = false);
 
     private:
         static void _setSocketBufferSizes(SOCKET socket);
@@ -87,14 +88,14 @@ namespace comm {
         static bool interpretSendResult(int &errorCode, int &localBytesSent, int &retries, char &sendIteration,
                                         bool verbose = false);
 
-        bool _sendBytes(const char *buffer, unsigned long long int bufferLength, int &errorCode,
+        bool _sendBytes(const char *buffer, uint64_t bufferLength, int &errorCode,
                         SerializationHeader *header, int retries = 0, bool verbose = false);
 
         bool checkCorrectReceivePartner(bool &overwritePartner, bool recvFirstMessage);
 
         bool performReceive(char *buffer, int &localReceivedBytes, bool &overwritePartner, bool &recvFromCorrectPartner,
-                            int receiveSize, unsigned long long int receivedBytes, bool recvFirstMessage,
-                            bool verbose = false);
+                            SerializationHeader *expectedHeader, int receiveSize, uint64_t receivedBytes,
+                            bool recvFirstMessage, bool verbose = false);
 
         static bool interpretReceiveResult(int &errorCode, int &localReceivedBytes, bool &recvFirstMessage,
                                            bool recvFromCorrectPartner, bool verbose = false);
@@ -102,8 +103,8 @@ namespace comm {
         static void setRetries(int &retries, bool &retry, int maxRetries, bool recvFromCorrectPartner,
                                int localReceivedBytes, bool verbose = false);
 
-        bool _receiveBytes(char *buffer, unsigned long long int expectedLength, int &errorCode, int retries = 0,
-                           bool verbose = false);
+        bool _receiveBytes(char *buffer, uint64_t expectedLength, int &errorCode,
+                           SerializationHeader *expectedHeader, int retries = 0, bool verbose = false);
 
         SOCKET socket;
         SocketType protocol;

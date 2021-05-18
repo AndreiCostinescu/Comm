@@ -5,10 +5,12 @@
 #ifndef PINAKOTHEKDRAWING_BUFFER_H
 #define PINAKOTHEKDRAWING_BUFFER_H
 
+#include <cstdint>
+
 namespace comm {
     class Buffer {
     public:
-        explicit Buffer(unsigned long long int bufferSize = 0);
+        explicit Buffer(uint64_t bufferSize = 0);
 
         ~Buffer();
 
@@ -54,11 +56,11 @@ namespace comm {
 
         [[nodiscard]] const char *getConstBuffer();
 
-        [[nodiscard]] unsigned long long int getBufferSize() const;
+        [[nodiscard]] uint64_t getBufferSize() const;
 
-        [[nodiscard]] unsigned long long int getBufferContentSize() const;
+        [[nodiscard]] uint64_t getBufferContentSize() const;
 
-        void setBufferContentSize(unsigned long long int _bufferContentSize);
+        void setBufferContentSize(uint64_t _bufferContentSize);
 
     private:
         enum BufferType {
@@ -67,13 +69,13 @@ namespace comm {
             BUFFER_CONST_REFERENCE = 2,
         };
 
-        void prepareBuffer(unsigned long long int desiredSize);
+        void prepareBuffer(uint64_t desiredSize);
 
-        void checkBufferContentSize(unsigned long long int size, bool modifySize);
+        void checkBufferContentSize(uint64_t size, bool modifySize);
 
         char *buffer, *referenceBuffer;
         const char *constReferenceBuffer;
-        unsigned long long int bufferSize, bufferContentSize;
+        uint64_t bufferSize, bufferContentSize;
         BufferType bufferType;
     };
 }
