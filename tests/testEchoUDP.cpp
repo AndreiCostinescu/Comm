@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <comm/communication/Communication.h>
+#include <comm/data/ImageData.h>
 #include <comm/data/StatusData.h>
 #include <iostream>
 #include <thread>
@@ -20,6 +21,7 @@ void createUDPEcho(SocketType socketType) {
     Communication comm;
     comm.createSocket(socketType, SocketPartner(true, false), port, 2000, 50);
 
+    ImageData image;
     StatusData status;
     MessageType messageType;
     while (!quit) {
@@ -40,6 +42,21 @@ void createUDPEcho(SocketType socketType) {
                 break;
             }
             cout << "Received " << status.getDataSize() << " bytes: " << status.getData() << endl;
+            comm.setOverwritePartner(socketType, true);
+        } else if (messageType == MessageType::IMAGE) {
+            cout << "Connection from " << comm.getPartner(socketType)->getStringAddress() << endl;
+            comm.setOverwritePartner(socketType, false);
+            if (!comm.recvData(socketType, &image, false, true,-1, verbose)) {
+                cout << "Error when recvData (image): " << comm.getErrorCode() << ", " << comm.getErrorString()
+                     << endl;
+                quit = true;
+                break;
+            } else if (!image.isImageDeserialized()) {
+                cout << "Error when recvData (image): image is not deserialized!" << endl;
+            } else {
+                imshow("Received Image", image.getImage());
+                cv::waitKey(2);
+            }
             comm.setOverwritePartner(socketType, true);
         }
     }
