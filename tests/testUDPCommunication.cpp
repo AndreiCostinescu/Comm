@@ -25,7 +25,7 @@ void server_1(SocketType udpSocketType) {
     while (true) {
         cout << x << ": In while loop, waiting for connection on " << p.getMyself(udpSocketType)->getStringAddress()
              << "..." << endl;
-        assert (p.recvData(udpSocketType, &status, 0, verbose) || p.getErrorCode() == -1);
+        assert (p.recvData(udpSocketType, &status, false, false, 0, verbose) || p.getErrorCode() == -1);
         if (p.getErrorCode() == -1) {
             this_thread::sleep_for(chrono::milliseconds(500));
             continue;
@@ -56,7 +56,7 @@ void test_1(SocketType udpSocketType) {
     cout << x << ": Created status data" << endl;
     assert (p.transmitData(udpSocketType, &status, false, false, -1, verbose));
     cout << x << ": Sent status data" << endl;
-    assert (p.recvData(udpSocketType, &status, -1, verbose));
+    assert (p.recvData(udpSocketType, &status, false, false, -1, verbose));
     cout << x << ": Received status data" << endl;
     cout << x << ": Received: \"" << status.getData() << "\" from partner" << endl;
     assert (strcmp(status.getData(), "Bine!") == 0);

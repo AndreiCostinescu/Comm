@@ -11,7 +11,7 @@
 using namespace comm;
 using namespace std;
 
-Communication::Communication() : sockets(), sendBuffer(), recvBuffer(), isCopy(false), errorCode(0), dataCollection(),
+Communication::Communication() : sockets(), sendBuffer(), recvBuffer(), isCopy(false), errorCode(0),
                                  sendHeader(), recvHeader() {}
 
 Communication::~Communication() {
@@ -88,100 +88,125 @@ bool Communication::sendRaw(SocketType type, const char *data, int dataSize, int
     return true;
 }
 
-bool Communication::recvMessageType(SocketType type, MessageType *messageType, int retries, bool verbose) {
+bool Communication::recvMessageType(SocketType socketType, MessageType &messageType, bool withHeader, int retries,
+                                    bool verbose) {
+    bool receiveResult;
+    char *dataLocalDeserializeBuffer;
+    unsigned long long int expectedSize;
+    int dataStart = (withHeader) ? 4 : 0;
     this->errorCode = 0;
-    this->recvBuffer.setBufferContentSize(1);
-
-    bool result = this->recv(type, retries, verbose);
-    if (messageType == nullptr) {
-        return result;
-    }
-
-    if (!result) {
-        // why < 1 (why is also 0, when the socket closes, ok???)
-        if (this->errorCode < 1) {
-            *messageType = MessageType::NOTHING;
-            return true;
-        }
-        return false;
-    }
-    *messageType = MessageType(int(this->recvBuffer.getChar(0)));
-    return true;
+    this->preReceiveMessageType(dataLocalDeserializeBuffer, expectedSize, dataStart);
+    receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, retries, verbose);
+    return this->postReceiveMessageType(messageType, receiveResult, dataStart);
 }
 
-bool Communication::recvData(SocketType type, CommunicationData *data, int retries, bool verbose) {
-    assert (data != nullptr);
-    this->errorCode = 0;
-    int localRetriesThreshold = 0, localRetries = localRetriesThreshold, deserializeState = 0;  // 10
+bool Communication::recvData(SocketType socketType, CommunicationData *data, bool withHeader, bool gotMessageType,
+                             int retries, bool verbose) {
+    bool receiveResult, deserializationDone, receivedSomething;
+    int deserializeState = (int) gotMessageType, localRetries, localRetriesThreshold = 0;
+    char *dataLocalDeserializeBuffer;
     unsigned long long int expectedSize;
-    bool deserializeDone = false, receiveResult, receivedSomething = false;
-    char *dataLocalDeserializeBuffer = nullptr;
-    while (!deserializeDone && localRetries >= 0) {
-        if (verbose) {
-            cout << "Communication::recvData: LocalRetries = " << localRetries << " data->getMessageType() "
-                 << messageTypeToString(data->getMessageType()) << "; deserializeState = " << deserializeState << endl;
-        }
+    int dataStart = (withHeader) ? 4 : 0;
+    MessageType messageType = data->getMessageType();
+    while (!deserializationDone && localRetries >= 0) {
         this->errorCode = 0;
-
-        dataLocalDeserializeBuffer = data->getDeserializeBuffer();
-        expectedSize = data->getExpectedDataSize();
-        if (verbose) {
-            cout << "In Communication::recvData: dataLocalDeserializeBuffer = " << (int *) dataLocalDeserializeBuffer
-                 << "; expectedSize = " << expectedSize << "; deserializeState = " << deserializeState << endl;
+        this->preReceiveData(dataLocalDeserializeBuffer, expectedSize, dataStart, data, withHeader);
+        receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, retries, verbose);
+        if (!this->postReceiveData(data, deserializeState, localRetries, receivedSomething, deserializationDone,
+                                   messageType, dataStart, localRetriesThreshold, receiveResult, withHeader, verbose)) {
+            return false;
         }
-        if (dataLocalDeserializeBuffer != nullptr) {
-            receiveResult = this->recv(type, dataLocalDeserializeBuffer, expectedSize, expectedSize, retries, verbose);
-            if (verbose) {
-                cout << "ReceiveResult = " << receiveResult << endl;
-            }
-        } else {
-            this->recvBuffer.setBufferContentSize(expectedSize);
-            receiveResult = this->recv(type, retries, verbose);
-        }
-        if (!receiveResult) {
-            if (this->errorCode >= 0) {
-                printLastError();
-                (*cerror) << "Stop loop: Can not recv data serialized bytes... error " << this->errorCode
-                          << "; deserializeState = " << deserializeState << endl;
-                data->resetDeserializeState();
-                return false;
-            } else if (this->errorCode == -2) {
-                (*cerror) << "Stop loop: Only part of the data has been received before new message started... "
-                          << "; deserializeState = " << deserializeState << endl;
-                data->resetDeserializeState();
-                return false;
-            }
-        }
-        assert (receiveResult || this->errorCode == -1);
-        // if we received something...
-        if (this->errorCode != -1) {
-            if (verbose) {
-                cout << "Received something! data->getMessageType() " << messageTypeToString(data->getMessageType())
-                     << endl;
-            }
-            receivedSomething = true;
-            deserializeDone = data->deserialize(&this->recvBuffer, 0, verbose);
-            deserializeState++;
-            localRetries = localRetriesThreshold;
-        } else {
-            if (verbose) {
-                cout << "Received nothing, decrease local retries!" << endl;
-            }
-            localRetries--;
-        }
+        deserializeState++;
     }
-    if (receivedSomething && !deserializeDone) {
-        cout << "After loop: Could not recv " << messageTypeToString(data->getMessageType())
+    if (receivedSomething && !deserializationDone) {
+        cout << "After loop: Could not recv " << messageTypeToString(messageType)
              << " serialized bytes... error " << this->errorCode << "; deserializeState = " << deserializeState << endl;
-        (*cerror) << "After loop: Could not recv " << messageTypeToString(data->getMessageType())
+        (*cerror) << "After loop: Could not recv " << messageTypeToString(messageType)
                   << " serialized bytes... error " << this->errorCode << "; deserializeState = " << deserializeState
                   << endl;
-        data->resetDeserializeState();
+        if (data != nullptr) {
+            data->resetDeserializeState();
+        }
         return false;
     } else if (!receivedSomething) {
         assert (this->errorCode == -1);
         if (verbose) {
-            cout << "Did not receive anything although expected " << messageTypeToString(data->getMessageType())
+            cout << "Did not receive anything although expected " << messageTypeToString(messageType)
+                 << endl;
+        }
+        return false;
+    }
+    return true;
+}
+
+bool Communication::receiveData(SocketType socketType, DataCollection *data, bool withHeader, bool withMessageType,
+                                int retries, bool verbose) {
+    bool deserializationDone = false, receiveResult, receivedSomething = false;
+    int deserializeState = 0, dataStart = 0;
+    int localRetriesThreshold = 0, localRetries = localRetriesThreshold;  // 10
+    unsigned long long int expectedSize;
+    char *dataLocalDeserializeBuffer = nullptr;
+    MessageType messageType;
+    CommunicationData *recvData = nullptr;
+    if (withHeader) {
+        dataStart = 4;
+    }
+
+    while (!deserializationDone && localRetries >= 0) {
+        this->errorCode = 0;
+
+        // receive setup
+        if (deserializeState == 0 && withMessageType) {
+            this->preReceiveMessageType(dataLocalDeserializeBuffer, expectedSize, dataStart);
+        } else {
+            this->preReceiveData(dataLocalDeserializeBuffer, expectedSize, dataStart, recvData, withHeader);
+            if (verbose) {
+                cout << "In Communication::fullReceiveData: dataLocalDeserializeBuffer = "
+                     << (int *) dataLocalDeserializeBuffer << "; expectedSize = " << expectedSize
+                     << "; deserializeState = " << deserializeState << endl;
+            }
+        }
+
+        // do receive
+        receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, retries, verbose);
+
+        // post receive
+        if (deserializeState == 0 && withMessageType) {
+            if (!this->postReceiveMessageType(messageType, receiveResult, dataStart)) {
+                return false;
+            }
+
+            if (messageType == MessageType::NOTHING) {
+                deserializationDone = true;
+                break;
+            } else {
+                recvData = data->get(messageType);
+            }
+        } else {
+            if (!this->postReceiveData(recvData, deserializeState, localRetries, receivedSomething, deserializationDone,
+                                       messageType, dataStart, localRetriesThreshold, receiveResult, withHeader,
+                                       verbose)) {
+                return false;
+            }
+        }
+
+        deserializeState++;
+    }
+
+    if (receivedSomething && !deserializationDone) {
+        cout << "After loop: Could not recv " << messageTypeToString(messageType)
+             << " serialized bytes... error " << this->errorCode << "; deserializeState = " << deserializeState << endl;
+        (*cerror) << "After loop: Could not recv " << messageTypeToString(messageType)
+                  << " serialized bytes... error " << this->errorCode << "; deserializeState = " << deserializeState
+                  << endl;
+        if (recvData != nullptr) {
+            recvData->resetDeserializeState();
+        }
+        return false;
+    } else if (!receivedSomething) {
+        assert (this->errorCode == -1);
+        if (verbose) {
+            cout << "Did not receive anything although expected " << messageTypeToString(messageType)
                  << endl;
         }
         return false;
@@ -323,6 +348,93 @@ bool Communication::send(SocketType type, const char *buffer, unsigned long long
         return false;
     }
     return socket->sendBytes(buffer, contentSize, this->errorCode, header, retries, verbose);
+}
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "readability-convert-member-functions-to-static"
+
+void Communication::preReceiveMessageType(char *&dataLocalDeserializeBuffer, unsigned long long int &expectedSize,
+                                          const int dataStart) {
+    dataLocalDeserializeBuffer = nullptr;
+    expectedSize = dataStart + 1;
+}
+
+#pragma clang diagnostic pop
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "readability-convert-member-functions-to-static"
+
+void Communication::preReceiveData(char *&dataLocalDeserializeBuffer, unsigned long long int &expectedSize,
+                                   const int dataStart, CommunicationData *const recvData, bool withHeader) {
+    dataLocalDeserializeBuffer = recvData->getDeserializeBuffer();
+    // don't to the if before, because some CommunicationData depend on calling getDeserializeBuffer!
+    if (withHeader) {
+        dataLocalDeserializeBuffer = nullptr;
+    }
+    expectedSize = dataStart + recvData->getExpectedDataSize();
+}
+
+#pragma clang diagnostic pop
+
+bool Communication::doReceive(SocketType socketType, char *&dataLocalDeserializeBuffer,
+                              unsigned long long int &expectedSize, int retries, bool verbose) {
+    if (dataLocalDeserializeBuffer != nullptr) {
+        return this->recv(socketType, dataLocalDeserializeBuffer, expectedSize, expectedSize, retries, verbose);
+    } else {
+        this->recvBuffer.setBufferContentSize(expectedSize);
+        return this->recv(socketType, retries, verbose);
+    }
+}
+
+bool Communication::postReceiveMessageType(MessageType &messageType, const bool receiveResult, int dataStart) {
+    if (!receiveResult) {
+        if (this->getErrorCode() < 1) {
+            messageType = MessageType::NOTHING;
+        } else {
+            return false;
+        }
+    } else {
+        messageType = MessageType(int(this->recvBuffer.getChar(dataStart)));
+    }
+    return true;
+}
+
+bool Communication::postReceiveData(CommunicationData *&recvData, int &deserializeState, int &localRetries,
+                                    bool &receivedSomething, bool &deserializationDone, MessageType messageType,
+                                    const int dataStart, const int localRetriesThreshold, const bool receiveResult,
+                                    const bool withHeader, const bool verbose) {
+    if (!receiveResult) {
+        if (this->getErrorCode() >= 0) {
+            printLastError();
+            (*cerror) << "Stop loop: Can not recv data serialized bytes... error " << this->getErrorCode()
+                      << "; deserializeState = " << deserializeState << endl;
+            recvData->resetDeserializeState();
+            return false;
+        } else if (this->getErrorCode() == -2) {
+            (*cerror) << "Stop loop: Only part of the data has been received before new message started... "
+                      << "; deserializeState = " << deserializeState << endl;
+            recvData->resetDeserializeState();
+            return false;
+        }
+    }
+
+    assert (receiveResult || this->getErrorCode() == -1);
+    // if we received something...
+    if (this->getErrorCode() != -1) {
+        if (verbose) {
+            cout << "Received something! data->getMessageType() " << messageTypeToString(messageType) << endl;
+        }
+        receivedSomething = true;
+        deserializationDone = recvData->deserialize(&(this->recvBuffer), dataStart, withHeader, verbose);
+        deserializeState++;
+        localRetries = localRetriesThreshold;
+    } else {
+        if (verbose) {
+            cout << "Received nothing, decrease local retries!" << endl;
+        }
+        localRetries--;
+    }
+    return true;
 }
 
 bool Communication::recv(SocketType type, int retries, bool verbose) {

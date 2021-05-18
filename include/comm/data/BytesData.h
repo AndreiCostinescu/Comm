@@ -23,7 +23,7 @@ namespace comm {
 
         [[nodiscard]] int getExpectedDataSize() const override;
 
-        bool deserialize(Buffer *buffer, int start, bool verbose) override;
+        bool deserialize(Buffer *buffer, int start, bool forceCopy, bool verbose) override;
 
         void reset();
 

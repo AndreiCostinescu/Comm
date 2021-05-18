@@ -53,7 +53,7 @@ int CoordinateData::getExpectedDataSize() const {
     }
 }
 
-bool CoordinateData::deserialize(Buffer *buffer, int start, bool verbose) {
+bool CoordinateData::deserialize(Buffer *buffer, int start, bool, bool verbose) {
     switch (this->deserializeState) {
         case 0: {
             this->id = buffer->getInt(start);

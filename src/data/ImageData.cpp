@@ -98,7 +98,7 @@ char *ImageData::getDeserializeBuffer() {
     }
 }
 
-bool ImageData::deserialize(Buffer *buffer, int start, bool verbose) {
+bool ImageData::deserialize(Buffer *buffer, int start, bool forceCopy, bool verbose) {
     switch (this->deserializeState) {
         case 0: {
             this->imageDeserialized = false;
@@ -111,6 +111,10 @@ bool ImageData::deserialize(Buffer *buffer, int start, bool verbose) {
             return false;
         }
         case 1: {
+            if (forceCopy) {
+                // this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
+                memcpy(this->image.data, buffer->getBuffer() + start, this->contentSize);
+            }
             this->imageDeserialized = true;
             this->deserializeState = 0;
             return true;

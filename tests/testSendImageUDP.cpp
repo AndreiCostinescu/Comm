@@ -29,7 +29,7 @@ void sender(SocketType udpSocketType) {
     StatusData s;
     s.setData(to_string(udpPort).c_str());
     assert(p.transmitData(SocketType::TCP, &s, false, false));
-    assert(p.recvData(udpSocketType, &s));
+    assert(p.recvData(udpSocketType, &s, false, false));
     assert(strcmp(s.getData(), "hello") == 0);
 
     Mat image = cv::imread("../../data/Lena.png");
@@ -57,7 +57,7 @@ void receiver(SocketType udpSocketType) {
     comm->setSocketTimeouts(SocketType::TCP, 2000, 500);
 
     StatusData s;
-    while (!comm->recvData(SocketType::TCP, &s)) {}
+    while (!comm->recvData(SocketType::TCP, &s, false, false,false, false)) {}
     assert(s.getData() != nullptr);
     SocketPartner p(comm->getPartner(SocketType::TCP)->getIP(), stoi(s.getData()), false);
     cout << "Connecting to udp: " << p.getPartnerString() << endl;
@@ -70,7 +70,7 @@ void receiver(SocketType udpSocketType) {
     cout << "\n\n";
 
     ImageData i;
-    if (!comm->recvData(udpSocketType, &i, 10, true)) {
+    if (!comm->recvData(udpSocketType, &i, false, false, 10, true)) {
         cout << "Error: " << comm->getErrorCode() << "; " << comm->getErrorString() << "; " << getLastErrorString()
              << endl;
     } else if (i.isImageDeserialized()) {

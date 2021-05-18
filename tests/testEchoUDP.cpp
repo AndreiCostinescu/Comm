@@ -23,7 +23,7 @@ void createUDPEcho(SocketType socketType) {
     StatusData status;
     MessageType messageType;
     while (!quit) {
-        if (!comm.recvMessageType(socketType, &messageType, 0, verbose)) {
+        if (!comm.recvMessageType(socketType, messageType, false, 0, verbose)) {
             cout << "Error when recvMessageType: " << comm.getErrorCode() << ", " << comm.getErrorString() << endl;
             quit = true;
             break;
@@ -33,7 +33,7 @@ void createUDPEcho(SocketType socketType) {
         if (messageType == MessageType::STATUS) {
             cout << "Connection from " << comm.getPartner(socketType)->getStringAddress() << endl;
             comm.setOverwritePartner(socketType, false);
-            if (!comm.recvData(socketType, &status, -1, verbose)) {
+            if (!comm.recvData(socketType, &status, false, true,-1, verbose)) {
                 cout << "Error when recvData (status): " << comm.getErrorCode() << ", " << comm.getErrorString()
                      << endl;
                 quit = true;

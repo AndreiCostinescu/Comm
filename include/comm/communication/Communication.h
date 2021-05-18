@@ -28,12 +28,14 @@ namespace comm {
 
         bool sendRaw(SocketType type, const char *data, int dataSize, int retries = 0, bool verbose = false);
 
-        bool recvMessageType(SocketType type, MessageType *messageType, int retries = 0, bool verbose = false);
+        bool recvMessageType(SocketType socketType, MessageType &messageType, bool withHeader, int retries = 0,
+                             bool verbose = false);
 
-        bool recvData(SocketType type, CommunicationData *data, int retries = 0, bool verbose = false);
+        bool recvData(SocketType socketType, CommunicationData *data, bool withHeader, bool gotMessageType = true,
+                      int retries = 0, bool verbose = false);
 
-        bool receiveData(SocketType type, CommunicationData *data, bool withHeader = false, int retries = 0,
-                         bool verbose = false);
+        bool receiveData(SocketType type, DataCollection *data, bool withHeader, bool withMessageType = true,
+                         int retries = 0, bool verbose = false);
 
         void createSocket(SocketType socketType, SocketPartner *partner = nullptr, int myPort = 0, int sendTimeout = -1,
                           int recvTimeout = -1);
@@ -77,6 +79,21 @@ namespace comm {
         virtual bool send(SocketType type, const char *buffer, unsigned long long int contentSize,
                           SerializationHeader *header, int retries, bool verbose);
 
+        void preReceiveMessageType(char *&dataLocalDeserializeBuffer, unsigned long long int &expectedSize,
+                                   int dataStart);
+
+        void preReceiveData(char *&dataLocalDeserializeBuffer, unsigned long long int &expectedSize, int dataStart,
+                            CommunicationData *recvData, bool withHeader);
+
+        bool doReceive(SocketType socketType, char *&dataLocalDeserializeBuffer, unsigned long long int &expectedSize,
+                       int retries, bool verbose);
+
+        bool postReceiveMessageType(MessageType &messageType, bool receiveResult, int dataStart);
+
+        bool postReceiveData(CommunicationData *&recvData, int &deserializeState, int &localRetries,
+                             bool &receivedSomething, bool &deserializationDone, MessageType messageType, int dataStart,
+                             int localRetriesThreshold, bool receiveResult, bool withHeader, bool verbose);
+
         virtual bool recv(SocketType type, int retries, bool verbose);
 
         virtual bool recv(SocketType type, char *&buffer, unsigned long long int &bufferSize,
@@ -86,7 +103,6 @@ namespace comm {
         Buffer sendBuffer, recvBuffer;
         bool isCopy;
         int errorCode;
-        DataCollection dataCollection;
         SerializationHeader sendHeader, recvHeader;
 
     private:

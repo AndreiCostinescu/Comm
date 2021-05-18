@@ -114,7 +114,7 @@ bool Communicator::_syphon(Communication *comm, SocketType type, MessageType &me
         case MessageType::STATUS: {
             int localSyphonRetries = (syphonRetries < 1) ? 1 : syphonRetries;
             while (notQuit() && localSyphonRetries > 0) {
-                if (!comm->recvData(type, data, retries, verbose)) {
+                if (!comm->recvData(type, data, false, true, retries, verbose)) {
                     if (comm->getErrorCode() == -1) {
                         localSyphonRetries--;
                         continue;
@@ -137,7 +137,7 @@ bool Communicator::_listen(Communication *comm, SocketType type, MessageType &me
                            DataCollection &_dataCollection, const std::function<bool()> &notQuit, int retries,
                            bool verbose) {
     // cout << "Entering _listen function..." << endl;
-    if (!comm->recvMessageType(type, &messageType, retries, verbose)) {
+    if (!comm->recvMessageType(type, messageType, false, retries, verbose)) {
         if (Communicator::isReceiveErrorOk(comm->getErrorCode(), &messageType, true)) {
             // cout << "Received NOTHING" << endl;
             return true;
@@ -171,7 +171,7 @@ bool Communicator::_listenFor(Communication *comm, SocketType type, Communicatio
     assert(data != nullptr);
     MessageType messageType;
     while (notQuit()) {
-        if (!comm->recvMessageType(type, &messageType, retries, verbose)) {
+        if (!comm->recvMessageType(type, messageType, false, retries, verbose)) {
             if (Communicator::isReceiveErrorOk(comm->getErrorCode(), &messageType, true)) {
                 continue;
             }

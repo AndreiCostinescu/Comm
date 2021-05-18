@@ -26,7 +26,7 @@ namespace comm {
 
         char *getDeserializeBuffer() override;
 
-        bool deserialize(Buffer *buffer, int start, bool verbose) override;
+        bool deserialize(Buffer *buffer, int start, bool forceCopy, bool verbose) override;
 
         void setID(int id);
 

@@ -76,7 +76,7 @@ int StatusData::getExpectedDataSize() const {
     }
 }
 
-bool StatusData::deserialize(Buffer *buffer, int start, bool verbose) {
+bool StatusData::deserialize(Buffer *buffer, int start, bool, bool verbose) {
     switch (this->deserializeState) {
         case 0: {
             this->dataSize = buffer->getInt(start);
@@ -84,8 +84,8 @@ bool StatusData::deserialize(Buffer *buffer, int start, bool verbose) {
             return false;
         }
         case 1: {
-            assert (buffer->getBufferContentSize() == this->dataSize);
-            this->setData(buffer->getBuffer(), this->dataSize);
+            assert ((buffer->getBufferContentSize() - start) == this->dataSize);
+            this->setData(buffer->getBuffer() + start, this->dataSize);
             this->deserializeState = 0;
             return true;
         }

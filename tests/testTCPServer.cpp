@@ -29,7 +29,7 @@ void server_1() {
         p = t.acceptCommunication();
         if (p != nullptr) {
             cout << x << ": Created partner communication with " << p->getPartnerString(SocketType::TCP) << endl;
-            assert (p->recvData(SocketType::TCP, &status, -1, true));
+            assert (p->recvData(SocketType::TCP, &status, false, false, -1, true));
             cout << x << ": Received: \"" << status.getData() << "\" from partner" << endl;
             assert (strcmp(status.getData(), "Ce faci?") == 0);
             status.setData("Bine!");
@@ -53,7 +53,7 @@ void test_1() {
     cout << x << ": Created status data" << endl;
     assert(p.transmitData(SocketType::TCP, &status, false, false, -1, true));
     cout << x << ": Sent status data" << endl;
-    assert(p.recvData(SocketType::TCP, &status, -1, true));
+    assert(p.recvData(SocketType::TCP, &status, false, false, -1, true));
     cout << x << ": Received status data" << endl;
     cout << x << ": Received: \"" << status.getData() << "\" from partner" << endl;
     assert (strcmp(status.getData(), "Bine!") == 0);

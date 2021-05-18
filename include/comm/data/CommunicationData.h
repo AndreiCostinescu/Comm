@@ -27,7 +27,7 @@ namespace comm {
 
         void resetDeserializeState();
 
-        virtual bool deserialize(Buffer *buffer, int start, bool verbose) = 0;
+        virtual bool deserialize(Buffer *buffer, int start, bool forceCopy, bool verbose) = 0;
 
     protected:
         int serializeState, deserializeState;
