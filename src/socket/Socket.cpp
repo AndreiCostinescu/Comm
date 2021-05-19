@@ -588,6 +588,14 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
         }
     }
     if (recvFromCorrectPartner) {
+        if (verbose) {
+            cout << "Received data: ";
+            const char *receivedBufferData = this->recvBuffer->getBuffer() + dataStart;
+            for (int i = 0; i < min(localReceivedBytes, 50); i++) {
+                cout << (int) receivedBufferData[i] << " ";
+            }
+            cout << endl;
+        }
         memcpy(buffer + receivedBytes, this->recvBuffer->getBuffer() + dataStart, localReceivedBytes * sizeof(char));
     }
     this->recvBuffer->setBufferContentSize(0);
