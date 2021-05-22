@@ -10,19 +10,19 @@ namespace Comm.utils {
             }
         }
 
-        public SerializationHeader(ref byte[] buffer) {
+        public SerializationHeader(ref byte[] buffer) : this(false) {
             this.localBuffer = buffer;
         }
 
-        public SerializationHeader(Buffer buffer) {
+        public SerializationHeader(Buffer buffer) : this(false) {
             this.passedBuffer = buffer;
         }
 
-        public SerializationHeader(int header) {
+        public SerializationHeader(int header) : this() {
             this.setInt(header);
         }
 
-        public SerializationHeader(byte serializationIteration, byte sendIteration, ushort sendSize) {
+        public SerializationHeader(byte serializationIteration, byte sendIteration, ushort sendSize) : this() {
             this.setData(serializationIteration, sendIteration, sendSize);
         }
 
@@ -50,7 +50,7 @@ namespace Comm.utils {
         }
 
         public void setSerializationIteration(byte _serializationIteration) {
-            if (this.passedBuffer != null) {
+            if (this.passedBuffer == null) {
                 this.localBuffer[0] = _serializationIteration;
             } else {
                 this.passedBuffer.setByte(_serializationIteration, 0);
@@ -58,7 +58,7 @@ namespace Comm.utils {
         }
 
         public void setSendIteration(byte _sendIteration) {
-            if (this.passedBuffer != null) {
+            if (this.passedBuffer == null) {
                 this.localBuffer[1] = _sendIteration;
             } else {
                 this.passedBuffer.setByte(_sendIteration, 1);
@@ -67,7 +67,7 @@ namespace Comm.utils {
 
         public void setSendSize(ushort _sendSize, bool setLocal = true) {
             short sendSize = (short)((setLocal) ? _sendSize : IPAddress.NetworkToHostOrder(_sendSize));
-            if (this.passedBuffer != null) {
+            if (this.passedBuffer == null) {
                 utils.Utils.memcpy(this.localBuffer, 2, BitConverter.GetBytes(sendSize), 0, 2);
             } else {
                 this.passedBuffer.setShort(sendSize, 2);
@@ -86,7 +86,7 @@ namespace Comm.utils {
         }
 
         public byte getSerializationIteration() {
-            if (this.passedBuffer != null) {
+            if (this.passedBuffer == null) {
                 return this.localBuffer[0];
             } else {
                 return this.passedBuffer.getByte(0);
@@ -94,7 +94,7 @@ namespace Comm.utils {
         }
 
         public byte getSendIteration() {
-            if (this.passedBuffer != null) {
+            if (this.passedBuffer == null) {
                 return this.localBuffer[1];
             } else {
                 return this.passedBuffer.getByte(1);
@@ -103,7 +103,7 @@ namespace Comm.utils {
 
         public ushort getSendSize(bool getLocal = true) {
             ushort sendSize;
-            if (this.passedBuffer != null) {
+            if (this.passedBuffer == null) {
                 sendSize = (ushort)BitConverter.ToInt16(this.localBuffer, 2);
             } else {
                 sendSize = (ushort)this.passedBuffer.getShort(2);

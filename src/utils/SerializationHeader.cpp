@@ -56,7 +56,7 @@ void SerializationHeader::setData(unsigned char _serializationIteration, unsigne
 }
 
 void SerializationHeader::setSerializationIteration(unsigned char _serializationIteration) {
-    if (this->passedBuffer != nullptr) {
+    if (this->passedBuffer == nullptr) {
         this->localBuffer[0] = (char) _serializationIteration;
     } else {
         this->passedBuffer->setChar((char) _serializationIteration, 0);
@@ -64,7 +64,7 @@ void SerializationHeader::setSerializationIteration(unsigned char _serialization
 }
 
 void SerializationHeader::setSendIteration(unsigned char _sendIteration) {
-    if (this->passedBuffer != nullptr) {
+    if (this->passedBuffer == nullptr) {
         this->localBuffer[1] = (char) _sendIteration;
     } else {
         this->passedBuffer->setChar((char) _sendIteration, 1);
@@ -73,7 +73,7 @@ void SerializationHeader::setSendIteration(unsigned char _sendIteration) {
 
 void SerializationHeader::setSendSize(unsigned short _sendSize, bool setLocal) {
     auto sendSize = (short) ((setLocal) ? _sendSize : ntohs(_sendSize));
-    if (this->passedBuffer != nullptr) {
+    if (this->passedBuffer == nullptr) {
         memcpy(this->localBuffer + 2, &sendSize, 2);
     } else {
         this->passedBuffer->setShort(sendSize, 2);
@@ -92,7 +92,7 @@ void SerializationHeader::setBuffer(Buffer &buffer, bool setLocal, int start) co
 }
 
 unsigned char SerializationHeader::getSerializationIteration() const {
-    if (this->passedBuffer != nullptr) {
+    if (this->passedBuffer == nullptr) {
         return this->localBuffer[0];
     } else {
         return this->passedBuffer->getChar(0);
@@ -100,7 +100,7 @@ unsigned char SerializationHeader::getSerializationIteration() const {
 }
 
 unsigned char SerializationHeader::getSendIteration() const {
-    if (this->passedBuffer != nullptr) {
+    if (this->passedBuffer == nullptr) {
         return this->localBuffer[1];
     } else {
         return this->passedBuffer->getChar(1);
@@ -109,7 +109,7 @@ unsigned char SerializationHeader::getSendIteration() const {
 
 unsigned short SerializationHeader::getSendSize(bool getLocal) const {
     unsigned short sendSize;
-    if (this->passedBuffer != nullptr) {
+    if (this->passedBuffer == nullptr) {
         memcpy(&sendSize, this->localBuffer + 2, 2);
     } else {
         sendSize = this->passedBuffer->getShort(2);
