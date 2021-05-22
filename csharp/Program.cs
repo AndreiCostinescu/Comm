@@ -1,6 +1,7 @@
 ﻿using Comm.communication;
 using Comm.data;
 using Comm.socket;
+using Comm.utils;
 using System;
 using System.Diagnostics;
 using System.Net;
@@ -19,7 +20,7 @@ namespace Comm {
             };
             for (int i = 0; i < image.height; i++) {
                 for (int j = 0; j < image.width; j++) {
-                    Console.ForegroundColor = (ConsoleColor)ToConsoleColor(image.GetPixel(i, j));
+                    Console.ForegroundColor = (ConsoleColor) ToConsoleColor(image.GetPixel(i, j));
                     Console.Write("██");
                 }
                 /*
@@ -57,12 +58,12 @@ namespace Comm {
             Console.WriteLine(sizeof(byte) + " " + sizeof(char) + " " + sizeof(short) + " " + sizeof(int) + " " + sizeof(long));
 
             ushort t = 48585;
-            Console.WriteLine(t + ", " + (ushort)IPAddress.NetworkToHostOrder((short)t) + ", " + (ushort)IPAddress.HostToNetworkOrder((short)t));
+            Console.WriteLine(t + ", " + (ushort) IPAddress.NetworkToHostOrder((short) t) + ", " + (ushort) IPAddress.HostToNetworkOrder((short) t));
 
             byte[] buffer = null;
             int bufferSize = 0;
 
-            long x1 = (long)(((ulong)1 << 63) - 1), x2 = 1 << 63, resLL;
+            long x1 = (long) (((ulong) 1 << 63) - 1), x2 = 1 << 63, resLL;
             Console.WriteLine(x1);
             Console.WriteLine(x2);
             for (int factor = 2; factor <= 15; factor++) {
@@ -73,8 +74,8 @@ namespace Comm {
                     }
                     Console.WriteLine("yL = " + yL);
                     socket.Utils.prepareBuffer(ref buffer, ref bufferSize, sizeof(long));
-                    utils.NetworkData.longLongToNetworkBytes(buffer, 0, yL);
-                    resLL = utils.NetworkData.networkBytesToLongLong(buffer, 0);
+                    NetworkData.longLongToNetworkBytes(buffer, 0, yL);
+                    resLL = NetworkData.networkBytesToLongLong(buffer, 0);
                     if (resLL != yL) {
                         Console.WriteLine("Error at y = " + yL + ", res = " + resLL);
                     }
@@ -84,31 +85,58 @@ namespace Comm {
             }
 
             socket.Utils.prepareBuffer(ref buffer, ref bufferSize, sizeof(long));
-            utils.NetworkData.longLongToNetworkBytes(buffer, 0, x2);
-            Debug.Assert(utils.NetworkData.networkBytesToLongLong(buffer, 0) == x2);
-            utils.NetworkData.longLongToNetworkBytes(buffer, 0, x1);
-            Debug.Assert(utils.NetworkData.networkBytesToLongLong(buffer, 0) == x1);
+            NetworkData.longLongToNetworkBytes(buffer, 0, x2);
+            Debug.Assert(NetworkData.networkBytesToLongLong(buffer, 0) == x2);
+            NetworkData.longLongToNetworkBytes(buffer, 0, x1);
+            Debug.Assert(NetworkData.networkBytesToLongLong(buffer, 0) == x1);
 
             int res = 0;
-            for (int yI = 0; yI < 1 + 20; yI++) {
+            for (int y = 0; y < 1 << 20; y++) {
+                // Console.WriteLine("yI = " + y);
                 socket.Utils.prepareBuffer(ref buffer, ref bufferSize, sizeof(int));
-                utils.NetworkData.intToNetworkBytes(buffer, 0, yI);
-                res = utils.NetworkData.networkBytesToInt(buffer, 0);
-                if (res != yI) {
-                    Console.WriteLine("Error at y = " + yI + ", res = " + res);
+                NetworkData.intToNetworkBytes(buffer, 0, y);
+                res = NetworkData.networkBytesToInt(buffer, 0);
+                if (res != y) {
+                    Console.WriteLine("Error at y = " + y + ", res = " + res);
                 }
-                Debug.Assert(res == yI);
+                Debug.Assert(res == y);
             }
-            int y = 1 << 31;
-            Console.WriteLine(y);
+            int yI = 1 << 31;
+            Console.WriteLine(yI);
             socket.Utils.prepareBuffer(ref buffer, ref bufferSize, sizeof(int));
-            utils.NetworkData.intToNetworkBytes(buffer, 0, y);
-            Debug.Assert(utils.NetworkData.networkBytesToInt(buffer, 0) == y);
+            NetworkData.intToNetworkBytes(buffer, 0, yI);
+            Debug.Assert(NetworkData.networkBytesToInt(buffer, 0) == yI);
+
+            short resS = 0;
+            for (short y = 0; y < 1 << 13; y++) {
+                // Console.WriteLine("yS = " + y);
+                socket.Utils.prepareBuffer(ref buffer, ref bufferSize, sizeof(short));
+                NetworkData.shortToNetworkBytes(buffer, 0, y);
+                resS = NetworkData.networkBytesToShort(buffer, 0);
+                if (resS != y) {
+                    Console.WriteLine("Error at y = " + y + ", res = " + resS);
+                }
+                Debug.Assert(resS == y);
+            }
+
+            float resF;
+            for (int factor = 2; factor <= 5; factor++) {
+                for (float z = 1.0f; z > 0; z /= factor) {
+                    Console.WriteLine("zF = " + z);
+                    socket.Utils.prepareBuffer(ref buffer, ref bufferSize, sizeof(float));
+                    NetworkData.floatToNetworkBytes(buffer, 0, z);
+                    resF = NetworkData.networkBytesToFloat(buffer, 0);
+                    if (resF != z) {
+                        Console.WriteLine("Error at z = " + z + ", res = " + resF);
+                    }
+                    Debug.Assert(resF == z);
+                }
+            }
 
             double resD;
             for (int factor = 2; factor <= 5; factor++) {
                 for (double z = 1.0; z > 0; z /= factor) {
-                    Console.WriteLine(z);
+                    Console.WriteLine("zD = " + z);
                     socket.Utils.prepareBuffer(ref buffer, ref bufferSize, sizeof(double));
                     utils.NetworkData.doubleToNetworkBytes(buffer, 0, z);
                     resD = utils.NetworkData.networkBytesToDouble(buffer, 0);
@@ -128,9 +156,9 @@ namespace Comm {
             Debug.Assert(utils.Utils.strcmp("asd", "asd\0") == 0);
             Debug.Assert(utils.Utils.strcmp("asd\0", "asd") == 0);
             Debug.Assert(utils.Utils.strcmp("asd\0", "asd\0") == 0);
-            Debug.Assert(utils.Utils.strcmp("asd\0", "asd" + (char)1) == -1);
-            Debug.Assert(utils.Utils.strcmp("asd" + (char)2, "asd") == 2);
-            Debug.Assert(utils.Utils.strcmp("asd" + (char)2, "asd" + (char)1) == 1);
+            Debug.Assert(utils.Utils.strcmp("asd\0", "asd" + (char) 1) == -1);
+            Debug.Assert(utils.Utils.strcmp("asd" + (char) 2, "asd") == 2);
+            Debug.Assert(utils.Utils.strcmp("asd" + (char) 2, "asd" + (char) 1) == 1);
             Debug.Assert(utils.Utils.strcmp("bsd", "asd") == 1);
             Debug.Assert(utils.Utils.strcmp("asd", "bsd") == -1);
         }
@@ -139,7 +167,8 @@ namespace Comm {
     static class TestSocketPartner {
         public static void test() {
             // string ip = "10.151.12.155";
-            string ip = "131.159.61.57";
+            // string ip = "131.159.61.57";
+            string ip = "10.151.13.77";
             SocketPartner p = new SocketPartner(ip, 8348, false);
             IPAddress[] ipAddrs = Dns.GetHostAddresses(ip);
 
@@ -153,11 +182,11 @@ namespace Comm {
     }
 
     static class TestTCPServerTimeoutAcceptConnections {
-        public static void testTCPServerTimeoutAcceptConnections() {
+        public static void test() {
             TCPServer s = new TCPServer(8348);
             // s.listen();
             int i = 0;
-            while (i++ < 100) {
+            while (i++ < 10) {
                 Communication comm = s.acceptCommunication();
                 if (comm != null) {
                     Console.WriteLine("Found commection!");
@@ -234,7 +263,7 @@ namespace Comm {
 
         static void test_1() {
             Thread.CurrentThread.Name = "Thread 1";
-            Thread.Sleep(7000);
+            Thread.Sleep(2000);
 
             string x = Thread.CurrentThread.Name;
             StatusData status = new StatusData();
@@ -557,7 +586,7 @@ namespace Comm {
         }
 
         static void test_1() {
-            Thread.Sleep(7000);
+            Thread.Sleep(2000);
 
             string x = "Thread 1";
             StatusData status = new StatusData();
@@ -673,9 +702,14 @@ namespace Comm {
         static void Main(string[] args) {
             Console.WriteLine("Hello World!");
 
+            // TestConsoleImage.test();
+            // TestEndianness.test();
+            // TestStrcmp.test();
+            // TestSocketPartner.test();
+            // TestTCPServerTimeoutAcceptConnections.test();
             TestClient.test();
-            // TestTCPServerUDPClient.test();
             // TestTCPServer.test();
+            // TestTCPServerUDPClient.test();
             // TestBothCommunication.test();
             // TestUDPCommunication.test();
             // TestSendImageUDP.test();
