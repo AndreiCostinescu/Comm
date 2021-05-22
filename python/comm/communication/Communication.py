@@ -32,8 +32,8 @@ class Communication:
         self.copyData(comm)
         return comm
 
-    def transmitData(self, socketType: SocketType, data: CommunicationData, withHeader: bool, withMessageType: bool,
-                     retries: int = 0, verbose: bool = False) -> bool:
+    def transmitData(self, socketType: SocketType, data: CommunicationData, withHeader: bool,
+                     withMessageType: bool = True, retries: int = 0, verbose: bool = False) -> bool:
         if data is None:
             return False
         self.errorCode = 0
