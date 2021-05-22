@@ -1,6 +1,6 @@
 from comm.comm_data.CommunicationData import CommunicationData
 from comm.comm_data.MessageType import MessageType
-from comm.comm_socket.Buffer import Buffer
+from comm.comm_utils.Buffer import Buffer
 
 
 class BytesData(CommunicationData):
@@ -14,19 +14,24 @@ class BytesData(CommunicationData):
     def getMessageType(self):
         return MessageType.BYTES
 
-    def serialize(self, buffer: Buffer, verbose: bool) -> bool:
+    def serialize(self, buffer: Buffer, start: int, forceCopy: bool, verbose: bool) -> bool:
         if self.serializeState == 0:
             buffer.setBufferContentSize(BytesData.headerSize)
             # print("This dataSize = " + str(self.dataSize))
-            buffer.setInt(self.data.getBufferContentSize(), 0)
+            buffer.setInt(self.data.getBufferContentSize(), start)
             if verbose:
                 dataBuffer = buffer.getBuffer()
-                print("buffer int content: ", int(dataBuffer[0]), " ", int(dataBuffer[1]), " ", int(dataBuffer[2]), " ",
-                      int(dataBuffer[3]))
+                print("buffer int content: ", int(dataBuffer[start]), " ", int(dataBuffer[start + 1]), " ",
+                      int(dataBuffer[start + 2]), " ", int(dataBuffer[start + 3]))
             self.serializeState = 1
             return False
         elif self.serializeState == 1:
-            buffer.setReferenceToData(self.data.getBuffer(), self.data.getBufferContentSize())
+            if forceCopy:
+                buffer.setData(self.data.getBuffer(), self.data.getBufferContentSize(), start)
+            else:
+                if start != 0:
+                    raise RuntimeError("Can not set a reference to data not starting at the first position!")
+                buffer.setReferenceToData(self.data.getBuffer(), self.data.getBufferContentSize())
             self.serializeState = 0
             return True
         else:
@@ -42,13 +47,13 @@ class BytesData(CommunicationData):
         else:
             raise RuntimeError("Impossible deserialize state... " + str(self.deserializeState))
 
-    def deserialize(self, buffer: Buffer, start: int, verbose: bool) -> bool:
+    def deserialize(self, buffer: Buffer, start: int, forceCopy: bool, verbose: bool) -> bool:
         if self.deserializeState == 0:
             self.expectedDataSize = buffer.getInt(start)
             self.deserializeState = 1
             return False
         elif self.deserializeState == 1:
-            assert (buffer.getBufferContentSize() == self.expectedDataSize)
+            assert ((buffer.getBufferContentSize() - start) == self.expectedDataSize)
             self.data.setData(buffer.getBuffer(), self.expectedDataSize)
             self.deserializeState = 0
             return True

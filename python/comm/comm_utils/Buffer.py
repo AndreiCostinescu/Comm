@@ -1,6 +1,6 @@
-from comm.comm_socket.utils import memcpy, memset, charToNetworkBytes, shortToNetworkBytes, intToNetworkBytes, \
-    longLongToNetworkBytes, floatToNetworkBytes, doubleToNetworkBytes, networkBytesToChar, networkBytesToShort, \
-    networkBytesToInt, networkBytesToLongLong, networkBytesToFloat, networkBytesToDouble, newBuffer
+from comm.comm_socket.utils import newBuffer
+from comm.comm_utils.utils import memcpy, memset
+from comm.comm_utils.NetworkData import NetworkData
 from typing import Optional
 
 
@@ -47,57 +47,58 @@ class Buffer:
 
     def setChar(self, data: int, position: int):
         self.checkBufferContentSize(position + 1, True)
-        self.buffer = charToNetworkBytes(self.buffer, position, data)
+        self.buffer = NetworkData.charToNetworkBytes(self.buffer, position, data)
         self.useReferenceBuffer = False
 
     def setShort(self, data: int, position: int):
         self.checkBufferContentSize(position + 2, True)
-        self.buffer = shortToNetworkBytes(self.buffer, position, data)
+        self.buffer = NetworkData.shortToNetworkBytes(self.buffer, position, data)
         self.useReferenceBuffer = False
 
     def setInt(self, data: int, position: int):
         self.checkBufferContentSize(position + 4, True)
-        self.buffer = intToNetworkBytes(self.buffer, position, data)
+        self.buffer = NetworkData.intToNetworkBytes(self.buffer, position, data)
         self.useReferenceBuffer = False
 
     def setLongLong(self, data: int, position: int):
         self.checkBufferContentSize(position + 8, True)
-        self.buffer = longLongToNetworkBytes(self.buffer, position, data)
+        self.buffer = NetworkData.longLongToNetworkBytes(self.buffer, position, data)
         self.useReferenceBuffer = False
 
     def setFloat(self, data: float, position: int):
         self.checkBufferContentSize(position + 4, True)
-        self.buffer = floatToNetworkBytes(self.buffer, position, data)
+        self.buffer = NetworkData.floatToNetworkBytes(self.buffer, position, data)
         self.useReferenceBuffer = False
 
     def setDouble(self, data: float, position: int):
         self.checkBufferContentSize(position + 8, True)
-        self.buffer = doubleToNetworkBytes(self.buffer, position, data)
+        self.buffer = NetworkData.doubleToNetworkBytes(self.buffer, position, data)
         self.useReferenceBuffer = False
 
     def getChar(self, position: int):
         self.checkBufferContentSize(position + 1, False)
-        return networkBytesToChar(self.buffer, position)
+        return NetworkData.networkBytesToChar(self.buffer, position)
 
     def getShort(self, position: int):
         self.checkBufferContentSize(position + 2, False)
-        return networkBytesToShort(self.buffer, position)
+        short = NetworkData.networkBytesToShort(self.buffer, position)
+        return short
 
     def getInt(self, position: int):
         self.checkBufferContentSize(position + 4, False)
-        return networkBytesToInt(self.buffer, position)
+        return NetworkData.networkBytesToInt(self.buffer, position)
 
     def getLongLong(self, position: int):
         self.checkBufferContentSize(position + 8, False)
-        return networkBytesToLongLong(self.buffer, position)
+        return NetworkData.networkBytesToLongLong(self.buffer, position)
 
     def getFloat(self, position: int):
         self.checkBufferContentSize(position + 4, False)
-        return networkBytesToFloat(self.buffer, position)
+        return NetworkData.networkBytesToFloat(self.buffer, position)
 
     def getDouble(self, position: int):
         self.checkBufferContentSize(position + 8, False)
-        return networkBytesToDouble(self.buffer, position)
+        return NetworkData.networkBytesToDouble(self.buffer, position)
 
     def empty(self):
         return self.bufferContentSize == 0

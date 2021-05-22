@@ -1,9 +1,11 @@
-from comm.comm_socket.Buffer import Buffer
+from comm.comm_data.CommunicationData import CommunicationData
+from comm.comm_data.DataCollection import DataCollection
+from comm.comm_data.MessageType import MessageType
 from comm.comm_socket.Socket import Socket
 from comm.comm_socket.SocketPartner import SocketPartner
 from comm.comm_socket.SocketType import SocketType
-from comm.comm_data.CommunicationData import CommunicationData
-from comm.comm_data.MessageType import MessageType
+from comm.comm_utils.Buffer import Buffer
+from comm.comm_utils.SerializationHeader import SerializationHeader
 from typing import Dict, Optional, Tuple
 
 
@@ -14,6 +16,8 @@ class Communication:
         self.recvBuffer = Buffer()  # type: Buffer
         self.isCopy = False  # type: bool
         self.errorCode = 0  # type: int
+        self.sendHeader = SerializationHeader(created=True)
+        self.recvHeader = SerializationHeader(created=True)
 
     def cleanup(self):
         for socketType, socket in self.sockets.items():
@@ -27,6 +31,166 @@ class Communication:
         comm = Communication()
         self.copyData(comm)
         return comm
+
+    def transmitData(self, socketType: SocketType, data: CommunicationData, withHeader: bool, withMessageType: bool,
+                     retries: int = 0, verbose: bool = False) -> bool:
+        if data is None:
+            return False
+        self.errorCode = 0
+
+        serializeDone = False
+        dataStart = 4 if withHeader else 0
+        serializationState = 0
+        while not serializeDone:
+            if withHeader:
+                self.sendHeader.setData(serializationState, 0, 0)
+            if serializationState == 0 and withMessageType:
+                self.sendBuffer.setBufferContentSize(dataStart + 1)
+                self.sendBuffer.setChar(data.getMessageType().value[0], dataStart)
+            else:
+                serializeDone = data.serialize(self.sendBuffer, dataStart, withHeader, verbose)
+
+            self.errorCode = 0
+            if not self.send(socketType, withHeader, retries, verbose):
+                if self.errorCode == 0:
+                    if verbose:
+                        print("Socket closed: Can not send data serialized bytes...")
+                else:
+                    print("Can not send data serialized bytes... error", self.errorCode)
+                data.resetSerializeState()
+                return False
+            serializationState += 1
+        return True
+
+    def sendRaw(self, socketType: SocketType, data: bytes, dataSize: int, retries: int = 0,
+                verbose: bool = False) -> bool:
+        if not data:
+            return False
+        self.sendBuffer.setData(data, dataSize)
+        self.errorCode = 0
+        if not self.send(socketType, None, retries, verbose):
+            if self.errorCode == 0:
+                if verbose:
+                    print("Socket closed: Can not send data serialized bytes...")
+            else:
+                print("Can not send data serialized bytes... error", self.errorCode)
+            return False
+        return True
+
+    def recvMessageType(self, socketType: SocketType, withHeader: bool, retries: int = 0,
+                        verbose: bool = False) -> Tuple[bool, MessageType]:
+        dataStart = 4 if withHeader else 0
+        self.errorCode = 0
+        if withHeader:
+            self.recvHeader.setData(0, 0, 0)
+        dataLocalDeserializeBuffer, expectedSize = self.preReceiveMessageType(dataStart)
+        receiveResult, _, _ = self.doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries,
+                                             verbose)
+        return self.postReceiveMessageType(receiveResult, dataStart)
+
+    def recvData(self, socketType: SocketType, data: CommunicationData, withHeader: bool, gotMessageType: bool = True,
+                 retries: int = 0, verbose: bool = False):
+        deserializationDone = False
+        receivedSomething = False
+        deserializeState = int(gotMessageType)
+        localRetriesThreshold = 0
+        localRetries = localRetriesThreshold
+        dataLocalDeserializeBuffer = None
+        dataStart = 4 if withHeader else 0
+        messageType = data.getMessageType()
+        while not deserializationDone and localRetries >= 0:
+            self.errorCode = 0
+            if withHeader:
+                self.recvHeader.setData(deserializeState, 0, 0)
+            dataLocalDeserializeBuffer, expectedSize = self.preReceiveData(dataStart, data, withHeader)
+            receiveResult, dataLocalDeserializeBuffer, expectedSize = \
+                self.doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries, verbose)
+            if not self.postReceiveData(data, deserializeState, localRetries, receivedSomething, deserializationDone,
+                                        messageType, dataStart, localRetriesThreshold, receiveResult, withHeader,
+                                        verbose):
+                return False
+
+        if receivedSomething and not deserializationDone:
+            print("After loop: Could not recv", MessageType.messageTypeToString(messageType),
+                  "serialized bytes... error", self.errorCode, "; deserializeState =", deserializeState)
+            print("After loop: Could not recv", MessageType.messageTypeToString(messageType),
+                  "serialized bytes... error", self.errorCode, "; deserializeState =", deserializeState)
+            if data is not None:
+                data.resetDeserializeState()
+            return False
+        elif not receivedSomething:
+            assert self.errorCode == -1
+            if verbose:
+                print("Did not receive anything although expected", MessageType.messageTypeToString(messageType))
+            return False
+
+        return True
+
+    def receiveData(self, socketType: SocketType, data: DataCollection, withHeader: bool, retries: int = 0,
+                    verbose: bool = False):
+        deserializationDone = False
+        receivedSomething = False
+        deserializeState = 0
+        dataStart = 0
+        localRetriesThreshold = 0  # 10
+        localRetries = localRetriesThreshold
+        messageType = None
+        recvData = None
+        if withHeader:
+            dataStart = 4
+
+        while not deserializationDone and localRetries >= 0:
+            self.errorCode = 0
+
+            # receive setup
+            if deserializeState == 0:
+                dataLocalDeserializeBuffer, expectedSize = self.preReceiveMessageType(dataStart)
+            else:
+                dataLocalDeserializeBuffer, expectedSize = self.preReceiveData(dataStart, recvData, withHeader)
+                if verbose:
+                    print("In Communication::fullReceiveData: dataLocalDeserializeBuffer =", dataLocalDeserializeBuffer,
+                          "; expectedSize =", expectedSize, "; deserializeState =", deserializeState)
+
+            # do receive
+            receiveResult, dataLocalDeserializeBuffer, expectedSize = \
+                self.doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries, verbose)
+
+            # post receive
+            if deserializeState == 0:
+                postReceiveResult, messageType = self.postReceiveMessageType(receiveResult, dataStart)
+                if not postReceiveResult:
+                    return False
+
+                if messageType == MessageType.NOTHING:
+                    deserializationDone = True
+                    break
+                else:
+                    recvData = data.get(messageType)
+            else:
+                assert messageType is not None
+                postReceiveResult, recvData, deserializeState, localRetries, receivedSomething, deserializationDone = \
+                    self.postReceiveData(recvData, deserializeState, localRetries, receivedSomething,
+                                         deserializationDone, messageType, dataStart, localRetriesThreshold,
+                                         receiveResult, withHeader, verbose)
+                if not postReceiveResult:
+                    return False
+
+            deserializeState += 1
+
+        if receivedSomething and not deserializationDone:
+            print("After loop: Could not recv", MessageType.messageTypeToString(messageType), "serialized bytes...",
+                  "error", self.errorCode, "; deserializeState =", deserializeState)
+            print("After loop: Could not recv", MessageType.messageTypeToString(messageType), "serialized bytes...",
+                  "error", self.errorCode, "; deserializeState =", deserializeState)
+            if recvData is not None:
+                recvData.resetDeserializeState()
+            return False
+        elif not receivedSomething:
+            assert self.errorCode == -1
+            if verbose:
+                print("Did not receive anything although expected", MessageType.messageTypeToString(messageType))
+            return False
+        return True
 
     def createSocket(self, socketType: SocketType, partner: SocketPartner = None, myPort: int = 0,
                      sendTimeout: int = -1, recvTimeout: int = -1):
@@ -44,174 +208,6 @@ class Communication:
         if not socket:
             return
         socket.setSocketTimeouts(sendTimeout, recvTimeout)
-
-    def sendMessageType(self, socketType: SocketType, messageType: Optional[MessageType], retries: int = 0,
-                        verbose: bool = False) -> bool:
-        if not messageType:
-            return False
-        self.errorCode = 0
-        self.sendBuffer.setBufferContentSize(1)
-        self.sendBuffer.setChar(messageType.value[0], 0)
-        if verbose:
-            print("Before sending message type...")
-        if not self.send(socketType, retries, verbose):
-            if self.errorCode == 0:
-                if verbose:
-                    print("Socket closed: Can not send messageType...", MessageType.messageTypeToString(messageType))
-            else:
-                print("Can not send messageType...", MessageType.messageTypeToString(messageType))
-                if verbose:
-                    print("Can not send messageType...", MessageType.messageTypeToString(messageType))
-            return False
-        return True
-
-    def sendData(self, socketType: SocketType, data: CommunicationData, withMessageType: bool, retries: int = 0,
-                 verbose: bool = False) -> bool:
-        if not data:
-            return False
-        self.errorCode = 0
-
-        if withMessageType:
-            if verbose:
-                print("Before sending message type...")
-            if verbose:
-                print("Message type =", MessageType.messageTypeToString(data.getMessageType()))
-            if not self.sendMessageType(socketType, data.getMessageType(), retries, verbose):
-                if self.errorCode == 0:
-                    if verbose:
-                        print("Socket closed: Can not send data message type bytes...")
-                else:
-                    print("Can not send data message type bytes... error", self.errorCode)
-                return False
-            if verbose:
-                print("Sent message type!!!")
-
-        serializeDone = False
-        while not serializeDone:
-            serializeDone = data.serialize(self.sendBuffer, verbose)
-            self.errorCode = 0
-            if not self.send(socketType, retries, verbose):
-                if self.errorCode == 0:
-                    if verbose:
-                        print("Socket closed: Can not send data serialized bytes...")
-                else:
-                    print("Can not send data serialized bytes... error", self.errorCode)
-                data.resetSerializeState()
-                return False
-
-        return True
-
-    def sendRaw(self, socketType: SocketType, data: bytes, dataSize: int, retries: int = 0,
-                verbose: bool = False) -> bool:
-        if not data:
-            return False
-        self.sendBuffer.setData(data, dataSize)
-        self.errorCode = 0
-        if not self.send(socketType, retries, verbose):
-            if self.errorCode == 0:
-                if verbose:
-                    print("Socket closed: Can not send data serialized bytes...")
-            else:
-                print("Can not send data serialized bytes... error", self.errorCode)
-            return False
-        return True
-
-    def recvMessageType(self, socketType: SocketType, retries: int = 0, verbose: bool = False) \
-            -> Tuple[bool, MessageType]:
-        self.errorCode = 0
-        self.recvBuffer.setBufferContentSize(1)
-
-        result = self.recv(socketType, retries, verbose)
-        assert isinstance(result, bool)
-        if not result:
-            # why < 1 (why is also 0, when the socket closes, ok???)
-            if self.errorCode < 1:
-                return True, MessageType.NOTHING
-            return False, MessageType.NOTHING
-        return True, MessageType.intToMessageType(self.recvBuffer.getChar(0))
-
-    def recvData(self, socketType: SocketType, data: CommunicationData, retries: int = 0, verbose: bool = False) \
-            -> Tuple[bool, CommunicationData]:
-        self.errorCode = 0
-        localRetriesThreshold = 0  # 10
-        localRetries = localRetriesThreshold
-        deserializeState = 0
-
-        deserializeDone = False
-        receivedSomething = False
-
-        while not deserializeDone and localRetries >= 0:
-            if verbose:
-                print("Communication::recvData: LocalRetries =", localRetries, "data->getMessageType() ",
-                      MessageType.messageTypeToString(data.getMessageType()), " deserializeState =", deserializeState)
-            self.errorCode = 0
-
-            dataLocalDeserializeBuffer = data.getDeserializeBuffer()
-            expectedSize = data.getExpectedDataSize()
-            if verbose:
-                print("In Communication::recvData: dataLocalDeserializeBuffer =", dataLocalDeserializeBuffer,
-                      "expectedSize =", expectedSize, " deserializeState =", deserializeState)
-            if dataLocalDeserializeBuffer is not None:
-                receiveResult = self.recv((socketType, dataLocalDeserializeBuffer, expectedSize, expectedSize), retries,
-                                          verbose)
-                assert isinstance(receiveResult, tuple)
-                recvSuccess = receiveResult[0]
-                buffer = Buffer()
-                buffer.setData(receiveResult[1], receiveResult[2])
-                if verbose:
-                    print("ReceiveResult = ", receiveResult)
-            else:
-                self.recvBuffer.setBufferContentSize(expectedSize)
-                """
-                print("Expecting " + str(self.recvBuffer.getBufferContentSize()) + "bytes... (expectedSize = " +
-                      str(expectedSize) + ")")
-                # """
-                recvSuccess = self.recv(socketType, retries, verbose)
-                assert isinstance(recvSuccess, bool)
-                buffer = self.recvBuffer
-
-            if not recvSuccess:
-                if self.errorCode >= 0:
-                    print("Stop loop: Can not recv data serialized bytes... error", self.errorCode,
-                          "deserializeState =", deserializeState)
-                    data.resetDeserializeState()
-                    return False, data
-                elif self.errorCode == -2:
-                    print("Stop loop: Only part of the data has been received before new message started... "
-                          "deserializeState =", deserializeState)
-                    data.resetDeserializeState()
-                    return False, data
-
-            assert (recvSuccess or self.errorCode == -1)
-            # if we received something...
-            if self.errorCode != -1:
-                if verbose:
-                    print("Received something! data->getMessageType()",
-                          MessageType.messageTypeToString(data.getMessageType()))
-                receivedSomething = True
-                deserializeDone = data.deserialize(buffer, 0, verbose)
-                deserializeState += 1
-                localRetries = localRetriesThreshold
-            else:
-                if verbose:
-                    print("Received nothing, decrease local retries!")
-                localRetries -= 1
-
-        if receivedSomething and not deserializeDone:
-            print("After loop: Could not recv", MessageType.messageTypeToString(data.getMessageType()),
-                  "serialized bytes... error", self.errorCode, "deserializeState =", deserializeState)
-            print("After loop: Could not recv", MessageType.messageTypeToString(data.getMessageType()),
-                  "serialized bytes... error", self.errorCode, "deserializeState =", deserializeState)
-            data.resetDeserializeState()
-            return False, data
-        elif not receivedSomething:
-            assert self.errorCode == -1
-            if verbose:
-                print("Did not receive anything although expected ",
-                      MessageType.messageTypeToString(data.getMessageType()))
-            return False, data
-
-        return True, data
 
     def setSocket(self, socketType: SocketType, socket: Socket):
         oldSocket = self.sockets.get(socketType, None)
@@ -272,8 +268,8 @@ class Communication:
             if socket:
                 copy.sockets[socketType] = socket.copy()
 
-    def send(self, sendData: SocketType or Tuple[SocketType, bytes, int], retries: int = 0,
-             verbose: bool = False) -> bool:
+    def send(self, sendData: SocketType or Tuple[SocketType, bytes, int], header: bool or Optional[SerializationHeader],
+             retries: int = 0, verbose: bool = False) -> bool:
         if isinstance(sendData, SocketType):
             socketType = sendData
             buffer = self.sendBuffer
@@ -284,10 +280,76 @@ class Communication:
         socket = self.getSocket(socketType)
         if not socket:
             return False
-        success, self.errorCode = socket.sendBytes(buffer, self.errorCode, retries, verbose)
+        if isinstance(header, bool):
+            header = self.sendHeader if header else None
+        success, self.errorCode = socket.sendBytes(buffer, self.errorCode, header, retries, verbose)
         return success
 
-    def recv(self, recvData: SocketType or Tuple[SocketType, bytes, int, int], retries: int = 0,
+    def preReceiveMessageType(self, dataStart: int) -> Tuple[Optional[bytes], int]:
+        return None, dataStart + 1
+
+    def preReceiveData(self, dataStart: int, recvData: CommunicationData,
+                       withHeader: bool) -> Tuple[Optional[bytes], int]:
+        dataLocalDeserializeBuffer = recvData.getDeserializeBuffer()
+        # don't to the if before, because some CommunicationData depend on calling getDeserializeBuffer!
+        if withHeader:
+            dataLocalDeserializeBuffer = None
+        expectedSize = dataStart + recvData.getExpectedDataSize()
+        return dataLocalDeserializeBuffer, expectedSize
+
+    def doReceive(self, socketType: SocketType, dataLocalDeserializeBuffer: bytes, expectedSize: int, withHeader: bool,
+                  retries: int, verbose: bool) -> Tuple[bool, bytes, int]:
+        if dataLocalDeserializeBuffer is not None:
+            assert (not withHeader)
+            return self.recv((socketType, dataLocalDeserializeBuffer, expectedSize, expectedSize), None, retries,
+                             verbose)
+        else:
+            self.recvBuffer.setBufferContentSize(expectedSize)
+            return self.recv(socketType, withHeader, retries, verbose)
+
+    def postReceiveMessageType(self, receiveResult: bool, dataStart: int) -> Tuple[bool, MessageType]:
+        if not receiveResult:
+            if self.getErrorCode() < 1:
+                messageType = MessageType.NOTHING
+            else:
+                return False, MessageType.NOTHING
+        else:
+            messageType = MessageType.intToMessageType(self.recvBuffer.getChar(dataStart))
+        return True, messageType
+
+    def postReceiveData(self, recvData: CommunicationData, deserializeState: int, localRetries: int,
+                        receivedSomething: bool, deserializationDone: bool, messageType: MessageType, dataStart: int,
+                        localRetriesThreshold: int, receiveResult: bool, withHeader: bool,
+                        verbose: bool) -> Tuple[bool, CommunicationData, int, int, bool, bool]:
+        if not receiveResult:
+            if self.getErrorCode() >= 0:
+                print("Stop loop: Can not recv data serialized bytes... error", self.getErrorCode(),
+                      "; deserializeState =", deserializeState)
+                recvData.resetDeserializeState()
+                return False, recvData, deserializeState, localRetries, receivedSomething, deserializationDone
+            elif self.getErrorCode() == -2:
+                print("Stop loop: Only part of the data has been received before new message started...",
+                      "deserializeState =", deserializeState)
+                recvData.resetDeserializeState()
+                return False, recvData, deserializeState, localRetries, receivedSomething, deserializationDone
+
+        assert (receiveResult or self.getErrorCode() == -1)
+        # if we received something...
+        if self.getErrorCode() != -1:
+            if verbose:
+                print("Received something! data->getMessageType()", MessageType.messageTypeToString(messageType))
+            receivedSomething = True
+            deserializationDone = recvData.deserialize(self.recvBuffer, dataStart, withHeader, verbose)
+            deserializeState += 1
+            localRetries = localRetriesThreshold
+        else:
+            if verbose:
+                print("Received nothing, decrease local retries!")
+            localRetries -= 1
+        return True, recvData, deserializeState, localRetries, receivedSomething, deserializationDone
+
+    def recv(self, recvData: SocketType or Tuple[SocketType, bytes, int, int],
+             expectedHeader: bool or Optional[SerializationHeader], retries: int = 0,
              verbose: bool = False) -> bool or Tuple[bool, bytes, int]:
         if isinstance(recvData, SocketType):
             socket = self.getSocket(recvData)
@@ -300,7 +362,9 @@ class Communication:
                 return False, recvData[1], recvData[2]
             buffer = (recvData[1], recvData[2], recvData[3])
 
-        success, buffer, self.errorCode = socket.receiveBytes(buffer, self.errorCode, retries, verbose)
+        if isinstance(expectedHeader, bool):
+            expectedHeader = self.recvHeader if expectedHeader else None
+        success, buffer, self.errorCode = socket.receiveBytes(buffer, self.errorCode, expectedHeader, retries, verbose)
         if isinstance(buffer, tuple):
             return success, buffer[0], buffer[1]
         else:

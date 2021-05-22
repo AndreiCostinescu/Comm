@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from comm.comm_data.MessageType import MessageType
-from comm.comm_socket.Buffer import Buffer
+from comm.comm_utils.Buffer import Buffer
 from typing import Optional
 
 
@@ -17,7 +17,7 @@ class CommunicationData(ABC):
         self.serializeState = 0
 
     @abstractmethod
-    def serialize(self, buffer: Buffer, verbose: bool) -> bool:
+    def serialize(self, buffer: Buffer, start: int, forceCopy: bool, verbose: bool) -> bool:
         pass
 
     @abstractmethod
@@ -31,5 +31,5 @@ class CommunicationData(ABC):
         self.deserializeState = 0
 
     @abstractmethod
-    def deserialize(self, buffer: Buffer, start: int, verbose: bool) -> bool:
+    def deserialize(self, buffer: Buffer, start: int, forceCopy: bool, verbose: bool) -> bool:
         pass

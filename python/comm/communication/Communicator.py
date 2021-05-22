@@ -1,94 +1,47 @@
 from comm.communication.Communication import Communication
 from comm.comm_data.CommunicationData import CommunicationData
-from comm.comm_data.CommunicatorState import CommunicatorState
 from comm.comm_data.DataCollection import DataCollection
 from comm.comm_data.utils import createCommunicationData
 from comm.comm_data.MessageType import MessageType
 from comm.comm_data.StatusData import StatusData
 from comm.comm_socket.SocketType import SocketType
+from comm.comm_utils.Reference import Reference
 from typing import Optional, Tuple, Callable
 
 
 class Communicator:
-    def __init__(self):
-        self.quit = False
-        self.state = CommunicatorState.COMMUNICATOR_IDLE
-        self.dataCollection = DataCollection()
-
-    def main(self):
-        while not self.quit:
-            self._preMain()
-            try:
-                self._main()
-            except Exception as e:
-                print("Exception caught: " + str(e))
-            self._postMain()
-
-    def stop(self):
-        self.quit = True
-
     @staticmethod
     def send(comm: Communication, socketType: SocketType, data: CommunicationData or MessageType, retries: int = 0,
              verbose: bool = False) -> bool:
-        if isinstance(data, CommunicationData):
-            if not data:
-                return True
-            if not comm.sendData(socketType, data, True, retries, verbose):
-                if comm.getErrorCode() > 0:
-                    print("When sending data... error: " + comm.getErrorString(), str(comm.getErrorCode()))
-                return False
+        if not data:
             return True
-        else:
-            assert isinstance(data, MessageType)
-            if not comm.sendMessageType(socketType, data, retries, verbose):
-                if comm.getErrorCode() > 0:
-                    print("When sending data... error: " + comm.getErrorString(), comm.getErrorCode())
-                    return False
-            return True
+        if not comm.transmitData(socketType, data, False, True, retries, verbose):
+            if comm.getErrorCode() > 0:
+                print("When sending data... error: " + comm.getErrorString(), str(comm.getErrorCode()))
+            return False
+        return True
 
     @staticmethod
-    def syphonComm(comm: Communication, socketType: SocketType, messageType: MessageType,
-                   data: Optional[CommunicationData], quitFlag: bool, retries: int = 0, verbose: bool = False,
-                   syphonRetries: int = 10):
-        return Communicator._syphon(comm, socketType, messageType, data, lambda: not quitFlag, retries, verbose,
-                                    syphonRetries)
-
-    @staticmethod
-    def listenComm(comm: Communication, socketType: SocketType, _dataCollection: DataCollection, quitFlag: bool):
-        return Communicator._listen(comm, socketType, _dataCollection, lambda: not quitFlag)
-
-    @staticmethod
-    def listenForComm(comm: Communication, socketType: SocketType, data: CommunicationData, quitFlag: bool,
-                      countIgnoreOtherMessages: int = -1, countIgnoreMessages: int = -1):
-        return Communicator._listenFor(comm, socketType, data, lambda: not quitFlag, countIgnoreOtherMessages,
-                                       countIgnoreMessages)
-
-    def syphon(self, comm: Communication, socketType: SocketType, messageType: MessageType,
-               data: Optional[CommunicationData], retries: int = 0, verbose: bool = False,
+    def syphon(comm: Communication, socketType: SocketType, messageType: MessageType, data: Optional[CommunicationData],
+               quitFlag: bool, retries: int = 0, verbose: bool = False,
                syphonRetries: int = 10) -> Tuple[bool, MessageType]:
-        return Communicator._syphon(comm, socketType, messageType, data, lambda: not self.quit, retries, verbose,
+        return Communicator._syphon(comm, socketType, messageType, data, (lambda: not quitFlag), retries, verbose,
                                     syphonRetries)
 
-    def listen(self, comm: Communication, socketType: SocketType, _dataCollection: DataCollection) \
-            -> Tuple[bool, MessageType, DataCollection]:
-        return Communicator._listen(comm, socketType, _dataCollection, lambda: not self.quit)
-
-    def listenFor(self, comm: Communication, socketType: SocketType, data: CommunicationData,
-                  countIgnoreOtherMessages: int = -1, countIgnoreMessages: int = -1) -> Tuple[bool, CommunicationData]:
-        return Communicator._listenFor(comm, socketType, data, lambda: not self.quit, countIgnoreOtherMessages,
-                                       countIgnoreMessages)
-
-    def _preMain(self):
-        pass
-
-    def _main(self):
-        pass
-
-    def _postMain(self):
-        pass
+    @staticmethod
+    def listen(comm: Communication, socketType: SocketType, _dataCollection: DataCollection, quitFlag: bool,
+               retries: int = 0, verbose: bool = False) -> Tuple[bool, MessageType, DataCollection]:
+        return Communicator._listen(comm, socketType, _dataCollection, (lambda: not quitFlag), retries, verbose)
 
     @staticmethod
-    def isReceiveErrorOk(errorCode: int, messageType: MessageType, nothingOk: bool) -> Tuple[bool, MessageType]:
+    def listenFor(comm: Communication, socketType: SocketType, data: CommunicationData, quitFlag: bool,
+                  timeoutResult: Reference = None, countIgnoreOtherMessages: int = -1, countIgnoreMessages: int = -1,
+                  retries: int = 0, verbose: bool = False) -> Tuple[bool, CommunicationData]:
+        return Communicator._listenFor(comm, socketType, data, (lambda: not quitFlag), timeoutResult,
+                                       countIgnoreOtherMessages, countIgnoreMessages, retries, verbose)
+
+    @staticmethod
+    def __isReceiveErrorOk(errorCode: int, messageType: MessageType, nothingOk: bool) -> Tuple[bool, MessageType]:
         if errorCode < 0:
             # nothing received
             messageType = MessageType.NOTHING
@@ -110,13 +63,13 @@ class Communicator:
                 data = createCommunicationData(messageType)
             localRetriesBeforeFail = 1 if (syphonRetries < 1) else syphonRetries
             while notQuit() and localRetriesBeforeFail > 0:
-                if not comm.recvData(socketType, data, retries, verbose):
+                if not comm.recvData(socketType, data, False, True, retries, verbose):
                     if comm.getErrorCode() == -1:
                         localRetriesBeforeFail -= 1
                         continue
                     # it shouldn't be possible to receive nothing if we already have received the header!!!
                     # set nothingOk to false!
-                    return Communicator.isReceiveErrorOk(comm.getErrorCode(), messageType, False)
+                    return Communicator.__isReceiveErrorOk(comm.getErrorCode(), messageType, False)
                 return True, messageType
             return False, messageType
         else:
@@ -124,10 +77,11 @@ class Communicator:
 
     @staticmethod
     def _listen(comm: Communication, socketType: SocketType, _dataCollection: DataCollection,
-                notQuit: Callable[[], bool]) -> Tuple[bool, MessageType, DataCollection]:
-        recvSuccess, messageType = comm.recvMessageType(socketType)
+                notQuit: Callable[[], bool], retries: int = 0,
+                verbose: bool = False) -> Tuple[bool, MessageType, DataCollection]:
+        recvSuccess, messageType = comm.recvMessageType(socketType, False, retries, verbose)
         if not recvSuccess:
-            recvErrorOk, messageType = Communicator.isReceiveErrorOk(comm.getErrorCode(), messageType, True)
+            recvErrorOk, messageType = Communicator.__isReceiveErrorOk(comm.getErrorCode(), messageType, True)
             if recvErrorOk:
                 return True, messageType, _dataCollection
             print("Error when receiving message type... setting \"quit\"")
@@ -137,7 +91,7 @@ class Communicator:
             return True, messageType, _dataCollection
 
         data = _dataCollection.get(messageType)
-        syphonResult, messageType = Communicator._syphon(comm, socketType, messageType, data, notQuit)
+        syphonResult, messageType = Communicator._syphon(comm, socketType, messageType, data, notQuit, retries, verbose)
         if not syphonResult:
             print("Error when syphoning data " + MessageType.messageTypeToString(messageType) + "... setting \"quit\"")
             messageType = MessageType.STATUS
@@ -148,13 +102,14 @@ class Communicator:
 
     @staticmethod
     def _listenFor(comm: Communication, socketType: SocketType, data: CommunicationData, notQuit: Callable[[], bool],
-                   countIgnoreOtherMessages: int = -1, countIgnoreMessages: int = -1) -> Tuple[bool, CommunicationData]:
+                   timeoutResult: Reference = None, countIgnoreOtherMessages: int = -1, countIgnoreMessages: int = -1,
+                   retries: int = 0, verbose: bool = False) -> Tuple[bool, CommunicationData]:
         assert data
         messageType = MessageType.NOTHING
         while notQuit():
-            recvResult, messageType = comm.recvMessageType(socketType)
+            recvResult, messageType = comm.recvMessageType(socketType, False, retries, verbose)
             if not recvResult:
-                recvErrorOk, messageType = Communicator.isReceiveErrorOk(comm.getErrorCode(), messageType, True)
+                recvErrorOk, messageType = Communicator.__isReceiveErrorOk(comm.getErrorCode(), messageType, True)
                 if recvErrorOk:
                     continue
                 return False, data
@@ -172,6 +127,8 @@ class Communicator:
                 if countIgnoreMessages > 0:
                     countIgnoreMessages -= 1
                 if countIgnoreOtherMessages == 0 or countIgnoreMessages == 0:
+                    if timeoutResult is not None:
+                        timeoutResult.value = True
                     return False, data
             else:
                 break
@@ -180,7 +137,8 @@ class Communicator:
             return False, data
 
         while notQuit():
-            syphonResult, messageType = Communicator._syphon(comm, socketType, messageType, data, notQuit)
+            syphonResult, messageType = Communicator._syphon(comm, socketType, messageType, data, notQuit, retries,
+                                                             verbose)
             if not syphonResult:
                 if comm.getErrorCode() < 0:
                     continue

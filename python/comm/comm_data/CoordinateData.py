@@ -19,17 +19,17 @@ class CoordinateData(CommunicationData):
     def getMessageType(self) -> MessageType:
         return MessageType.COORDINATE
 
-    def serialize(self, buffer: Buffer, verbose: bool) -> bool:
+    def serialize(self, buffer: Buffer, start: int, forceCopy: bool, verbose: bool) -> bool:
         if self.serializeState == 0:
             buffer.setBufferContentSize(CoordinateData.headerSize)
             if verbose:
                 print("Serialize: ", self.id, ", ", self.time, ", ", self.x, ", ", self.y, ", ", self.touch, ", ",
                       self.buttonFwd, ", ", self.buttonDwn)
-            buffer.setInt(self.id, 0)
-            buffer.setLongLong(self.time, 4)
-            buffer.setDouble(self.x, 12)
-            buffer.setDouble(self.y, 20)
-            buffer.setInt((self.buttonDwn << 2) + (self.buttonFwd << 1) + self.touch, 28)
+            buffer.setInt(self.id, start)
+            buffer.setLongLong(self.time, start + 4)
+            buffer.setDouble(self.x, start + 12)
+            buffer.setDouble(self.y, start + 20)
+            buffer.setInt((self.buttonDwn << 2) + (self.buttonFwd << 1) + self.touch, start + 28)
             self.serializeState = 0
             return True
         else:
@@ -43,7 +43,7 @@ class CoordinateData(CommunicationData):
         else:
             raise RuntimeError("Impossible deserialize state... " + str(self.deserializeState))
 
-    def deserialize(self, buffer: Buffer, start: int, verbose: bool) -> bool:
+    def deserialize(self, buffer: Buffer, start: int, forceCopy: bool, verbose: bool) -> bool:
         if self.deserializeState == 0:
             self.id = buffer.getInt(start)
             self.time = buffer.getLongLong(start + 4)

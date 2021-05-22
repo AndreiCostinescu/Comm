@@ -11,6 +11,10 @@ class DataCollection:
     def reset(self):
         self.data.clear()
 
+    def set(self, messageType: MessageType, commData: CommunicationData):
+        stringMessageType = MessageType.messageTypeToString(messageType)
+        self.data[stringMessageType] = commData
+
     def get(self, messageType: MessageType):
         communicationData = self.data.get(MessageType.messageTypeToString(messageType), None)
         if messageType != MessageType.NOTHING and communicationData is None:

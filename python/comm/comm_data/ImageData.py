@@ -1,7 +1,7 @@
 import numpy as np
 from comm.comm_data.CommunicationData import CommunicationData
 from comm.comm_data.MessageType import MessageType
-from comm.comm_socket.Buffer import Buffer
+from comm.comm_utils.Buffer import Buffer
 
 
 class ImageData(CommunicationData):
@@ -29,7 +29,6 @@ class ImageData(CommunicationData):
     @staticmethod
     def cvTypeToNPType(cvType: int) -> np.dtype:
         cvType &= 7
-
         if cvType == 0:
             npType = np.uint8
         elif cvType == 1:
@@ -47,6 +46,7 @@ class ImageData(CommunicationData):
         else:
             assert cvType == 7
             npType = np.float16
+        # noinspection PyTypeChecker
         return npType
 
     @staticmethod
@@ -77,18 +77,18 @@ class ImageData(CommunicationData):
     def getMessageType(self) -> MessageType:
         return MessageType.IMAGE
 
-    def serialize(self, buffer: Buffer, verbose: bool) -> bool:
+    def serialize(self, buffer: Buffer, start: int, forceCopy: bool, verbose: bool) -> bool:
         if self.serializeState == 0:
             buffer.setBufferContentSize(ImageData.headerSize)
             if verbose:
                 print("Serialize: ", self.image.shape[0], ", ", self.image.shape[1], ", ", self.image.shape[2], ", ",
                       self.image.size)
 
-            buffer.setInt(self.id, 0)
-            buffer.setInt(self.imageHeight, 4)
-            buffer.setInt(self.imageWidth, 8)
-            buffer.setInt(self.imageType, 12)
-            buffer.setInt(self.contentSize, 16)
+            buffer.setInt(self.id, start)
+            buffer.setInt(self.imageHeight, start + 4)
+            buffer.setInt(self.imageWidth, start + 8)
+            buffer.setInt(self.imageType, start + 12)
+            buffer.setInt(self.contentSize, start + 16)
             if verbose:
                 dataBuffer = buffer.getBuffer()
                 print("Serialized content: ")
@@ -98,7 +98,12 @@ class ImageData(CommunicationData):
             self.serializeState = 1
             return False
         elif self.serializeState == 1:
-            buffer.setReferenceToData(self.image.tobytes(), self.contentSize)
+            if forceCopy:
+                buffer.setData(self.image.tobytes(), self.contentSize, start)
+            else:
+                if start != 0:
+                    raise ValueError("Can not set a reference to data not starting at the first position!")
+                buffer.setReferenceToData(self.image.tobytes(), self.contentSize)
             self.serializeState = 0
             return True
         else:
