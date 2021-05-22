@@ -361,11 +361,11 @@ namespace Comm.socket {
                         errorCode = 0;
                         return false;
                     }
-                    localBytesSent = this.socket.SendTo(this.sendBuffer.getBuffer(), localSendOffset, sendSize, 0, toAddress);
+                    localBytesSent = this.socket.SendTo(this.sendBuffer.getBuffer(), localSendOffset, (int) this.sendBuffer.getBufferContentSize(), 0, toAddress);
                     break;
                 }
                 case SocketType.TCP: {
-                    localBytesSent = this.socket.Send(this.sendBuffer.getBuffer(), localSendOffset, sendSize, 0);
+                    localBytesSent = this.socket.Send(this.sendBuffer.getBuffer(), localSendOffset, (int) this.sendBuffer.getBufferContentSize(), 0);
                     break;
                 }
                 default: {
@@ -481,118 +481,6 @@ namespace Comm.socket {
                 // do not consider received data from other partners than the saved partner
                 return false;
             }
-            return true;
-        }
-
-        private bool performReceiveOld(byte[] buffer, ref int localReceivedBytes, ref bool overwritePartner, ref bool recvFromCorrectPartner,
-                                       int receiveSize, int receivedBytes, bool recvFirstMessage, bool verbose = false) {
-            recvFromCorrectPartner = true;
-            switch (this.protocol) {
-                case SocketType.UDP: {
-                    if (verbose) {
-                        Console.WriteLine("Pre recvfrom... already recvBytes = " + receivedBytes);
-                    }
-                    localReceivedBytes = this.socket.ReceiveFrom(buffer, receivedBytes, receiveSize, 0, ref this.recvAddress);
-                    Debug.Assert(localReceivedBytes >= 0);
-                    recvFromCorrectPartner = this.checkCorrectReceivePartner(ref overwritePartner, recvFirstMessage);
-                    if (verbose) {
-                        Console.WriteLine("Post recvfrom... managed to receive localReceivedBytes = " + localReceivedBytes);
-                        /*
-                        for (int i = 0; i < localReceivedBytes; i++) {
-                            Console.WriteLine((int) buffer[i + receivedBytes] + ", ");
-                        }
-                        Console.WriteLine();
-                        //*/
-                    }
-                    break;
-                }
-                case SocketType.UDP_HEADER: {
-                    if (verbose) {
-                        Console.WriteLine("Pre recvfrom... already recvBytes = " + receivedBytes + ", expecting " + (4 + receiveSize));
-                    }
-
-                    if (!recvFirstMessage && !this.recvBuffer.empty()) {
-                        localReceivedBytes = (int)this.recvBuffer.getBufferContentSize();
-                    } else {
-                        Debug.Assert(this.recvBuffer.empty());
-                        Debug.Assert(this.recvBuffer.getBuffer() != null);
-                        localReceivedBytes = this.socket.ReceiveFrom(this.recvBuffer.getBuffer(), 0, 4 + receiveSize, 0, ref this.recvAddress);
-                    }
-
-                    if (localReceivedBytes >= 0) {
-                        if (localReceivedBytes < 4) {
-                            Console.WriteLine("Wrong protocol for this socket!!!");
-                            localReceivedBytes = -1;
-                            return false;
-                        }
-                        this.recvBuffer.setBufferContentSize((ulong)localReceivedBytes);
-                        localReceivedBytes -= 4;
-                        if (verbose) {
-                            Console.WriteLine("Should have received " + (ushort)this.recvBuffer.getShort(2) + ", received " + localReceivedBytes);
-                            for (int i = 0; i < 4; i++) {
-                                Console.Write(this.recvBuffer.getByte(i) + ", ");
-                            }
-                            Console.WriteLine();
-                        }
-                    }
-
-                    if (verbose) {
-                        Console.WriteLine("Post recvfrom... localReceivedBytes = " + localReceivedBytes + "; overwritePartner = " + overwritePartner);
-                    }
-
-                    if (localReceivedBytes >= 0) {
-                        if (!recvFirstMessage) {
-                            if (this.recvBuffer.getByte(0) != 0) {
-                                // wrong data, ignore, pretend like nothing was received (like recv from wrong partner)
-                                recvFromCorrectPartner = false;
-                            } else {
-                                recvFromCorrectPartner = this.checkCorrectReceivePartner(ref overwritePartner, recvFirstMessage);
-                                Debug.Assert(recvFromCorrectPartner);
-                                utils.Utils.memcpy(buffer, (ulong)receivedBytes, this.recvBuffer.getBuffer(), 4, (ulong)localReceivedBytes);
-                            }
-                            // make recvBuffer empty
-                            this.recvBuffer.setBufferContentSize(0);
-                        } else {
-                            if (this.recvBuffer.getByte(0) == 0) {
-                                // received start of another message...
-                                // check if the partner is the same
-                                recvFromCorrectPartner = this.checkCorrectReceivePartner(ref overwritePartner, recvFirstMessage);
-                                if (recvFromCorrectPartner) {
-                                    // if the partner is ok, interrupt receive! and don't reset the recvBuffer
-                                    throw new System.Net.Sockets.SocketException(10060);  // <- to ensure that this will be interpreted as a timeout :)
-                                } else {
-                                    // if the partner is not ok, ignore message
-                                    this.recvBuffer.setBufferContentSize(0);
-                                }
-                            } else {
-                                utils.Utils.memcpy(buffer, (ulong)receivedBytes, this.recvBuffer.getBuffer(), 4, (ulong)localReceivedBytes);
-                                this.recvBuffer.setBufferContentSize(0);
-                            }
-                        }
-                    }
-
-                    if (verbose) {
-                        Console.WriteLine("Post recvfrom... managed to receive localReceivedBytes = " + localReceivedBytes);
-                        /*
-                        for (int i = 0; i < localReceivedBytes; i++) {
-                            Console.Write((int) buffer[i + receivedBytes] + ", ");
-                        }
-                        Console.WriteLine();
-                        //*/
-                    }
-                    break;
-                }
-                case SocketType.TCP: {
-                    localReceivedBytes = this.socket.Receive(buffer, receivedBytes, receiveSize, 0);
-                    break;
-                }
-                default: {
-                    throw new Exception("Unknown SocketType " + this.protocol);
-                }
-            }
-
-            // if we read here and no exception has been thrown, assert that we have received something :)
-            Debug.Assert(localReceivedBytes >= 0);
             return true;
         }
 
