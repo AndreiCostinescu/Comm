@@ -34,8 +34,8 @@ namespace comm {
         bool recvData(SocketType socketType, CommunicationData *data, bool withHeader, bool gotMessageType = true,
                       int retries = 0, bool verbose = false);
 
-        bool receiveData(SocketType socketType, DataCollection *data, bool withHeader, bool withMessageType = true,
-                         int retries = 0, bool verbose = false);
+        bool receiveData(SocketType socketType, DataCollection *data, bool withHeader, int retries = 0,
+                         bool verbose = false);
 
         bool receiveRaw(SocketType socketType, char *&data, int dataLength, int retries = 0, bool verbose = false);
 

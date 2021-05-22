@@ -145,8 +145,8 @@ bool Communication::recvData(SocketType socketType, CommunicationData *data, boo
     return true;
 }
 
-bool Communication::receiveData(SocketType socketType, DataCollection *data, bool withHeader, bool withMessageType,
-                                int retries, bool verbose) {
+bool Communication::receiveData(SocketType socketType, DataCollection *data, bool withHeader, int retries,
+                                bool verbose) {
     bool deserializationDone = false, receiveResult, receivedSomething = false;
     int deserializeState = 0, dataStart = 0;
     int localRetriesThreshold = 0, localRetries = localRetriesThreshold;  // 10
@@ -162,7 +162,7 @@ bool Communication::receiveData(SocketType socketType, DataCollection *data, boo
         this->errorCode = 0;
 
         // receive setup
-        if (deserializeState == 0 && withMessageType) {
+        if (deserializeState == 0) {
             this->preReceiveMessageType(dataLocalDeserializeBuffer, expectedSize, dataStart);
         } else {
             this->preReceiveData(dataLocalDeserializeBuffer, expectedSize, dataStart, recvData, withHeader);
@@ -178,7 +178,7 @@ bool Communication::receiveData(SocketType socketType, DataCollection *data, boo
                                         verbose);
 
         // post receive
-        if (deserializeState == 0 && withMessageType) {
+        if (deserializeState == 0) {
             if (!this->postReceiveMessageType(messageType, receiveResult, dataStart)) {
                 return false;
             }

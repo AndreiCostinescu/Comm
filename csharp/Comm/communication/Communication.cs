@@ -142,7 +142,7 @@ namespace Comm.communication {
             return true;
         }
 
-        public bool receiveData(SocketType socketType, DataCollection data, bool withHeader, bool withMessageType = true, int retries = 0, bool verbose = false) {
+        public bool receiveData(SocketType socketType, DataCollection data, bool withHeader, int retries = 0, bool verbose = false) {
             bool deserializationDone = false, receiveResult, receivedSomething = false;
             int deserializeState = 0, dataStart = 0;
             int localRetriesThreshold = 0, localRetries = localRetriesThreshold;  // 10
@@ -158,7 +158,7 @@ namespace Comm.communication {
                 this.errorCode = 0;
 
                 // receive setup
-                if (deserializeState == 0 && withMessageType) {
+                if (deserializeState == 0) {
                     this.preReceiveMessageType(ref dataLocalDeserializeBuffer, ref expectedSize, dataStart);
                 } else {
                     this.preReceiveData(ref dataLocalDeserializeBuffer, ref expectedSize, dataStart, recvData, withHeader);
@@ -172,7 +172,7 @@ namespace Comm.communication {
                 receiveResult = this.doReceive(socketType, ref dataLocalDeserializeBuffer, ref expectedSize, withHeader, retries, verbose);
 
                 // post receive
-                if (deserializeState == 0 && withMessageType) {
+                if (deserializeState == 0) {
                     if (!this.postReceiveMessageType(ref messageType, receiveResult, dataStart)) {
                         return false;
                     }
