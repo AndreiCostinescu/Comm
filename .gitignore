@@ -4,3 +4,9 @@
 *__pycache__*
 *.pyc
 
+*.vs
+
+csharp/*.sln
+csharp/*.csproj
+csharp/bin
+csharp/obj

@@ -1,7 +1,6 @@
 ﻿using Comm.communication;
 using Comm.data;
 using Comm.socket;
-using DesignAIRobotics.Client;
 using System;
 using System.Diagnostics;
 using System.Net;
@@ -671,7 +670,7 @@ namespace Comm {
     }
 
     public static class Tester {
-        static void test(string[] args) {
+        static void Main(string[] args) {
             Console.WriteLine("Hello World!");
 
             TestClient.test();
