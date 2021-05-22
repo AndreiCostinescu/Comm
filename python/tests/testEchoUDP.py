@@ -20,12 +20,12 @@ def createUDPEcho(socketType: SocketType):
             quitFlag = True
             break
         elif messageType != MessageType.NOTHING:
-            print("Received message type ", MessageType.messageTypeToString(messageType))
+            print("Received message type", MessageType.messageTypeToString(messageType))
 
         if messageType == MessageType.STATUS:
             print("Connection from", comm.getPartner(socketType).getStringAddress())
             comm.setOverwritePartner(socketType, False)
-            recvSuccess, status = comm.recvData(socketType, status, False, True, -1, verbose)  # type: bool, StatusData
+            recvSuccess = comm.recvData(socketType, status, False, True, -1, verbose)  # type: bool
             if not recvSuccess:
                 print("Error when recvData (status): ", comm.getErrorCode(), ", ", comm.getErrorString(), sep="")
                 quitFlag = True
