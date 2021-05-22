@@ -1,5 +1,4 @@
-﻿
-namespace Comm.utils {
+﻿namespace Comm.utils {
     class Utils {
         public static int strcmp(string s1, string s2) {
             int i = 0, s1Len = s1.Length, s2Len = s2.Length;

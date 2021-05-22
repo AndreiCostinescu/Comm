@@ -62,24 +62,6 @@ namespace Comm {
             return this.getter;
         }
 
-        /*
-        public void setControlRequestView(ControlRequestView controlRequestView) {
-            this.controlRequestView = controlRequestView;
-        }
-
-        public void setControlSelectView(ControlSelectView controlSelectView) {
-            this.controlSelectView = controlSelectView;
-        }
-
-        public void setControlRobotView(ControlRobotView controlRobotView) {
-            this.robotView = controlRobotView;
-        }
-
-        public void setControlUploadView(ControlUploadView controlUploadView) {
-            this.uploadView = controlUploadView;
-        }
-        //*/
-
         public bool connect(ref string errorMessage) {
             try {
                 if (this.serverPartner != null) {
@@ -162,15 +144,6 @@ namespace Comm {
             }
             this.getter.resetDrawingArea();
         }
-
-        /*
-        private static StreamImageSource GenerateImageSource(BitmapModel image) {
-            // Create MemoryStream from buffer with bitmap; Convert to StreamImageSource.
-            return (StreamImageSource) StreamImageSource.FromStream(() => {
-                return new MemoryStream(image.buffer);
-            });
-        }
-        //*/
 
         private void recvControlFromServerLoop(Communication partner, DataCollection dataCollection) {
             MessageType messageType;
@@ -475,7 +448,31 @@ namespace Comm {
         private bool commQuit;
         private CoordinateGetter getter;
         private Communication serverPartner;
+
         /*
+        public void setControlRequestView(ControlRequestView controlRequestView) {
+            this.controlRequestView = controlRequestView;
+        }
+
+        public void setControlSelectView(ControlSelectView controlSelectView) {
+            this.controlSelectView = controlSelectView;
+        }
+
+        public void setControlRobotView(ControlRobotView controlRobotView) {
+            this.robotView = controlRobotView;
+        }
+
+        public void setControlUploadView(ControlUploadView controlUploadView) {
+            this.uploadView = controlUploadView;
+        }
+
+        private static StreamImageSource GenerateImageSource(BitmapModel image) {
+            // Create MemoryStream from buffer with bitmap; Convert to StreamImageSource.
+            return (StreamImageSource) StreamImageSource.FromStream(() => {
+                return new MemoryStream(image.buffer);
+            });
+        }
+
         private ControlRequestView controlRequestView;
         private ControlSelectView controlSelectView;
         private ControlRobotView robotView;
