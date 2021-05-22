@@ -1,7 +1,9 @@
 import socket
+import struct
 import sys
 from comm.comm_socket.utils import prepareBuffer
 from comm.comm_utils.NetworkData import NetworkData
+from comm.comm_utils.utils import equal
 
 
 def test():
@@ -66,14 +68,14 @@ def test():
 
     for factor in range(2, 5):
         z = 1.0
-        while z > 1e-46:
-            print(z)
+        while z > 7007e-49:
+            print(z, struct.pack("<f", z))
             buffer, bufferSize = prepareBuffer(buffer, bufferSize, 4)
             buffer = NetworkData.floatToNetworkBytes(buffer, 0, z)
             resF = NetworkData.networkBytesToFloat(buffer, 0)
             if resF != z:
-                print("Error at z = ", z, ", res = ", resF, sep="")
-            assert (resF == z)
+                print("Error at z = ", z, ", res = ", resF, "; pack-struct(z) = ", struct.pack("<f", z), sep="")
+            assert (equal(resF, z, tol=1e-7))
             z /= factor
     print("Finished float-tests")
 
@@ -86,7 +88,7 @@ def test():
             resD = NetworkData.networkBytesToDouble(buffer, 0)
             if resD != z:
                 print("Error at z = ", z, ", res = ", resD, sep="")
-            assert (resD == z)
+            assert (equal(resD, z, tol=1e-9))
             z /= factor
     print("Finished double-tests")
 
