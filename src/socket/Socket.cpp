@@ -135,6 +135,12 @@ bool Socket::initialize(SocketType _protocol, SocketPartner *_partner, int _myPo
     this->isCopy = false;
     this->initialized = false;
     this->deletePartner = false;
+    if (this->sendBuffer == nullptr) {
+        this->sendBuffer = new Buffer(CLIENT_MAX_MESSAGE_BYTES + 4);
+    }
+    if (this->recvBuffer == nullptr) {
+        this->recvBuffer = new Buffer(CLIENT_MAX_MESSAGE_BYTES + 4);
+    }
     return this->initialize();
 }
 

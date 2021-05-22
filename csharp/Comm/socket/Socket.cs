@@ -138,6 +138,12 @@ namespace Comm.socket {
             this.myself = new SocketPartner("", _myPort, false);
             this.sendTimeout = _sendTimeout;
             this.recvTimeout = _recvTimeout;
+            if (this.sendBuffer == None) {
+                this.sendBuffer = new Buffer(CLIENT_MAX_MESSAGE_BYTES + 4);
+            }
+            if (this.recvBuffer == None) {
+                this.recvBuffer = new Buffer(CLIENT_MAX_MESSAGE_BYTES + 4);
+            }
             return this.initialize();
         }
 
