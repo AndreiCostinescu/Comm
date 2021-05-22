@@ -45,6 +45,8 @@ def memcpy(destBuffer: bytes or bytearray, destStart: int, srcBuffer: bytes, src
     newSize = len(newBuffer)
     assert (initSize == newSize), "{} vs. {}".format(initSize, newSize)
     """
+    if size == 0:
+        return destBuffer
     if isinstance(destBuffer, bytearray):
         destBuffer[destStart:destStart + size] = srcBuffer[srcStart:srcStart + size]
         return destBuffer
@@ -52,6 +54,8 @@ def memcpy(destBuffer: bytes or bytearray, destStart: int, srcBuffer: bytes, src
 
 
 def memset(destBuffer: bytes or bytearray, destStart: int, value: int, size: int) -> bytes:
+    if size == 0:
+        return destBuffer
     if isinstance(destBuffer, bytearray):
         destBuffer[destStart:destStart + size] = [value] * size
         return destBuffer
