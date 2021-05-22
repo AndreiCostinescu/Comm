@@ -74,8 +74,8 @@ namespace Comm.data {
                     return false;
                 }
                 case 1: {
-                    Debug.Assert((buffer.getBufferContentSize() - (ulong)start) == (ulong)this.expectedDataSize);
-                    this.data.setData(buffer.getBuffer(), (ulong)this.expectedDataSize, (ulong)start);
+                    Debug.Assert((buffer.getBufferContentSize() - (ulong) start) == (ulong) this.expectedDataSize);
+                    this.data.setData(buffer.getBuffer(), (ulong) this.expectedDataSize, (ulong) start);
                     this.deserializeState = 0;
                     return true;
                 }

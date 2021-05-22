@@ -79,7 +79,7 @@ namespace Comm.data {
                     return false;
                 }
                 case 1: {
-                    Debug.Assert(buffer.getBufferContentSize() == (ulong)this.dataSize);
+                    Debug.Assert((buffer.getBufferContentSize() - (ulong) start) == (ulong) this.dataSize);
                     this.setData(buffer.getBuffer(), this.dataSize);
                     this.deserializeState = 0;
                     return true;

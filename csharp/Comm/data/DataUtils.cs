@@ -16,6 +16,9 @@ namespace Comm.data {
                 case MessageType.STATUS: {
                     return new StatusData();
                 }
+                case MessageType.BYTES: {
+                    return new BytesData();
+                }
                 default: {
                     throw new Exception("Unknown message type: " + messageType);
                 }
