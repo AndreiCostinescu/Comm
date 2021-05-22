@@ -516,6 +516,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
     }
 
     bool withHeader = (expectedHeader != nullptr || this->protocol == UDP_HEADER);
+    int dataStart = (withHeader) ? 4 : 0;
     if (withHeader && !recvFirstMessage && !this->recvBuffer->empty()) {
         localReceivedBytes = (int) this->recvBuffer->getBufferContentSize();
     } else {
@@ -525,12 +526,12 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                 assert (this->recvBuffer->empty());
                 assert (this->recvBuffer->getBuffer() != nullptr);
                 this->recvAddressLength = sizeof(this->recvAddress);
-                localReceivedBytes = recvfrom(this->socket, this->recvBuffer->getBuffer(), 4 + receiveSize, 0,
+                localReceivedBytes = recvfrom(this->socket, this->recvBuffer->getBuffer(), dataStart + receiveSize, 0,
                                               (struct sockaddr *) (&this->recvAddress), &this->recvAddressLength);
                 break;
             }
             case TCP: {
-                localReceivedBytes = recv(this->socket, this->recvBuffer->getBuffer(), receiveSize, 0);
+                localReceivedBytes = recv(this->socket, this->recvBuffer->getBuffer(), dataStart + receiveSize, 0);
                 break;
             }
             default : {
@@ -568,7 +569,6 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
         return true;
     }
 
-    int dataStart = (withHeader) ? 4 : 0;
     if (withHeader) {
         // check serialization iteration
         if (expectedHeader != nullptr && this->recvBuffer->getChar(0) != expectedHeader->getSerializationIteration()) {
