@@ -74,6 +74,16 @@ long long NetworkData::networkBytesToLongLong(const char *buffer, int start) {
     return a;
 }
 
+void NetworkData::floatToNetworkBytes(char *buffer, int start, float value) {
+    memcpy(buffer + start, &value, sizeof(float));
+}
+
+float NetworkData::networkBytesToFloat(const char *buffer, int start) {
+    float a;
+    memcpy(&a, buffer + start, sizeof(float));
+    return a;
+}
+
 void NetworkData::doubleToNetworkBytes(char *buffer, int start, double value) {
     memcpy(buffer + start, &value, sizeof(double));
 }
@@ -94,14 +104,3 @@ double NetworkData::networkBytesToDouble(const char *buffer, int start) {
     return a;
     //*/
 }
-
-void NetworkData::floatToNetworkBytes(char *buffer, int start, float value) {
-    memcpy(buffer + start, &value, sizeof(float));
-}
-
-float NetworkData::networkBytesToFloat(const char *buffer, int start) {
-    float a;
-    memcpy(&a, buffer + start, sizeof(float));
-    return a;
-}
-
