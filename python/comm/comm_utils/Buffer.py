@@ -1,4 +1,3 @@
-from comm.comm_socket.utils import newBuffer
 from comm.comm_utils.utils import memcpy, memset
 from comm.comm_utils.NetworkData import NetworkData
 from typing import Optional
@@ -123,7 +122,7 @@ class Buffer:
             oldBuffer = self.buffer
             oldSize = self.bufferSize
 
-            self.buffer = newBuffer(desiredSize)
+            self.buffer = bytes(desiredSize)
             self.bufferSize = desiredSize
 
             if oldSize > 0:

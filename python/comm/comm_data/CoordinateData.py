@@ -1,6 +1,6 @@
 from comm.comm_data.CommunicationData import CommunicationData
 from comm.comm_data.MessageType import MessageType
-from comm.comm_socket.Buffer import Buffer
+from comm.comm_utils.Buffer import Buffer
 
 
 class CoordinateData(CommunicationData):

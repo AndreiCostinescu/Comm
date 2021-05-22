@@ -1,4 +1,3 @@
-from comm.comm_socket.Buffer import Buffer
 from comm.comm_socket.Socket import Socket
 from comm.comm_socket.SocketPartner import SocketPartner
 from comm.comm_socket.SocketType import SocketType

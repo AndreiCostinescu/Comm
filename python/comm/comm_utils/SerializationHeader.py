@@ -1,7 +1,7 @@
-from Buffer import Buffer
-from typing import Optional
-from comm.comm_utils.utils import memcpy, memset, networkToHostBytes, hostToNetworkBytes
+from comm.comm_utils.Buffer import Buffer
 from comm.comm_utils.NetworkData import NetworkData
+from comm.comm_utils.utils import memcpy, memset, networkToHostBytes, hostToNetworkBytes
+from typing import Optional
 
 
 class SerializationHeader:
