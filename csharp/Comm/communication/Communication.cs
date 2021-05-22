@@ -115,7 +115,7 @@ namespace Comm.communication {
             while (!deserializationDone && localRetries >= 0) {
                 this.errorCode = 0;
                 if (withHeader) {
-                    this.recvHeader.setData((byte) deserializeState, 0, 0);
+                    this.recvHeader.setData((byte)deserializeState, 0, 0);
                 }
                 this.preReceiveData(ref dataLocalDeserializeBuffer, ref expectedSize, dataStart, data, withHeader);
                 receiveResult = this.doReceive(socketType, ref dataLocalDeserializeBuffer, ref expectedSize, withHeader, retries,
@@ -126,7 +126,7 @@ namespace Comm.communication {
                 }
             }
             if (receivedSomething && !deserializationDone) {
-                Console.WriteLine("After loop: Could not recv " + MessageTypeConverter.messageTypeToString(messageType) + 
+                Console.WriteLine("After loop: Could not recv " + MessageTypeConverter.messageTypeToString(messageType) +
                                   " serialized bytes... error " + this.errorCode + "; deserializeState = " + deserializeState);
                 if (data != null) {
                     data.resetDeserializeState();
@@ -334,7 +334,7 @@ namespace Comm.communication {
         }
 
         protected virtual bool send(SocketType socketType, bool withHeader, int retries, bool verbose) {
-            return this.send(socketType, this.sendBuffer.getBuffer(), this.sendBuffer.getBufferContentSize(), 
+            return this.send(socketType, this.sendBuffer.getBuffer(), this.sendBuffer.getBufferContentSize(),
                 ((withHeader) ? this.sendHeader : null), retries, verbose);
         }
 

@@ -22,7 +22,7 @@ namespace Comm.communication {
 
         private void listen() {
             this.socket.getSocket().Listen(this.backlog);
-        } 
+        }
 
         public Communication acceptCommunication() {
             try {
@@ -39,7 +39,7 @@ namespace Comm.communication {
                 int errorCode = se.ErrorCode;
                 if (errorCode == 10035) {
                     // Timeout occurred!
-                    return null; 
+                    return null;
                 } else {
                     Console.WriteLine("ErrorCode in acceptCommunication = " + errorCode);
                     this.initServerSocket();

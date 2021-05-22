@@ -54,5 +54,5 @@ namespace Comm.data {
         }
     };
 
-    
+
 }

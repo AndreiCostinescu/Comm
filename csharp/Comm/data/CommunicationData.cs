@@ -1,4 +1,5 @@
-﻿namespace Comm.data {
+﻿
+namespace Comm.data {
     public abstract class CommunicationData {
         public CommunicationData() {
             this.serializeState = 0;

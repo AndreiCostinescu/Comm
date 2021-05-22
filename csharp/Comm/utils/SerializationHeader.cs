@@ -37,10 +37,10 @@ namespace Comm.utils {
         }
 
         public void setInt(int header, bool local = true) {
-            this.setSendSize((ushort) (header & 65535), local);  // mod 2^16
+            this.setSendSize((ushort)(header & 65535), local);  // mod 2^16
             header >>= 16;  // div 2^16
-            this.setSendIteration((byte) (header & 255));  // mod 2^8
-            this.setSerializationIteration((byte) (header >> 8));  // div 2^8
+            this.setSendIteration((byte)(header & 255));  // mod 2^8
+            this.setSerializationIteration((byte)(header >> 8));  // div 2^8
         }
 
         public void setData(byte _serializationIteration, byte _sendIteration, ushort _sendSize, bool local = true) {
@@ -66,7 +66,7 @@ namespace Comm.utils {
         }
 
         public void setSendSize(ushort _sendSize, bool setLocal = true) {
-            short sendSize = (short) ((setLocal) ? _sendSize : IPAddress.NetworkToHostOrder(_sendSize));
+            short sendSize = (short)((setLocal) ? _sendSize : IPAddress.NetworkToHostOrder(_sendSize));
             if (this.passedBuffer != null) {
                 utils.Utils.memcpy(this.localBuffer, 2, BitConverter.GetBytes(sendSize), 0, 2);
             } else {
@@ -78,7 +78,7 @@ namespace Comm.utils {
             buffer[start] = this.getSerializationIteration();
             buffer[start + 1] = this.getSendIteration();
             ushort x = this.getSendSize(setLocal);
-            utils.Utils.memcpy(buffer, (ulong) start + 2, BitConverter.GetBytes(x), 0, NetworkData.shortSize);
+            utils.Utils.memcpy(buffer, (ulong)start + 2, BitConverter.GetBytes(x), 0, NetworkData.shortSize);
         }
 
         public void setBuffer(utils.Buffer buffer, bool setLocal, int start = 0) {
@@ -104,14 +104,14 @@ namespace Comm.utils {
         public ushort getSendSize(bool getLocal = true) {
             ushort sendSize;
             if (this.passedBuffer != null) {
-                sendSize = (ushort) BitConverter.ToInt16(this.localBuffer, 2);
+                sendSize = (ushort)BitConverter.ToInt16(this.localBuffer, 2);
             } else {
-                sendSize = (ushort) this.passedBuffer.getShort(2);
+                sendSize = (ushort)this.passedBuffer.getShort(2);
             }
             if (getLocal) {
                 return sendSize;
             } else {
-                return (ushort) IPAddress.HostToNetworkOrder((short) sendSize);
+                return (ushort)IPAddress.HostToNetworkOrder((short)sendSize);
             }
         }
 

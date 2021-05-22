@@ -26,7 +26,7 @@ namespace Comm.socket {
             // cout << "Initialize new buffer!" << endl;
             buffer = new byte[desiredLength];
             // cout << "Initialized new buffer (" << bufferLength << ")!" << endl;
-            utils.Utils.memset(buffer, 0, 0, (ulong) desiredLength * sizeof(byte));
+            utils.Utils.memset(buffer, 0, 0, (ulong)desiredLength * sizeof(byte));
         }
 
         public static void prepareBuffer(ref byte[] buffer, ref int bufferLength, int desiredLength) {

@@ -1,8 +1,8 @@
 ﻿using Comm.utils;
 using DesignAIRobotics.Utils;
 using System;
-using System.Net;
 using System.Diagnostics;
+using System.Net;
 
 namespace Comm.socket {
     public class Socket {
@@ -214,7 +214,7 @@ namespace Comm.socket {
             acceptSocket = new Socket(null);
             Console.WriteLine("Socket Initialization: accepting tcp connection...");
             acceptSocket.socket = acceptedSocket;
-            acceptSocket.partner = new SocketPartner((IPEndPoint) acceptSocket.socket.RemoteEndPoint);
+            acceptSocket.partner = new SocketPartner((IPEndPoint)acceptSocket.socket.RemoteEndPoint);
 
             if (verbose) {
                 Console.WriteLine("Found connection...");
@@ -321,9 +321,9 @@ namespace Comm.socket {
             if (this.myself == null || this.myself.getPort() == 0) {
                 // this.socket.RemoteEndPoint;
                 if (this.myself == null) {
-                    this.myself = new SocketPartner((IPEndPoint) this.socket.LocalEndPoint);
+                    this.myself = new SocketPartner((IPEndPoint)this.socket.LocalEndPoint);
                 } else {
-                    this.myself.setPartner((IPEndPoint) this.socket.LocalEndPoint);
+                    this.myself.setPartner((IPEndPoint)this.socket.LocalEndPoint);
                 }
             }
             Console.WriteLine("Socket Initialization: bound socket to local " + this.myself.getPartnerString() + "!");
@@ -340,11 +340,11 @@ namespace Comm.socket {
                     this.sendBuffer.setByte(0, 0);
                 }
                 this.sendBuffer.setByte(sendIteration, 1);
-                this.sendBuffer.setShort((short) sendSize, 2);
-                this.sendBuffer.setData(buffer, (ulong) sendSize, 4, (ulong) sentBytes);
+                this.sendBuffer.setShort((short)sendSize, 2);
+                this.sendBuffer.setData(buffer, (ulong)sendSize, 4, (ulong)sentBytes);
                 localSendOffset = 0;
             } else {
-                this.sendBuffer.setReferenceToData(buffer, (ulong) sendSize);
+                this.sendBuffer.setReferenceToData(buffer, (ulong)sendSize);
                 localSendOffset = sentBytes;
             }
             if (verbose) {
@@ -449,8 +449,8 @@ namespace Comm.socket {
             int sentBytes = 0, localBytesSent = 0;
             ulong maxSendPerRound = Utils.CLIENT_MAX_MESSAGE_BYTES;
             byte sendIteration = 0;
-            while ((ulong) sentBytes < bufferLength) {
-                int sendSize = (int) Math.Min(maxSendPerRound, bufferLength - (ulong) sentBytes);
+            while ((ulong)sentBytes < bufferLength) {
+                int sendSize = (int)Math.Min(maxSendPerRound, bufferLength - (ulong)sentBytes);
                 if (!this.interpretSendResult(buffer, ref localBytesSent, ref errorCode, ref sentBytes, ref retries, ref sendIteration, header, sendSize, verbose)) {
                     return false;
                 }
@@ -472,12 +472,12 @@ namespace Comm.socket {
                 Debug.Assert(!recvFirstMessage);
                 // if overwritePartner is desired, choose first partner and do not overwrite until recv is finished!
                 if (this.partner == null) {
-                    this.partner = new SocketPartner((IPEndPoint) this.recvAddress);
+                    this.partner = new SocketPartner((IPEndPoint)this.recvAddress);
                 } else {
-                    this.partner.setPartner((IPEndPoint) this.recvAddress);
+                    this.partner.setPartner((IPEndPoint)this.recvAddress);
                 }
                 overwritePartner = false;
-            } else if (!Utils.comparePartners((IPEndPoint) this.recvAddress, this.partner.getPartner())) {
+            } else if (!Utils.comparePartners((IPEndPoint)this.recvAddress, this.partner.getPartner())) {
                 // do not consider received data from other partners than the saved partner
                 return false;
             }
@@ -512,7 +512,7 @@ namespace Comm.socket {
                     }
 
                     if (!recvFirstMessage && !this.recvBuffer.empty()) {
-                        localReceivedBytes = (int) this.recvBuffer.getBufferContentSize();
+                        localReceivedBytes = (int)this.recvBuffer.getBufferContentSize();
                     } else {
                         Debug.Assert(this.recvBuffer.empty());
                         Debug.Assert(this.recvBuffer.getBuffer() != null);
@@ -525,10 +525,10 @@ namespace Comm.socket {
                             localReceivedBytes = -1;
                             return false;
                         }
-                        this.recvBuffer.setBufferContentSize((ulong) localReceivedBytes);
+                        this.recvBuffer.setBufferContentSize((ulong)localReceivedBytes);
                         localReceivedBytes -= 4;
                         if (verbose) {
-                            Console.WriteLine("Should have received " + (ushort) this.recvBuffer.getShort(2) + ", received " + localReceivedBytes);
+                            Console.WriteLine("Should have received " + (ushort)this.recvBuffer.getShort(2) + ", received " + localReceivedBytes);
                             for (int i = 0; i < 4; i++) {
                                 Console.Write(this.recvBuffer.getByte(i) + ", ");
                             }
@@ -548,7 +548,7 @@ namespace Comm.socket {
                             } else {
                                 recvFromCorrectPartner = this.checkCorrectReceivePartner(ref overwritePartner, recvFirstMessage);
                                 Debug.Assert(recvFromCorrectPartner);
-                                utils.Utils.memcpy(buffer, (ulong) receivedBytes, this.recvBuffer.getBuffer(), 4, (ulong) localReceivedBytes);
+                                utils.Utils.memcpy(buffer, (ulong)receivedBytes, this.recvBuffer.getBuffer(), 4, (ulong)localReceivedBytes);
                             }
                             // make recvBuffer empty
                             this.recvBuffer.setBufferContentSize(0);
@@ -565,7 +565,7 @@ namespace Comm.socket {
                                     this.recvBuffer.setBufferContentSize(0);
                                 }
                             } else {
-                                utils.Utils.memcpy(buffer, (ulong) receivedBytes, this.recvBuffer.getBuffer(), 4, (ulong) localReceivedBytes);
+                                utils.Utils.memcpy(buffer, (ulong)receivedBytes, this.recvBuffer.getBuffer(), 4, (ulong)localReceivedBytes);
                                 this.recvBuffer.setBufferContentSize(0);
                             }
                         }
@@ -606,7 +606,7 @@ namespace Comm.socket {
             bool withHeader = (expectedHeader != null || this.protocol == SocketType.UDP_HEADER);
             int dataStart = (withHeader) ? 4 : 0;
             if (withHeader && !recvFirstMessage && !this.recvBuffer.empty()) {
-                localReceivedBytes = (int) this.recvBuffer.getBufferContentSize();
+                localReceivedBytes = (int)this.recvBuffer.getBufferContentSize();
             } else {
                 Debug.Assert(this.recvBuffer.empty());
                 Debug.Assert(this.recvBuffer.getBuffer() != null);
@@ -632,10 +632,10 @@ namespace Comm.socket {
                     localReceivedBytes = -1;
                     return false;
                 }
-                this.recvBuffer.setBufferContentSize((ulong) localReceivedBytes);
+                this.recvBuffer.setBufferContentSize((ulong)localReceivedBytes);
                 localReceivedBytes -= 4;
                 if (verbose) {
-                    Console.WriteLine("Should have received " + ((ushort) this.recvBuffer.getShort(2)) + ", received " + localReceivedBytes);
+                    Console.WriteLine("Should have received " + ((ushort)this.recvBuffer.getShort(2)) + ", received " + localReceivedBytes);
                 }
             }
             if (verbose) {
@@ -679,11 +679,11 @@ namespace Comm.socket {
                     Console.Write("Received data: ");
                     byte[] receivedBufferData = this.recvBuffer.getBuffer();
                     for (int i = 0; i < Math.Min(localReceivedBytes, 50); i++) {
-                        Console.Write((int) receivedBufferData[dataStart + i] + " ");
+                        Console.Write((int)receivedBufferData[dataStart + i] + " ");
                     }
                     Console.WriteLine();
                 }
-                utils.Utils.memcpy(buffer, (ulong) receivedBytes, this.recvBuffer.getBuffer(), (ulong) dataStart, (ulong) localReceivedBytes);
+                utils.Utils.memcpy(buffer, (ulong)receivedBytes, this.recvBuffer.getBuffer(), (ulong)dataStart, (ulong)localReceivedBytes);
             }
             this.recvBuffer.setBufferContentSize(0);
 
@@ -700,7 +700,7 @@ namespace Comm.socket {
         }
 
         private bool interpretReceiveResult(byte[] buffer, ref int localReceivedBytes, ref int errorCode, ref bool overwritePartner,
-                                            ref bool recvFromCorrectPartner, ref bool recvFirstMessage, SerializationHeader expectedHeader, 
+                                            ref bool recvFromCorrectPartner, ref bool recvFirstMessage, SerializationHeader expectedHeader,
                                             int receiveSize, int receivedBytes, bool verbose = false) {
             try {
                 if (!this.performReceive(buffer, ref localReceivedBytes, ref overwritePartner, ref recvFromCorrectPartner, expectedHeader, receiveSize, receivedBytes, recvFirstMessage, verbose)) {
@@ -799,14 +799,14 @@ namespace Comm.socket {
             if (verbose) {
                 Console.WriteLine("Entering _receiveBytes function with expected length = " + expectedLength + " and receivePartner = " + ((this.partner == null) ? "any" : this.partner.getStringAddress()) + "!");
             }
-            Debug.Assert((ulong) buffer.Length >= expectedLength);
+            Debug.Assert((ulong)buffer.Length >= expectedLength);
             int localReceivedBytes = 0, receiveSize, receivedBytes = 0, maxRetries = retries;
             ulong maxPossibleReceiveBytes = Utils.CLIENT_MAX_MESSAGE_BYTES;
             errorCode = 0;
             bool recvFirstMessage = false, retry = true, recvFromCorrectPartner = true;
             bool overwritePartner = (this.partner == null) || (!this.partner.isInitialized()) || this.partner.getOverwrite();
-            while ((ulong) receivedBytes < expectedLength) {
-                receiveSize = (int) Math.Min(expectedLength - (ulong) receivedBytes, maxPossibleReceiveBytes);
+            while ((ulong)receivedBytes < expectedLength) {
+                receiveSize = (int)Math.Min(expectedLength - (ulong)receivedBytes, maxPossibleReceiveBytes);
                 // wait to receive data from socket (and retry when timeout occurs)
                 do {
                     if (!this.interpretReceiveResult(buffer, ref localReceivedBytes, ref errorCode, ref overwritePartner, ref recvFromCorrectPartner,
@@ -827,7 +827,7 @@ namespace Comm.socket {
                 }
                 receivedBytes += localReceivedBytes;
             }
-            Debug.Assert((ulong) receivedBytes == expectedLength);
+            Debug.Assert((ulong)receivedBytes == expectedLength);
             if (verbose) {
                 Console.WriteLine("Exiting _receiveBytes function having received = " + expectedLength + "B to " + ((this.partner == null) ? "any" : this.partner.getStringAddress()) + "!");
             }

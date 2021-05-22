@@ -80,7 +80,7 @@ namespace Comm.communication {
                 }
                 Console.WriteLine("Error when receiving message type... setting \"quit\"");
                 messageType = MessageType.STATUS;
-                StatusData status = (StatusData) _dataCollection.get(messageType);
+                StatusData status = (StatusData)_dataCollection.get(messageType);
                 status.setCommand("quit");
                 return true;
             }
@@ -93,14 +93,14 @@ namespace Comm.communication {
                 }
                 Console.WriteLine("Error when syphoning data " + MessageTypeConverter.messageTypeToString(messageType) + "... setting \"quit\"");
                 messageType = MessageType.STATUS;
-                StatusData status = (StatusData) _dataCollection.get(messageType);
+                StatusData status = (StatusData)_dataCollection.get(messageType);
                 status.setCommand("quit");
             }
             return true;
         }
 
-        public static bool listenFor(Communication comm, SocketType socketType, CommunicationData data, ref bool quitFlag, 
-                                     Reference<bool> timeoutResult = null, int countIgnoreOther = -1, int countIgnore = -1, 
+        public static bool listenFor(Communication comm, SocketType socketType, CommunicationData data, ref bool quitFlag,
+                                     Reference<bool> timeoutResult = null, int countIgnoreOther = -1, int countIgnore = -1,
                                      int retries = 0, bool verbose = false) {
             Debug.Assert(data != null);
             MessageType messageType = MessageType.NOTHING;

@@ -19,7 +19,7 @@ namespace Comm.utils {
         }
 
         public static void shortToNetworkBytes(byte[] buffer, int start, short value) {
-            Utils.memcpy(buffer, (ulong) start, BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value)), 0, shortSize);
+            Utils.memcpy(buffer, (ulong)start, BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value)), 0, shortSize);
         }
 
         public static short networkBytesToShort(byte[] buffer, int start) {
@@ -27,7 +27,7 @@ namespace Comm.utils {
         }
 
         public static void intToNetworkBytes(byte[] buffer, int start, int value) {
-            Utils.memcpy(buffer, (ulong) start, BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value)), 0, intSize);
+            Utils.memcpy(buffer, (ulong)start, BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value)), 0, intSize);
         }
 
         public static int networkBytesToInt(byte[] buffer, int start) {
@@ -35,7 +35,7 @@ namespace Comm.utils {
         }
 
         public static void longLongToNetworkBytes(byte[] buffer, int start, long value) {
-            Utils.memcpy(buffer, (ulong) start, BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value)), 0, longSize);
+            Utils.memcpy(buffer, (ulong)start, BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value)), 0, longSize);
         }
 
         public static long networkBytesToLongLong(byte[] buffer, int start) {
@@ -43,7 +43,7 @@ namespace Comm.utils {
         }
 
         public static void floatToNetworkBytes(byte[] buffer, int start, double value) {
-            Utils.memcpy(buffer, (ulong) start, BitConverter.GetBytes(value), 0, floatSize);
+            Utils.memcpy(buffer, (ulong)start, BitConverter.GetBytes(value), 0, floatSize);
         }
 
         public static float networkBytesToFloat(byte[] buffer, int start) {
@@ -51,7 +51,7 @@ namespace Comm.utils {
         }
 
         public static void doubleToNetworkBytes(byte[] buffer, int start, double value) {
-            Utils.memcpy(buffer, (ulong) start, BitConverter.GetBytes(value), 0, doubleSize);
+            Utils.memcpy(buffer, (ulong)start, BitConverter.GetBytes(value), 0, doubleSize);
         }
 
         public static double networkBytesToDouble(byte[] buffer, int start) {

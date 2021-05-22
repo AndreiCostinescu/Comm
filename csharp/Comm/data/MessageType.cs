@@ -43,7 +43,7 @@ namespace Comm.data {
                     return "bytes";
                 }
                 default: {
-                    throw new Exception("Undefined MessageType: " + (int) messageType);
+                    throw new Exception("Undefined MessageType: " + (int)messageType);
                 }
             }
         }

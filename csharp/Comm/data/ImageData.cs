@@ -142,16 +142,16 @@ namespace Comm.data {
                         // Construct BMP header (14 bytes).
                         writer.Write(new char[] { 'B', 'M' });  // 2: Signature
                         writer.Write(fileSize);                 // 4: File size
-                        writer.Write((short) 0);                 // 2: Reserved
-                        writer.Write((short) 0);                 // 2: Reserved
+                        writer.Write((short)0);                 // 2: Reserved
+                        writer.Write((short)0);                 // 2: Reserved
                         writer.Write(headerSize);               // 4: Offset to pixels
 
                         // Construct BitmapInfoHeader (40 bytes).
                         writer.Write(40);                       // 4: Header size
                         writer.Write(this.width);               // 4: Pixel width
                         writer.Write(this.height);              // 4: Pixel height
-                        writer.Write((short) 1);                 // 2: Planes
-                        writer.Write((short) 32);                // 2: Bits per pixel
+                        writer.Write((short)1);                 // 2: Planes
+                        writer.Write((short)32);                // 2: Bits per pixel
                         writer.Write(0);                        // 4: Compression
                         writer.Write(this.bmpPixelBytes);       // 4: Image size in bytes
                         writer.Write(0);                        // 4: X pixels per meter
@@ -204,7 +204,7 @@ namespace Comm.data {
                     break;
                 }
                 case BitmapFormat.RGBA: {
-                    utils.Utils.memcpy(this.buffer, headerSize, data, 0, (ulong) this.opencvBytes);
+                    utils.Utils.memcpy(this.buffer, headerSize, data, 0, (ulong)this.opencvBytes);
                     // Array.Copy(data, 0, this.buffer, headerSize, this.numPixelBytes);
                     break;
                 }
@@ -241,20 +241,20 @@ namespace Comm.data {
             int index = headerSize;
             for (int i = 0; i < this.numPixels; i++, index += 4) {
                 if (opencvStyle) {
-                    this.buffer[index + 0] = (byte) b;
-                    this.buffer[index + 1] = (byte) g;
-                    this.buffer[index + 2] = (byte) r;
+                    this.buffer[index + 0] = (byte)b;
+                    this.buffer[index + 1] = (byte)g;
+                    this.buffer[index + 2] = (byte)r;
                 } else {
-                    this.buffer[index + 0] = (byte) r;
-                    this.buffer[index + 1] = (byte) g;
-                    this.buffer[index + 2] = (byte) b;
+                    this.buffer[index + 0] = (byte)r;
+                    this.buffer[index + 1] = (byte)g;
+                    this.buffer[index + 2] = (byte)b;
                 }
-                this.buffer[index + 3] = (byte) a;
+                this.buffer[index + 3] = (byte)a;
             }
         }
 
         public void SetPixel(int row, int col, Color color, bool opencvStyle = false) {
-            this.SetPixel(row, col, (int) (255 * color.R), (int) (255 * color.G), (int) (255 * color.B), (int) (255 * color.A), opencvStyle);
+            this.SetPixel(row, col, (int)(255 * color.R), (int)(255 * color.G), (int)(255 * color.B), (int)(255 * color.A), opencvStyle);
         }
 
         public void SetPixel(int row, int col, BitmapColor color, bool opencvStyle = false) {
@@ -264,15 +264,15 @@ namespace Comm.data {
         public void SetPixel(int row, int col, int r, int g, int b, int a = 255, bool opencvStyle = false) {
             int index = (row * this.width + col) * 4 + headerSize;
             if (opencvStyle) {
-                this.buffer[index + 0] = (byte) b;
-                this.buffer[index + 1] = (byte) g;
-                this.buffer[index + 2] = (byte) r;
+                this.buffer[index + 0] = (byte)b;
+                this.buffer[index + 1] = (byte)g;
+                this.buffer[index + 2] = (byte)r;
             } else {
-                this.buffer[index + 0] = (byte) r;
-                this.buffer[index + 1] = (byte) g;
-                this.buffer[index + 2] = (byte) b;
+                this.buffer[index + 0] = (byte)r;
+                this.buffer[index + 1] = (byte)g;
+                this.buffer[index + 2] = (byte)b;
             }
-            this.buffer[index + 3] = (byte) a;
+            this.buffer[index + 3] = (byte)a;
         }
 
         public BitmapColor GetPixel(int row, int col) {
@@ -332,8 +332,8 @@ namespace Comm.data {
                     if (verbose) {
                         byte[] dataBuffer = buffer.getBuffer();
                         Console.WriteLine("Serialized content: ");
-                        for (int i = 0; (ulong) i < headerSize; i++) {
-                            Console.WriteLine(((int) dataBuffer[i]) + " ");
+                        for (int i = 0; (ulong)i < headerSize; i++) {
+                            Console.WriteLine(((int)dataBuffer[i]) + " ");
                         }
                         Console.WriteLine();
                     }
@@ -342,12 +342,12 @@ namespace Comm.data {
                 }
                 case 1: {
                     if (forceCopy) {
-                        buffer.setData(this.image.GetRGBData(), (ulong) this.contentSize, (ulong) start);
+                        buffer.setData(this.image.GetRGBData(), (ulong)this.contentSize, (ulong)start);
                     } else {
                         if (start != 0) {
                             throw new System.Exception("Can not set a reference to data not starting at the first position!");
                         }
-                        buffer.setReferenceToData(this.image.GetRGBData(), (ulong) this.contentSize);
+                        buffer.setReferenceToData(this.image.GetRGBData(), (ulong)this.contentSize);
                     }
                     this.serializeState = 0;
                     return true;
@@ -366,7 +366,7 @@ namespace Comm.data {
                     return headerSize;
                 }
                 case 1: {
-                    return (ulong) this.contentSize;
+                    return (ulong)this.contentSize;
                 }
                 default: {
                     throw new Exception("Impossible deserialize state... " + this.deserializeState);
@@ -389,7 +389,7 @@ namespace Comm.data {
                 case 1: {
                     this.image = null;
                     this.image = new BitmapModel(this.imageHeight, this.imageWidth, BitmapFormat.RGB);
-                    Debug.Assert((ulong) this.contentSize == buffer.getBufferContentSize());
+                    Debug.Assert((ulong)this.contentSize == buffer.getBufferContentSize());
                     this.image.SetData(buffer.getBuffer());
 
                     this.imageDeserialized = true;

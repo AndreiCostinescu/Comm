@@ -18,8 +18,8 @@ namespace Comm.data {
         }
 
         public override MessageType getMessageType() {
-            if (Enum.IsDefined(typeof(MessageType), (int) this.getDataType())) {
-                return (MessageType) this.getDataType();
+            if (Enum.IsDefined(typeof(MessageType), (int)this.getDataType())) {
+                return (MessageType)this.getDataType();
             } else {
                 return MessageType.NOTHING;
             }
@@ -32,19 +32,19 @@ namespace Comm.data {
                     buffer.setInt(this.dataSize, 0);
                     if (verbose) {
                         byte[] dataBuffer = buffer.getBuffer();
-                        Console.WriteLine("buffer int content: " + (int) dataBuffer[0] + " " + (int) dataBuffer[1] + " " + (int) dataBuffer[2] + " " + (int) dataBuffer[3]);
+                        Console.WriteLine("buffer int content: " + (int)dataBuffer[0] + " " + (int)dataBuffer[1] + " " + (int)dataBuffer[2] + " " + (int)dataBuffer[3]);
                     }
                     this.serializeState = 1;
                     return false;
                 }
                 case 1: {
                     if (forceCopy) {
-                        buffer.setData(this.data, (ulong) this.dataSize, (ulong) start);
+                        buffer.setData(this.data, (ulong)this.dataSize, (ulong)start);
                     } else {
                         if (start != 0) {
                             throw new System.Exception("Can not set a reference to data not starting at the first position!");
                         }
-                        buffer.setReferenceToData(this.data, (ulong) this.dataSize);
+                        buffer.setReferenceToData(this.data, (ulong)this.dataSize);
                     }
                     this.serializeState = 0;
                     return true;
@@ -63,7 +63,7 @@ namespace Comm.data {
                     return headerSize;
                 }
                 case 1: {
-                    return (ulong) this.dataSize;
+                    return (ulong)this.dataSize;
                 }
                 default: {
                     throw new Exception("Impossible deserialize state... " + this.deserializeState);
@@ -79,7 +79,7 @@ namespace Comm.data {
                     return false;
                 }
                 case 1: {
-                    Debug.Assert(buffer.getBufferContentSize() == (ulong) this.dataSize);
+                    Debug.Assert(buffer.getBufferContentSize() == (ulong)this.dataSize);
                     this.setData(buffer.getBuffer(), this.dataSize);
                     this.deserializeState = 0;
                     return true;
@@ -94,7 +94,7 @@ namespace Comm.data {
 
         public void reset() {
             this.dataSize = -1;
-            this.dataType = (byte) MessageType.NOTHING;
+            this.dataType = (byte)MessageType.NOTHING;
         }
 
         public void setCommand(string command) {
@@ -105,47 +105,47 @@ namespace Comm.data {
             } else if (command == "ping") {
                 commandData = Messages.PING_MESSAGE;
                 this.dataSize = Messages.PING_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             } else if (command == "quit") {
                 commandData = Messages.QUIT_MESSAGE;
                 this.dataSize = Messages.QUIT_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             } else if (command == "start") {
                 commandData = Messages.START_MESSAGE;
                 this.dataSize = Messages.START_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             } else if (command == "stop") {
                 commandData = Messages.STOP_MESSAGE;
                 this.dataSize = Messages.STOP_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             } else if (command == "wait") {
                 commandData = Messages.WAIT_MESSAGE;
                 this.dataSize = Messages.WAIT_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             } else if (command == "accept") {
                 commandData = Messages.ACCEPT_MESSAGE;
                 this.dataSize = Messages.ACCEPT_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             } else if (command == "ready") {
                 commandData = Messages.READY_MESSAGE;
                 this.dataSize = Messages.READY_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             } else if (command == "control") {
                 commandData = Messages.CONTROL_MESSAGE;
                 this.dataSize = Messages.CONTROL_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             } else if (command == "upload") {
                 commandData = Messages.UPLOAD_MESSAGE;
                 this.dataSize = Messages.UPLOAD_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             } else if (command == "select") {
                 commandData = Messages.SELECT_MESSAGE;
                 this.dataSize = Messages.SELECT_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             } else if (command == "reject") {
                 commandData = Messages.REJECT_MESSAGE;
                 this.dataSize = Messages.REJECT_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             }
             socket.Utils.prepareBuffer(ref this.data, ref this.dataLength, this.dataSize);
             this.setData(commandData, this.dataSize);
@@ -159,15 +159,15 @@ namespace Comm.data {
             } else if (status == "idle") {
                 statusData = Messages.IDLE_MESSAGE;
                 this.dataSize = Messages.IDLE_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             } else if (status == "active") {
                 statusData = Messages.ACTIVE_MESSAGE;
                 this.dataSize = Messages.ACTIVE_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             } else if (status == "done") {
                 statusData = Messages.DONE_MESSAGE;
                 this.dataSize = Messages.DONE_MESSAGE_LENGTH;
-                this.dataType = (byte) MessageType.STATUS;
+                this.dataType = (byte)MessageType.STATUS;
             }
             socket.Utils.prepareBuffer(ref this.data, ref this.dataLength, this.dataSize);
             this.setData(statusData, this.dataSize);
@@ -183,7 +183,7 @@ namespace Comm.data {
                 return;
             }
             socket.Utils.prepareBuffer(ref this.data, ref this.dataLength, _dataSize);
-            utils.Utils.memcpy(this.data, 0, _data, 0, (ulong) Math.Min(_data.Length, _dataSize));
+            utils.Utils.memcpy(this.data, 0, _data, 0, (ulong)Math.Min(_data.Length, _dataSize));
             this.dataSize = _dataSize;
             this.dataType = statusDataType;
         }
@@ -218,7 +218,7 @@ namespace Comm.data {
             return this.dataType;
         }
 
-        private static readonly byte statusDataType = (byte) MessageType.STATUS;
+        private static readonly byte statusDataType = (byte)MessageType.STATUS;
 
         private byte[] data;
         private int dataSize, dataLength;

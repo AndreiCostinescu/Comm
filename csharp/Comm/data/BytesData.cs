@@ -6,7 +6,7 @@ namespace Comm.data {
         const int headerSize = sizeof(int);
 
         public BytesData(int size) {
-            this.data = new utils.Buffer((ulong) size);
+            this.data = new utils.Buffer((ulong)size);
             this.expectedDataSize = 0;
 
         }
@@ -23,18 +23,18 @@ namespace Comm.data {
             switch (this.serializeState) {
                 case 0: {
                     // header
-                    buffer.setBufferContentSize((ulong) start + headerSize);
-                    buffer.setInt((int) this.data.getBufferContentSize(), start);
+                    buffer.setBufferContentSize((ulong)start + headerSize);
+                    buffer.setInt((int)this.data.getBufferContentSize(), start);
                     if (verbose) {
                         byte[] dataBuffer = buffer.getBuffer();
-                        Console.WriteLine("buffer int content: " + (int) dataBuffer[0] + " " + (int) dataBuffer[1] + " " + (int) dataBuffer[2] + " " + (int) dataBuffer[3]);
+                        Console.WriteLine("buffer int content: " + (int)dataBuffer[0] + " " + (int)dataBuffer[1] + " " + (int)dataBuffer[2] + " " + (int)dataBuffer[3]);
                     }
                     this.serializeState = 1;
                     return false;
                 }
                 case 1: {
                     if (forceCopy) {
-                        buffer.setData(this.getBuffer(), this.getBufferSize(), (ulong) start);
+                        buffer.setData(this.getBuffer(), this.getBufferSize(), (ulong)start);
                     } else {
                         if (start != 0) {
                             throw new System.Exception("Can not set a reference to data not starting at the first position!");
@@ -58,7 +58,7 @@ namespace Comm.data {
                     return headerSize;
                 }
                 case 1: {
-                    return (ulong) this.expectedDataSize;
+                    return (ulong)this.expectedDataSize;
                 }
                 default: {
                     throw new System.Exception("Impossible deserialize state... " + this.deserializeState);
@@ -74,8 +74,8 @@ namespace Comm.data {
                     return false;
                 }
                 case 1: {
-                    Debug.Assert((buffer.getBufferContentSize() - (ulong) start) == (ulong) this.expectedDataSize);
-                    this.data.setData(buffer.getBuffer(), (ulong) this.expectedDataSize, (ulong) start);
+                    Debug.Assert((buffer.getBufferContentSize() - (ulong)start) == (ulong)this.expectedDataSize);
+                    this.data.setData(buffer.getBuffer(), (ulong)this.expectedDataSize, (ulong)start);
                     this.deserializeState = 0;
                     return true;
                 }
@@ -158,7 +158,7 @@ namespace Comm.data {
 
         public ulong getBufferSize() {
             ulong size = this.data.getBufferContentSize();
-            Debug.Assert(this.deserializeState != 1 || size == (ulong) this.expectedDataSize);
+            Debug.Assert(this.deserializeState != 1 || size == (ulong)this.expectedDataSize);
             return size;
         }
 

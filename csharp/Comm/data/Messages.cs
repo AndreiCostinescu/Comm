@@ -1,4 +1,5 @@
-﻿namespace Comm.data {
+﻿
+namespace Comm.data {
     public static class Messages {
         public static readonly string ACCEPT_MESSAGE = "Accepted\0";
         public static readonly int ACCEPT_MESSAGE_LENGTH = 9;
