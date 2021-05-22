@@ -33,7 +33,7 @@ namespace Comm.communication {
                 Communication comm = new Communication();
                 Socket tcpSocket = null;
                 this.socket.accept(ref tcpSocket, acceptedSocket);
-                comm.setSocket(SocketType.TCP, socket);
+                comm.setSocket(SocketType.TCP, tcpSocket);
                 return comm;
             } catch (System.Net.Sockets.SocketException se) {
                 int errorCode = se.ErrorCode;
