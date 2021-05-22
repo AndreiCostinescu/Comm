@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 
-namespace DesignAIRobotics.Comm.utils {
+namespace Comm.utils {
     public class SerializationHeader {
         public SerializationHeader(bool create = true) {
             this.created = create;

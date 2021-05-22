@@ -1,10 +1,10 @@
-﻿using System;
-using System.Diagnostics;
-using DesignAIRobotics.Comm.data;
-using DesignAIRobotics.Comm.socket;
+﻿using Comm.data;
+using Comm.socket;
 using DesignAIRobotics.Utils;
+using System;
+using System.Diagnostics;
 
-namespace DesignAIRobotics.Comm.communication {
+namespace Comm.communication {
     public class Communicator {
         private delegate bool QuitCheck();
 
@@ -54,7 +54,7 @@ namespace DesignAIRobotics.Comm.communication {
                     }
                     int localRetriesBeforeFail = (syphonRetries < 1) ? 1 : syphonRetries;
                     while (!quitFlag && localRetriesBeforeFail > 0) {
-                        if (!comm.recvData(socketType, data, retries, verbose)) {
+                        if (!comm.recvData(socketType, data, false, true, retries, verbose)) {
                             if (comm.getErrorCode() == -1) {
                                 localRetriesBeforeFail--;
                                 continue;
@@ -99,9 +99,9 @@ namespace DesignAIRobotics.Comm.communication {
             return true;
         }
 
-        public static bool listenFor(Communication comm, SocketType socketType, CommunicationData data,
-                                 ref bool quitFlag, Reference<bool> timeoutResult = null, int countIgnoreOther = -1,
-                                 int countIgnore = -1, int retries = 0, bool verbose = false) {
+        public static bool listenFor(Communication comm, SocketType socketType, CommunicationData data, ref bool quitFlag, 
+                                     Reference<bool> timeoutResult = null, int countIgnoreOther = -1, int countIgnore = -1, 
+                                     int retries = 0, bool verbose = false) {
             Debug.Assert(data != null);
             MessageType messageType = MessageType.NOTHING;
             while (!quitFlag) {

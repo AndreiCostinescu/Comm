@@ -1,19 +1,21 @@
-﻿using System;
+﻿using Comm.data;
+using Comm.socket;
+using Comm.utils;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
-using DesignAIRobotics.Comm.data;
-using DesignAIRobotics.Comm.socket;
 
-namespace DesignAIRobotics.Comm.communication {
+namespace Comm.communication {
     public class Communication {
         public Communication() {
             this.sockets = new Dictionary<SocketType, Socket>();
-            this.sendBuffer = new socket.Buffer();
-            this.recvBuffer = new socket.Buffer();
+            this.sendBuffer = new utils.Buffer();
+            this.recvBuffer = new utils.Buffer();
             this.isCopy = false;
             this.errorCode = 0;
-            this.dataCollection = new DataCollection();
+            this.sendHeader = new SerializationHeader();
+            this.recvHeader = new SerializationHeader();
         }
 
         ~Communication() {
@@ -29,6 +31,183 @@ namespace DesignAIRobotics.Comm.communication {
             Communication copy = new Communication();
             this.copyData(copy);
             return copy;
+        }
+
+        public bool transmitData(SocketType socketType, CommunicationData data, bool withHeader, bool withMessageType = true,
+                                 int retries = 0, bool verbose = false) {
+            if (data == null) {
+                return false;
+            }
+            this.errorCode = 0;
+
+            bool serializeDone = false;
+            int dataStart = (withHeader) ? 4 : 0;
+            byte serializationState = 0;
+            while (!serializeDone) {
+                if (withHeader) {
+                    this.sendHeader.setData(serializationState, 0, 0);
+                }
+                if (serializationState == 0 && withMessageType) {
+                    this.sendBuffer.setBufferContentSize((ulong)dataStart + 1);
+                    this.sendBuffer.setByte((byte)(data.getMessageType()), dataStart);
+                } else {
+                    serializeDone = data.serialize(this.sendBuffer, dataStart, withHeader, verbose);
+                }
+                this.errorCode = 0;
+                if (!this.send(socketType, withHeader, retries, verbose)) {
+                    if (this.errorCode == 0) {
+                        if (verbose) {
+                            Console.WriteLine("Socket closed: Can not send data serialized bytes...");
+                        }
+                    } else {
+                        Console.WriteLine("Can not send data serialized bytes... error " + this.errorCode);
+                    }
+                    data.resetSerializeState();
+                    return false;
+                }
+                serializationState++;
+            }
+            return true;
+        }
+
+        public bool sendRaw(SocketType socketType, byte[] data, int dataSize, int retries = 0, bool verbose = false) {
+            if (data == null) {
+                return false;
+            }
+            this.sendBuffer.setData(data, (ulong)dataSize);
+            this.errorCode = 0;
+            if (!this.send(socketType, false, retries, verbose)) {
+                if (this.errorCode == 0) {
+                    if (verbose) {
+                        Console.WriteLine("Socket closed: Can not raw data serialized bytes...");
+                    }
+                } else {
+                    Console.WriteLine("Can not send raw serialized bytes... error " + this.errorCode);
+                }
+                return false;
+            }
+            return true;
+        }
+
+        public bool recvMessageType(SocketType socketType, ref MessageType messageType, bool withHeader, int retries = 0,
+                                    bool verbose = false) {
+            bool receiveResult;
+            byte[] dataLocalDeserializeBuffer = null;
+            ulong expectedSize = 0;
+            int dataStart = (withHeader) ? 4 : 0;
+            this.errorCode = 0;
+            if (withHeader) {
+                this.recvHeader.setData(0, 0, 0);
+            }
+            this.preReceiveMessageType(ref dataLocalDeserializeBuffer, ref expectedSize, dataStart);
+            receiveResult = this.doReceive(socketType, ref dataLocalDeserializeBuffer, ref expectedSize, withHeader, retries, verbose);
+            return this.postReceiveMessageType(ref messageType, receiveResult, dataStart);
+        }
+
+        public bool recvData(SocketType socketType, CommunicationData data, bool withHeader, bool gotMessageType = true,
+                             int retries = 0, bool verbose = false) {
+            bool receiveResult, deserializationDone = false, receivedSomething = false;
+            int deserializeState = (int)(gotMessageType ? 1 : 0), localRetriesThreshold = 0, localRetries = localRetriesThreshold;
+            byte[] dataLocalDeserializeBuffer = null;
+            ulong expectedSize = 0;
+            int dataStart = (withHeader) ? 4 : 0;
+            MessageType messageType = data.getMessageType();
+            while (!deserializationDone && localRetries >= 0) {
+                this.errorCode = 0;
+                if (withHeader) {
+                    this.recvHeader.setData((byte) deserializeState, 0, 0);
+                }
+                this.preReceiveData(ref dataLocalDeserializeBuffer, ref expectedSize, dataStart, data, withHeader);
+                receiveResult = this.doReceive(socketType, ref dataLocalDeserializeBuffer, ref expectedSize, withHeader, retries,
+                                               verbose);
+                if (!this.postReceiveData(ref data, ref deserializeState, ref localRetries, ref receivedSomething, ref deserializationDone,
+                                           messageType, dataStart, localRetriesThreshold, receiveResult, withHeader, verbose)) {
+                    return false;
+                }
+            }
+            if (receivedSomething && !deserializationDone) {
+                Console.WriteLine("After loop: Could not recv " + MessageTypeConverter.messageTypeToString(messageType) + 
+                                  " serialized bytes... error " + this.errorCode + "; deserializeState = " + deserializeState);
+                if (data != null) {
+                    data.resetDeserializeState();
+                }
+                return false;
+            } else if (!receivedSomething) {
+                Debug.Assert(this.errorCode == -1);
+                if (verbose) {
+                    Console.WriteLine("Did not receive anything although expected " + MessageTypeConverter.messageTypeToString(messageType));
+                }
+                return false;
+            }
+            return true;
+        }
+
+        public bool receiveData(SocketType socketType, DataCollection data, bool withHeader, bool withMessageType = true, int retries = 0, bool verbose = false) {
+            bool deserializationDone = false, receiveResult, receivedSomething = false;
+            int deserializeState = 0, dataStart = 0;
+            int localRetriesThreshold = 0, localRetries = localRetriesThreshold;  // 10
+            ulong expectedSize = 0;
+            byte[] dataLocalDeserializeBuffer = null;
+            MessageType messageType = 0;
+            CommunicationData recvData = null;
+            if (withHeader) {
+                dataStart = 4;
+            }
+
+            while (!deserializationDone && localRetries >= 0) {
+                this.errorCode = 0;
+
+                // receive setup
+                if (deserializeState == 0 && withMessageType) {
+                    this.preReceiveMessageType(ref dataLocalDeserializeBuffer, ref expectedSize, dataStart);
+                } else {
+                    this.preReceiveData(ref dataLocalDeserializeBuffer, ref expectedSize, dataStart, recvData, withHeader);
+                    if (verbose) {
+                        Console.WriteLine("In Communication::fullReceiveData: dataLocalDeserializeBuffer = " + dataLocalDeserializeBuffer +
+                                          "; expectedSize = " + expectedSize + "; deserializeState = " + deserializeState);
+                    }
+                }
+
+                // do receive
+                receiveResult = this.doReceive(socketType, ref dataLocalDeserializeBuffer, ref expectedSize, withHeader, retries, verbose);
+
+                // post receive
+                if (deserializeState == 0 && withMessageType) {
+                    if (!this.postReceiveMessageType(ref messageType, receiveResult, dataStart)) {
+                        return false;
+                    }
+
+                    if (messageType == MessageType.NOTHING) {
+                        deserializationDone = true;
+                        break;
+                    } else {
+                        recvData = data.get(messageType);
+                    }
+                } else {
+                    if (!this.postReceiveData(ref recvData, ref deserializeState, ref localRetries, ref receivedSomething, ref deserializationDone,
+                                              messageType, dataStart, localRetriesThreshold, receiveResult, withHeader, verbose)) {
+                        return false;
+                    }
+                }
+
+                deserializeState++;
+            }
+
+            if (receivedSomething && !deserializationDone) {
+                Console.WriteLine("After loop: Could not recv " + MessageTypeConverter.messageTypeToString(messageType) +
+                                  " serialized bytes... error " + this.errorCode + "; deserializeState = " + deserializeState);
+                if (recvData != null) {
+                    recvData.resetDeserializeState();
+                }
+                return false;
+            } else if (!receivedSomething) {
+                Debug.Assert(this.errorCode == -1);
+                if (verbose) {
+                    Console.WriteLine("Did not receive anything although expected " + MessageTypeConverter.messageTypeToString(messageType));
+                }
+                return false;
+            }
+            return true;
         }
 
         public void createSocket(SocketType socketType, SocketPartner partner = null, int myPort = 0, int sendTimeout = -1, int recvTimeout = -1) {
@@ -49,158 +228,39 @@ namespace DesignAIRobotics.Comm.communication {
             }
         }
 
-        public void setSocketTimeouts(SocketType type, int _sendTimeout = -1, int _recvTimeout = -1) {
-            Socket socket = this.getSocket(type);
+        public void setSocketTimeouts(SocketType socketType, int _sendTimeout = -1, int _recvTimeout = -1) {
+            Socket socket = this.getSocket(socketType);
             if (socket == null) {
                 return;
             }
             socket.setSocketTimeouts(_sendTimeout, _recvTimeout);
         }
 
-        public bool sendMessageType(SocketType type, MessageType messageType, int retries = 0, bool verbose = false) {
-            this.errorCode = 0;
-            this.sendBuffer.setBufferContentSize(1);
-            this.sendBuffer.setByte((byte)messageType, 0);
-            if (!this.send(type, retries, verbose)) {
-                Console.WriteLine("Can not send messageType... " + MessageTypeConverter.messageTypeToString(messageType));
-                if (verbose) {
-                    Console.WriteLine("Can not send messageType... " + MessageTypeConverter.messageTypeToString(messageType));
-                }
-                return false;
+        public void setSocket(SocketType socketType, Socket socket) {
+            if (this.sockets.ContainsKey(socketType) && this.sockets[socketType] != null) {
+                this.sockets[socketType].cleanup();
             }
-            return true;
+            this.sockets[socketType] = socket;
         }
 
-        public bool sendData(SocketType type, CommunicationData data, bool withMessageType, int retries = 0, bool verbose = false) {
-            if (data == null) {
-                return false;
-            }
-            this.errorCode = 0;
-
-            if (withMessageType) {
-                if (!this.sendMessageType(type, data.getMessageType(), retries, verbose)) {
-                    Console.WriteLine("Can not send data message type bytes... error " + this.errorCode);
-                    return false;
-                }
-            }
-
-            bool serializeDone = false;
-            while (!serializeDone) {
-                serializeDone = data.serialize(this.sendBuffer, verbose);
-                this.errorCode = 0;
-                if (!this.send(type, retries, verbose)) {
-                    Console.WriteLine("Can not send data serialized bytes... error " + this.errorCode);
-                    data.resetSerializeState();
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        public bool recvMessageType(SocketType type, ref MessageType messageType, int retries = 0, bool verbose = false) {
-            this.errorCode = 0;
-            this.recvBuffer.setBufferContentSize(1);
-
-            bool result = this.recv(type, retries, verbose);
-
-            if (!result) {
-                // why < 1 (why is also 0, when the socket closes, ok???)
-                if (this.errorCode < 1) {
-                    messageType = MessageType.NOTHING;
-                    return true;
-                }
-                return false;
-            }
-            messageType = (MessageType)this.recvBuffer.getByte(0);
-            return true;
-        }
-
-        public bool recvData(SocketType type, CommunicationData data, int retries = 0, bool verbose = false) {
-            Debug.Assert(data != null);
-            this.errorCode = 0;
-            int localRetriesThreshold = 0, localRetries = localRetriesThreshold, deserializeState = 0;  // 10
-            ulong expectedSize;
-            bool deserializeDone = false, receiveResult, receivedSomething = false;
-            byte[] dataLocalDeserializeBuffer = null;
-            while (!deserializeDone && localRetries >= 0) {
-                if (verbose) {
-                    Console.WriteLine("Communication::recvData: LocalRetries = " + localRetries + " data->getMessageType() " + MessageTypeConverter.messageTypeToString(data.getMessageType()) + "; deserializeState = " + deserializeState);
-                }
-                this.errorCode = 0;
-
-                dataLocalDeserializeBuffer = data.getDeserializeBuffer();
-                expectedSize = data.getExpectedDataSize();
-                if (verbose) {
-                    Console.WriteLine("In Communication::recvData: dataLocalDeserializeBuffer = " + dataLocalDeserializeBuffer + "; expectedSize = " + expectedSize + "; deserializeState = " + deserializeState);
-                }
-                if (dataLocalDeserializeBuffer != null) {
-                    receiveResult = this.recv(type, ref dataLocalDeserializeBuffer, ref expectedSize, expectedSize, retries, verbose);
-                    if (verbose) {
-                        Console.WriteLine("ReceiveResult = " + receiveResult);
-                    }
-                } else {
-                    this.recvBuffer.setBufferContentSize(expectedSize);
-                    receiveResult = this.recv(type, retries, verbose);
-                }
-                if (!receiveResult && this.errorCode != -1) {
-                    Console.WriteLine("In loop: Can not recv data serialized bytes... error " + this.errorCode + "; deserializeState = " + deserializeState);
-                    data.resetDeserializeState();
-                    return false;
-                }
-                // if we received something...
-                if (this.errorCode != -1) {
-                    if (verbose) {
-                        Console.WriteLine("Received something! data->getMessageType() " + MessageTypeConverter.messageTypeToString(data.getMessageType()));
-                    }
-                    receivedSomething = true;
-                    deserializeDone = data.deserialize(this.recvBuffer, 0, verbose);
-                    deserializeState++;
-                    localRetries = localRetriesThreshold;
-                } else {
-                    if (verbose) {
-                        Console.WriteLine("Received nothing, decrease local retries!");
-                    }
-                    localRetries--;
-                }
-            }
-            if (receivedSomething && !deserializeDone) {
-                Console.WriteLine("After loop: Could not recv data serialized bytes... error " + this.errorCode + "; deserializeState = " + deserializeState);
-                Console.WriteLine("After loop: Could not recv data serialized bytes... error " + this.errorCode + "; deserializeState = " + deserializeState);
-                data.resetDeserializeState();
-                return false;
-            } else if (!receivedSomething) {
-                Debug.Assert(this.errorCode == -1);
-                Console.WriteLine("Did not receive anything although expected " + MessageTypeConverter.messageTypeToString(data.getMessageType()));
-                return false;
-            }
-            return true;
-        }
-
-        public void setSocket(SocketType type, Socket socket) {
-            if (this.sockets.ContainsKey(type) && this.sockets[type] != null) {
-                this.sockets[type].cleanup();
-            }
-            this.sockets[type] = socket;
-        }
-
-        public void setPartner(SocketType type, IPEndPoint _partner, bool overwrite) {
-            Socket socket = this.getSocket(type);
+        public void setPartner(SocketType socketType, IPEndPoint _partner, bool overwrite) {
+            Socket socket = this.getSocket(socketType);
             if (socket == null) {
                 return;
             }
             socket.setPartner(_partner, overwrite);
         }
 
-        public void setPartner(SocketType type, string partnerIP, int partnerPort, bool overwrite) {
-            Socket socket = this.getSocket(type);
+        public void setPartner(SocketType socketType, string partnerIP, int partnerPort, bool overwrite) {
+            Socket socket = this.getSocket(socketType);
             if (socket == null) {
                 return;
             }
             socket.setPartner(partnerIP, partnerPort, overwrite);
         }
 
-        public void setOverwritePartner(SocketType type, bool overwrite) {
-            Socket socket = this.getSocket(type);
+        public void setOverwritePartner(SocketType socketType, bool overwrite) {
+            Socket socket = this.getSocket(socketType);
             if (socket == null) {
                 return;
             }
@@ -214,32 +274,32 @@ namespace DesignAIRobotics.Comm.communication {
             return this.sockets[socketType];
         }
 
-        public SocketPartner getMyself(SocketType type) {
-            Socket socket = this.getSocket(type);
+        public SocketPartner getMyself(SocketType socketType) {
+            Socket socket = this.getSocket(socketType);
             if (socket == null || !socket.isInitialized()) {
-                System.Console.WriteLine(SocketTypeConverter.socketTypeToString(type) + " socket is not initialized! Can't getMyself...");
+                System.Console.WriteLine(SocketTypeConverter.socketTypeToString(socketType) + " socket is not initialized! Can't getMyself...");
                 return null;
             }
             return socket.getMyself();
         }
 
-        public string getMyAddressString(SocketType type) {
-            SocketPartner myself = this.getMyself(type);
+        public string getMyAddressString(SocketType socketType) {
+            SocketPartner myself = this.getMyself(socketType);
             Debug.Assert(myself != null);
             return myself.getPartnerString();
         }
 
-        public SocketPartner getPartner(SocketType type) {
-            Socket socket = this.getSocket(type);
+        public SocketPartner getPartner(SocketType socketType) {
+            Socket socket = this.getSocket(socketType);
             if (socket == null || !socket.isInitialized()) {
-                System.Console.WriteLine(SocketTypeConverter.socketTypeToString(type) + " socket is not initialized! Can't getPartner...");
+                System.Console.WriteLine(SocketTypeConverter.socketTypeToString(socketType) + " socket is not initialized! Can't getPartner...");
                 return null;
             }
             return socket.getPartner();
         }
 
-        public string getPartnerString(SocketType type) {
-            SocketPartner partner = this.getPartner(type);
+        public string getPartnerString(SocketType socketType) {
+            SocketPartner partner = this.getPartner(socketType);
             if (partner == null) {
                 return "???";
             }
@@ -273,39 +333,114 @@ namespace DesignAIRobotics.Comm.communication {
             this._cleanupData();
         }
 
-        protected virtual bool send(SocketType type, int retries, bool verbose) {
-            return this.send(type, this.sendBuffer.getBuffer(), this.sendBuffer.getBufferContentSize(), retries, verbose);
+        protected virtual bool send(SocketType socketType, bool withHeader, int retries, bool verbose) {
+            return this.send(socketType, this.sendBuffer.getBuffer(), this.sendBuffer.getBufferContentSize(), 
+                ((withHeader) ? this.sendHeader : null), retries, verbose);
         }
 
-        protected virtual bool send(SocketType type, byte[] buffer, ulong contentSize, int retries, bool verbose) {
-            Socket socket = this.getSocket(type);
+        protected virtual bool send(SocketType socketType, byte[] buffer, ulong contentSize, SerializationHeader header, int retries, bool verbose) {
+            Socket socket = this.getSocket(socketType);
             if (socket == null) {
                 return false;
             }
-            return socket.sendBytes(buffer, contentSize, ref this.errorCode, retries, verbose);
+            return socket.sendBytes(buffer, contentSize, ref this.errorCode, header, retries, verbose);
         }
 
-        protected virtual bool recv(SocketType type, int retries, bool verbose) {
-            Socket socket = this.getSocket(type);
+        protected void preReceiveMessageType(ref byte[] dataLocalDeserializeBuffer, ref ulong expectedSize, int dataStart) {
+            dataLocalDeserializeBuffer = null;
+            expectedSize = (ulong)dataStart + 1;
+        }
+
+        protected void preReceiveData(ref byte[] dataLocalDeserializeBuffer, ref ulong expectedSize, int dataStart,
+                                      CommunicationData recvData, bool withHeader) {
+            dataLocalDeserializeBuffer = recvData.getDeserializeBuffer();
+            // don't to the if before, because some CommunicationData depend on calling getDeserializeBuffer!
+            if (withHeader) {
+                dataLocalDeserializeBuffer = null;
+            }
+            expectedSize = (ulong)dataStart + recvData.getExpectedDataSize();
+        }
+
+
+        protected bool doReceive(SocketType socketType, ref byte[] dataLocalDeserializeBuffer, ref ulong expectedSize,
+                                 bool withHeader, int retries, bool verbose) {
+            if (dataLocalDeserializeBuffer != null) {
+                Debug.Assert(!withHeader);
+                return this.recv(socketType, ref dataLocalDeserializeBuffer, ref expectedSize, expectedSize, null, retries, verbose);
+            } else {
+                this.recvBuffer.setBufferContentSize((ulong)expectedSize);
+                return this.recv(socketType, withHeader, retries, verbose);
+            }
+        }
+
+        protected bool postReceiveMessageType(ref MessageType messageType, bool receiveResult, int dataStart) {
+            if (!receiveResult) {
+                if (this.getErrorCode() < 1) {
+                    messageType = MessageType.NOTHING;
+                } else {
+                    return false;
+                }
+            } else {
+                messageType = (MessageType)this.recvBuffer.getByte(dataStart);
+            }
+            return true;
+        }
+
+        protected bool postReceiveData(ref CommunicationData recvData, ref int deserializeState, ref int localRetries, ref bool receivedSomething,
+                                       ref bool deserializationDone, MessageType messageType, int dataStart, int localRetriesThreshold,
+                                       bool receiveResult, bool withHeader, bool verbose) {
+            if (!receiveResult) {
+                if (this.getErrorCode() >= 0) {
+                    Console.WriteLine("Stop loop: Can not recv data serialized bytes... error " + this.getErrorCode() + "; deserializeState = " + deserializeState);
+                    recvData.resetDeserializeState();
+                    return false;
+                } else if (this.getErrorCode() == -2) {
+                    Console.WriteLine("Stop loop: Only part of the data has been received before new message started...; deserializeState = " + deserializeState);
+                    recvData.resetDeserializeState();
+                    return false;
+                }
+            }
+
+            Debug.Assert(receiveResult || this.getErrorCode() == -1);
+            // if we received something...
+            if (this.getErrorCode() != -1) {
+                if (verbose) {
+                    Console.WriteLine("Received something! data.getMessageType() " + MessageTypeConverter.messageTypeToString(messageType));
+                }
+                receivedSomething = true;
+                deserializationDone = recvData.deserialize(this.recvBuffer, dataStart, withHeader, verbose);
+                deserializeState++;
+                localRetries = localRetriesThreshold;
+            } else {
+                if (verbose) {
+                    Console.WriteLine("Received nothing, decrease local retries!");
+                }
+                localRetries--;
+            }
+            return true;
+        }
+
+        protected virtual bool recv(SocketType socketType, bool withHeader, int retries, bool verbose) {
+            Socket socket = this.getSocket(socketType);
             if (socket == null) {
                 return false;
             }
-            return socket.receiveBytes(this.recvBuffer, ref this.errorCode, retries, verbose);
+            return socket.receiveBytes(this.recvBuffer, ref this.errorCode, ((withHeader) ? this.recvHeader : null), retries, verbose);
         }
 
-        protected virtual bool recv(SocketType type, ref byte[] buffer, ref ulong bufferSize, ulong expectedBytes, int retries, bool verbose) {
-            Socket socket = this.getSocket(type);
+        protected virtual bool recv(SocketType socketType, ref byte[] buffer, ref ulong bufferSize, ulong expectedBytes, SerializationHeader expectedHeader, int retries, bool verbose) {
+            Socket socket = this.getSocket(socketType);
             if (socket == null) {
                 return false;
             }
-            return socket.receiveBytes(ref buffer, ref bufferSize, expectedBytes, ref this.errorCode, retries, verbose);
+            return socket.receiveBytes(ref buffer, ref bufferSize, expectedBytes, ref this.errorCode, expectedHeader, retries, verbose);
         }
 
         protected Dictionary<SocketType, Socket> sockets;
-        protected socket.Buffer sendBuffer, recvBuffer;
+        protected utils.Buffer sendBuffer, recvBuffer;
         protected bool isCopy;
         protected int errorCode;
-        protected DataCollection dataCollection;
+        protected SerializationHeader sendHeader, recvHeader;
 
         private void _cleanupData() {
             foreach (KeyValuePair<SocketType, Socket> entry in this.sockets) {

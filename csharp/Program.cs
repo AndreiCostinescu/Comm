@@ -1,14 +1,14 @@
-﻿using System;
+﻿using Comm.communication;
+using Comm.data;
+using Comm.socket;
+using DesignAIRobotics.Client;
+using System;
 using System.Diagnostics;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using DesignAIRobotics.Comm.client;
-using DesignAIRobotics.Comm.communication;
-using DesignAIRobotics.Comm.data;
-using DesignAIRobotics.Comm.socket;
 
-namespace DesignAIRobotics.Comm {
+namespace Comm {
     static class TestConsoleImage {
         public static void ConsoleWriteImage(BitmapModel image) {
             Func<BitmapColor, int> ToConsoleColor = c => {
@@ -50,13 +50,11 @@ namespace DesignAIRobotics.Comm {
             Console.WindowHeight = 2 * height;
             ConsoleWriteImage(x);
         }
-
-
     }
 
     static class TestEndianness {
         public static void test() {
-            Console.WriteLine("Am I big endian? " + socket.Utils.isBigEndian());
+            Console.WriteLine("Am I big endian? " + utils.NetworkData.isBigEndian());
             Console.WriteLine(sizeof(byte) + " " + sizeof(char) + " " + sizeof(short) + " " + sizeof(int) + " " + sizeof(long));
 
             ushort t = 48585;
@@ -76,8 +74,8 @@ namespace DesignAIRobotics.Comm {
                     }
                     Console.WriteLine("yL = " + yL);
                     socket.Utils.prepareBuffer(ref buffer, ref bufferSize, sizeof(long));
-                    socket.Utils.longLongToNetworkBytes(buffer, 0, yL);
-                    resLL = socket.Utils.networkBytesToLongLong(buffer, 0);
+                    utils.NetworkData.longLongToNetworkBytes(buffer, 0, yL);
+                    resLL = utils.NetworkData.networkBytesToLongLong(buffer, 0);
                     if (resLL != yL) {
                         Console.WriteLine("Error at y = " + yL + ", res = " + resLL);
                     }
@@ -87,16 +85,16 @@ namespace DesignAIRobotics.Comm {
             }
 
             socket.Utils.prepareBuffer(ref buffer, ref bufferSize, sizeof(long));
-            socket.Utils.longLongToNetworkBytes(buffer, 0, x2);
-            Debug.Assert(socket.Utils.networkBytesToLongLong(buffer, 0) == x2);
-            socket.Utils.longLongToNetworkBytes(buffer, 0, x1);
-            Debug.Assert(socket.Utils.networkBytesToLongLong(buffer, 0) == x1);
+            utils.NetworkData.longLongToNetworkBytes(buffer, 0, x2);
+            Debug.Assert(utils.NetworkData.networkBytesToLongLong(buffer, 0) == x2);
+            utils.NetworkData.longLongToNetworkBytes(buffer, 0, x1);
+            Debug.Assert(utils.NetworkData.networkBytesToLongLong(buffer, 0) == x1);
 
             int res = 0;
             for (int yI = 0; yI < 1 + 20; yI++) {
                 socket.Utils.prepareBuffer(ref buffer, ref bufferSize, sizeof(int));
-                socket.Utils.intToNetworkBytes(buffer, 0, yI);
-                res = socket.Utils.networkBytesToInt(buffer, 0);
+                utils.NetworkData.intToNetworkBytes(buffer, 0, yI);
+                res = utils.NetworkData.networkBytesToInt(buffer, 0);
                 if (res != yI) {
                     Console.WriteLine("Error at y = " + yI + ", res = " + res);
                 }
@@ -105,16 +103,16 @@ namespace DesignAIRobotics.Comm {
             int y = 1 << 31;
             Console.WriteLine(y);
             socket.Utils.prepareBuffer(ref buffer, ref bufferSize, sizeof(int));
-            socket.Utils.intToNetworkBytes(buffer, 0, y);
-            Debug.Assert(socket.Utils.networkBytesToInt(buffer, 0) == y);
+            utils.NetworkData.intToNetworkBytes(buffer, 0, y);
+            Debug.Assert(utils.NetworkData.networkBytesToInt(buffer, 0) == y);
 
             double resD;
             for (int factor = 2; factor <= 5; factor++) {
                 for (double z = 1.0; z > 0; z /= factor) {
                     Console.WriteLine(z);
                     socket.Utils.prepareBuffer(ref buffer, ref bufferSize, sizeof(double));
-                    socket.Utils.doubleToNetworkBytes(buffer, 0, z);
-                    resD = socket.Utils.networkBytesToDouble(buffer, 0);
+                    utils.NetworkData.doubleToNetworkBytes(buffer, 0, z);
+                    resD = utils.NetworkData.networkBytesToDouble(buffer, 0);
                     if (resD != z) {
                         Console.WriteLine("Error at z = " + z + ", res = " + resD);
                     }
@@ -127,15 +125,15 @@ namespace DesignAIRobotics.Comm {
     static class TestStrcmp {
         public static void test() {
             Debug.Assert(Int32.Parse("8348\0") == 8348);
-            Debug.Assert(socket.Utils.strcmp("asd", "asd") == 0);
-            Debug.Assert(socket.Utils.strcmp("asd", "asd\0") == 0);
-            Debug.Assert(socket.Utils.strcmp("asd\0", "asd") == 0);
-            Debug.Assert(socket.Utils.strcmp("asd\0", "asd\0") == 0);
-            Debug.Assert(socket.Utils.strcmp("asd\0", "asd" + (char)1) == -1);
-            Debug.Assert(socket.Utils.strcmp("asd" + (char)2, "asd") == 2);
-            Debug.Assert(socket.Utils.strcmp("asd" + (char)2, "asd" + (char)1) == 1);
-            Debug.Assert(socket.Utils.strcmp("bsd", "asd") == 1);
-            Debug.Assert(socket.Utils.strcmp("asd", "bsd") == -1);
+            Debug.Assert(utils.Utils.strcmp("asd", "asd") == 0);
+            Debug.Assert(utils.Utils.strcmp("asd", "asd\0") == 0);
+            Debug.Assert(utils.Utils.strcmp("asd\0", "asd") == 0);
+            Debug.Assert(utils.Utils.strcmp("asd\0", "asd\0") == 0);
+            Debug.Assert(utils.Utils.strcmp("asd\0", "asd" + (char)1) == -1);
+            Debug.Assert(utils.Utils.strcmp("asd" + (char)2, "asd") == 2);
+            Debug.Assert(utils.Utils.strcmp("asd" + (char)2, "asd" + (char)1) == 1);
+            Debug.Assert(utils.Utils.strcmp("bsd", "asd") == 1);
+            Debug.Assert(utils.Utils.strcmp("asd", "bsd") == -1);
         }
     }
 
@@ -223,11 +221,11 @@ namespace DesignAIRobotics.Comm {
                 p = t.acceptCommunication();
                 if (p != null) {
                     Console.WriteLine(x + ": Created partner communication with " + p.getPartnerString(SocketType.TCP));
-                    Debug.Assert(p.recvData(SocketType.TCP, status, -1, true));
+                    Debug.Assert(p.recvData(SocketType.TCP, status, false, false, -1, true));
                     Console.WriteLine(x + ": Received: \"" + status.getData() + "\" from partner");
-                    Debug.Assert(socket.Utils.strcmp(status.getData(), "Ce faci?") == 0);
+                    Debug.Assert(utils.Utils.strcmp(status.getData(), "Ce faci?") == 0);
                     status.setData("Bine!");
-                    Debug.Assert(p.sendData(SocketType.TCP, status, false, -1, true));
+                    Debug.Assert(p.transmitData(SocketType.TCP, status, false, false, -1, true));
                     break;
                 }
             }
@@ -246,12 +244,12 @@ namespace DesignAIRobotics.Comm {
             Console.WriteLine(x + ": Created partner communication");
             status.setData("Ce faci?");
             Console.WriteLine(x + ": Created status data");
-            Debug.Assert(p.sendData(SocketType.TCP, status, false, -1, true));
+            Debug.Assert(p.transmitData(SocketType.TCP, status, false, false, -1, true));
             Console.WriteLine(x + ": Sent status data");
-            Debug.Assert(p.recvData(SocketType.TCP, status, -1, true));
+            Debug.Assert(p.recvData(SocketType.TCP, status, false, false, -1, true));
             Console.WriteLine(x + ": Received status data");
             Console.WriteLine(x + ": Received: \"" + status.getData() + "\" from partner");
-            Debug.Assert(socket.Utils.strcmp(status.getData(), "Bine!") == 0);
+            Debug.Assert(utils.Utils.strcmp(status.getData(), "Bine!") == 0);
         }
 
         public static void test() {
@@ -281,7 +279,7 @@ namespace DesignAIRobotics.Comm {
             }
 
             StatusData s = new StatusData();
-            while (!partner.recvData(SocketType.TCP, s, 0, false)) { }
+            while (!partner.recvData(SocketType.TCP, s, false, false, 0, false)) { }
             Debug.Assert(s.getData() != null);
             int udpPort = Int32.Parse(s.getData());
             Console.WriteLine("Received udp port to communicate on: " + udpPort);
@@ -293,11 +291,11 @@ namespace DesignAIRobotics.Comm {
             Console.WriteLine("Client: UDP sendTo: " + partner.getPartnerString(SocketType.UDP));
             Console.WriteLine("Client: UDP myself: " + partner.getMyAddressString(SocketType.UDP));
             s.setData("Hello!");
-            partner.sendData(SocketType.UDP, s, false, 0, false);
+            partner.transmitData(SocketType.UDP, s, false, false, 0, false);
             Console.WriteLine("Client: UDP sendTo: " + partner.getPartnerString(SocketType.UDP));
             Console.WriteLine("Client: UDP myself: " + partner.getMyAddressString(SocketType.UDP));
             s.setData(partner.getMyAddressString(SocketType.UDP));
-            partner.sendData(SocketType.UDP, s, false, 0, false);
+            partner.transmitData(SocketType.UDP, s, false, false, 0, false);
             Console.WriteLine("Sent my address");
             Console.WriteLine("UDP Server finished normally");
         }
@@ -312,22 +310,22 @@ namespace DesignAIRobotics.Comm {
             Console.WriteLine("Initialized client!");
             StatusData s = new StatusData();
             s.setData("" + udpPort);
-            Debug.Assert(p.sendData(SocketType.TCP, s, false));
+            Debug.Assert(p.transmitData(SocketType.TCP, s, false, false));
             Console.WriteLine("Sent udp port: " + udpPort);
             Thread.Sleep(2000);
 
             Console.WriteLine();
             Console.WriteLine("Server: UDP sendTo: " + p.getPartnerString(SocketType.UDP));
             Console.WriteLine("Server: UDP myself: " + p.getMyAddressString(SocketType.UDP));
-            p.recvData(SocketType.UDP, s, 0, false);
-            Debug.Assert(socket.Utils.strcmp(s.getData(), "Hello!") == 0);
+            p.recvData(SocketType.UDP, s, false, false, 0, false);
+            Debug.Assert(utils.Utils.strcmp(s.getData(), "Hello!") == 0);
             Console.WriteLine("Got data: " + s.getData() + "; expected: \"Hello!\"");
             Console.WriteLine("Server: UDP sendTo: " + p.getPartnerString(SocketType.UDP));
             Console.WriteLine("Server: UDP myself: " + p.getMyAddressString(SocketType.UDP));
-            p.recvData(SocketType.UDP, s, 0, false);
+            p.recvData(SocketType.UDP, s, false, false, 0, false);
             Console.WriteLine("Got data: " + s.getData() + "; expected: " + p.getPartnerString(SocketType.UDP));
             // Only compare the ports!
-            Debug.Assert(socket.Utils.strcmp(s.getData().Split(':')[1], p.getPartnerString(SocketType.UDP).Split(':')[1]) == 0);
+            Debug.Assert(utils.Utils.strcmp(s.getData().Split(':')[1], p.getPartnerString(SocketType.UDP).Split(':')[1]) == 0);
             Console.WriteLine("Receive start message");
 
             Console.WriteLine("Test finished normally");
@@ -370,19 +368,19 @@ namespace DesignAIRobotics.Comm {
             }
 
             Console.WriteLine(x + ": Starting receive tcp status data...");
-            Debug.Assert(p.recvData(SocketType.TCP, status, -1, true));
+            Debug.Assert(p.recvData(SocketType.TCP, status, false, false, -1, true));
             Console.WriteLine(x + ": Received: \"" + status.getData() + "\" from partner");
 
             status.setData("start");
             Console.WriteLine(x + ": Starting start status data...");
-            Debug.Assert(p.sendData(SocketType.TCP, status, false, -1, true));
+            Debug.Assert(p.transmitData(SocketType.TCP, status, false, false, -1, true));
 
             Thread.Sleep(3000);
 
             p.createSocket(SocketType.UDP, null, portUDP, 2000, 50);
             string message;
             while (true) {
-                Debug.Assert(p.recvData(SocketType.UDP, status) || p.getErrorCode() == -1);
+                Debug.Assert(p.recvData(SocketType.UDP, status, false, false) || p.getErrorCode() == -1);
                 if (p.getErrorCode() == -1) {
                     continue;
                 }
@@ -397,7 +395,7 @@ namespace DesignAIRobotics.Comm {
             }
 
             status.setData("stop");
-            Debug.Assert(p.sendData(SocketType.TCP, status, false));
+            Debug.Assert(p.transmitData(SocketType.TCP, status, false, false));
 
             t.cleanup();
             p.cleanup();
@@ -423,11 +421,11 @@ namespace DesignAIRobotics.Comm {
 
             tcpStatus.setData("Robot 1");
             Console.WriteLine(x + ": Created tcpStatus data");
-            Debug.Assert(p.sendData(SocketType.TCP, tcpStatus, false, -1, true));
+            Debug.Assert(p.transmitData(SocketType.TCP, tcpStatus, false, false, -1, true));
             Console.WriteLine(x + ": Sent tcpStatus data");
-            Debug.Assert(p.recvData(SocketType.TCP, tcpStatus, -1, true));
+            Debug.Assert(p.recvData(SocketType.TCP, tcpStatus, false, false, -1, true));
             Console.WriteLine(x + ": Received tcpStatus data \"" + tcpStatus.getData() + "\" from partner");
-            Debug.Assert(socket.Utils.strcmp(tcpStatus.getData(), "start") == 0);
+            Debug.Assert(utils.Utils.strcmp(tcpStatus.getData(), "start") == 0);
 
             Thread.Sleep(3000);
 
@@ -436,9 +434,9 @@ namespace DesignAIRobotics.Comm {
             while (true) {
                 udpStatus.setData("Message " + id++);
                 // Console.WriteLine(x + ": set data for udp transmission");
-                Debug.Assert(p.sendData(SocketType.UDP, udpStatus, false));
+                Debug.Assert(p.transmitData(SocketType.UDP, udpStatus, false, false));
                 Console.WriteLine(x + ": sent udp data: " + udpStatus.getData());
-                Debug.Assert(p.recvData(SocketType.TCP, tcpStatus, 0) || p.getErrorCode() == -1);
+                Debug.Assert(p.recvData(SocketType.TCP, tcpStatus, false, false, 0) || p.getErrorCode() == -1);
                 // Console.WriteLine(x + ": after tcp listen/recv");
                 if (p.getErrorCode() == -1) {
                     continue;
@@ -446,7 +444,7 @@ namespace DesignAIRobotics.Comm {
                 message = tcpStatus.getData();
                 if (message != null) {
                     Console.WriteLine(x + ": received \"" + message + "\" from server");
-                    if (socket.Utils.strcmp(message, "stop") == 0) {
+                    if (utils.Utils.strcmp(message, "stop") == 0) {
                         break;
                     }
                 }
@@ -478,10 +476,10 @@ namespace DesignAIRobotics.Comm {
 
             status.setData("start");
             Console.WriteLine(x + ": Starting start status data...");
-            Debug.Assert(p.sendData(SocketType.TCP, status, false, -1, true));
+            Debug.Assert(p.transmitData(SocketType.TCP, status, false, false, -1, true));
 
             Console.WriteLine(x + ": Starting receive tcp status data...");
-            Debug.Assert(p.recvData(SocketType.TCP, status, -1, true));
+            Debug.Assert(p.recvData(SocketType.TCP, status, false, false, -1, true));
             Console.WriteLine(x + ": Received: \"" + status.getData() + "\" from partner");
 
             t.cleanup();
@@ -503,12 +501,12 @@ namespace DesignAIRobotics.Comm {
             p.createSocket(SocketType.TCP, partner, -1, 2000, 50);
             Console.WriteLine(x + ": Created TCP partner communication");
 
-            Debug.Assert(p.recvData(SocketType.TCP, tcpStatus, -1, true));
+            Debug.Assert(p.recvData(SocketType.TCP, tcpStatus, false, false, -1, true));
             Console.WriteLine(x + ": Received tcpStatus data \"" + tcpStatus.getData() + "\" from partner");
 
             tcpStatus.setData("Robot 1");
             Console.WriteLine(x + ": Created tcpStatus data");
-            Debug.Assert(p.sendData(SocketType.TCP, tcpStatus, false, -1, true));
+            Debug.Assert(p.transmitData(SocketType.TCP, tcpStatus, false, false, -1, true));
             Console.WriteLine(x + ": Sent tcpStatus data");
 
             Console.WriteLine(x + ": test_2 finished normally!");
@@ -542,16 +540,16 @@ namespace DesignAIRobotics.Comm {
 
             while (true) {
                 Console.WriteLine(x + ": In while loop, waiting for connection...");
-                Debug.Assert(p.recvData(SocketType.UDP, status) || p.getErrorCode() == -1);
+                Debug.Assert(p.recvData(SocketType.UDP, status, false, false) || p.getErrorCode() == -1);
                 if (p.getErrorCode() == -1) {
                     continue;
                 }
                 if (status.getData() != null) {
                     Console.WriteLine(x + ": Created partner communication with " + p.getPartnerString(SocketType.UDP));
                     Console.WriteLine(x + ": Received: \"" + status.getData() + "\" from partner");
-                    Debug.Assert(socket.Utils.strcmp(status.getData(), "Ce faci?") == 0);
+                    Debug.Assert(utils.Utils.strcmp(status.getData(), "Ce faci?") == 0);
                     status.setData("Bine!");
-                    Debug.Assert(p.sendData(SocketType.UDP, status, false, -1, true));
+                    Debug.Assert(p.transmitData(SocketType.UDP, status, false, false, -1, true));
                     break;
                 }
             }
@@ -569,12 +567,12 @@ namespace DesignAIRobotics.Comm {
             Console.WriteLine(x + ": Created partner communication");
             status.setData("Ce faci?");
             Console.WriteLine(x + ": Created status data");
-            Debug.Assert(p.sendData(SocketType.UDP, status, false, -1, true));
+            Debug.Assert(p.transmitData(SocketType.UDP, status, false, false, -1, true));
             Console.WriteLine(x + ": Sent status data");
-            Debug.Assert(p.recvData(SocketType.UDP, status, -1, true));
+            Debug.Assert(p.recvData(SocketType.UDP, status, false, false, -1, true));
             Console.WriteLine(x + ": Received status data");
             Console.WriteLine(x + ": Received: \"" + status.getData() + "\" from partner");
-            Debug.Assert(socket.Utils.strcmp(status.getData(), "Bine!") == 0);
+            Debug.Assert(utils.Utils.strcmp(status.getData(), "Bine!") == 0);
 
             Console.WriteLine(x + ": Ending test_1 normally!");
         }
@@ -603,14 +601,14 @@ namespace DesignAIRobotics.Comm {
             Console.WriteLine("Initialized sender udp server!");
             StatusData s = new StatusData();
             s.setData("" + udpPort);
-            Debug.Assert(p.sendData(SocketType.TCP, s, false));
-            Debug.Assert(p.recvData(SocketType.UDP, s));
-            Debug.Assert(socket.Utils.strcmp(s.getData(), "hello") == 0);
+            Debug.Assert(p.transmitData(SocketType.TCP, s, false, false));
+            Debug.Assert(p.recvData(SocketType.UDP, s, false, false));
+            Debug.Assert(utils.Utils.strcmp(s.getData(), "hello") == 0);
 
             BitmapModel image = new BitmapModel(20, 30, BitmapFormat.RGB); // cv.imread("../../data/Lena.png");
             image.Fill(255, 50, 255);
             ImageData i = new ImageData(image, 1);
-            if (!p.sendData(SocketType.UDP, i, false, 0, verbose)) {
+            if (!p.transmitData(SocketType.UDP, i, false, false, 0, verbose)) {
                 Console.WriteLine("Error: " + p.getErrorCode() + "; " + p.getErrorString());
             } else {
                 Console.WriteLine("Sent image data ");
@@ -633,17 +631,17 @@ namespace DesignAIRobotics.Comm {
             comm.setSocketTimeouts(SocketType.TCP, 2000, 500);
 
             StatusData s = new StatusData();
-            while (!comm.recvData(SocketType.TCP, s)) { }
+            while (!comm.recvData(SocketType.TCP, s, false, false)) { }
             Debug.Assert(s.getData() != null);
             SocketPartner p = new SocketPartner(comm.getPartner(SocketType.TCP).getIP(), Int32.Parse(s.getData()), false);
             Console.WriteLine("Connecting to udp: " + p.getPartnerString());
             comm.createSocket(SocketType.UDP, p, -1, 2000, 500);
 
             s.setData("hello");
-            Debug.Assert(comm.sendData(SocketType.UDP, s, false));
+            Debug.Assert(comm.transmitData(SocketType.UDP, s, false, false));
 
             ImageData i = new ImageData();
-            if (!comm.recvData(SocketType.UDP, i, 0, verbose)) {
+            if (!comm.recvData(SocketType.UDP, i, false, false, 0, verbose)) {
                 Console.WriteLine("Error: " + comm.getErrorCode() + "; " + comm.getErrorString());
             } else if (i.isImageDeserialized()) {
                 BitmapModel image = i.getImage();

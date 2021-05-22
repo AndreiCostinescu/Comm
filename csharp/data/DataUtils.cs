@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DesignAIRobotics.Comm.data {
+namespace Comm.data {
     public static class DataUtils {
         public static CommunicationData createCommunicationData(MessageType messageType) {
             switch (messageType) {

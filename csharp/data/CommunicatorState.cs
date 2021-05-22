@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DesignAIRobotics.Comm.data {
+namespace Comm.data {
     public enum CommunicatorState {
         COMMUNICATOR_IDLE = 0,
         COMMUNICATOR_ACTIVE = 1,

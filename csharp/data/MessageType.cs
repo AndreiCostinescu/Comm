@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DesignAIRobotics.Comm.data {
+namespace Comm.data {
     public enum MessageType {
         NOTHING = 0,
         STATUS,

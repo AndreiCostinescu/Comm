@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 
-namespace DesignAIRobotics.Comm.socket {
+namespace Comm.socket {
     public class SocketPartner {
         public SocketPartner(bool overwritePartner = false, bool initializePartner = false) {
             this.overwrite = overwritePartner;

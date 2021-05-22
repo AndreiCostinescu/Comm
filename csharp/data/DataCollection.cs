@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DesignAIRobotics.Comm.data {
+namespace Comm.data {
     public class DataCollection {
 
         public DataCollection() {

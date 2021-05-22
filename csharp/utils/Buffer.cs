@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace DesignAIRobotics.Comm.utils {
+namespace Comm.utils {
     public class Buffer {
         public Buffer(ulong bufferSize = 0) {
             this.buffer = null;

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace DesignAIRobotics.Comm.data {
+namespace Comm.data {
     class BytesData : CommunicationData {
         const int headerSize = sizeof(int);
 

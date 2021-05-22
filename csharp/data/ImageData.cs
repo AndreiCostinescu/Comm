@@ -4,7 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 
-namespace DesignAIRobotics.Comm.data {
+namespace Comm.data {
     public enum BitmapFormat {
         Empty = 0,
         Grayscale = 1,

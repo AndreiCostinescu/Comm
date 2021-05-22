@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace DesignAIRobotics.Comm.socket {
+namespace Comm.socket {
     public enum SocketType {
         UDP,
         UDP_HEADER,

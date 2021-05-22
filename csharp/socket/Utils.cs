@@ -1,8 +1,6 @@
-﻿using System;
-using System.Net;
-using DesignAIRobotics.Comm.utils;
+﻿using System.Net;
 
-namespace DesignAIRobotics.Comm.socket {
+namespace Comm.socket {
     class Utils {
         public static readonly int SOCKET_ACCEPT_TIMEOUT_SECONDS = 1;
 

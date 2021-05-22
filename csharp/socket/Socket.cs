@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Comm.utils;
+using DesignAIRobotics.Utils;
+using System;
 using System.Net;
 using System.Diagnostics;
-using DesignAIRobotics.Utils;
-using DesignAIRobotics.Comm.utils;
 
-namespace DesignAIRobotics.Comm.socket {
+namespace Comm.socket {
     public class Socket {
         public Socket(SocketType protocol, SocketPartner partner = null, int myPort = 0, int sendTimeout = -1, int recvTimeout = -1) : this() {
             this.initialize(protocol, partner, myPort, sendTimeout, recvTimeout);
@@ -315,7 +315,7 @@ namespace DesignAIRobotics.Comm.socket {
                 } catch (Exception e) {
                     Console.WriteLine("ERROR on bind... " + e.ToString());
                     throw e;
-                    return false;
+                    // return false;
                 }
             }
             if (this.myself == null || this.myself.getPort() == 0) {

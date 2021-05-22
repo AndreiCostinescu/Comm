@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Comm.socket;
+using System;
 using System.Diagnostics;
-using DesignAIRobotics.Comm.socket;
 
-namespace DesignAIRobotics.Comm.communication {
+namespace Comm.communication {
     class TCPServer {
         public TCPServer(int port, int backlog = 5) {
             this.port = port;

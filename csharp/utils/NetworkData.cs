@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 
-namespace DesignAIRobotics.Comm.utils {
+namespace Comm.utils {
     class NetworkData {
         private static bool bigEndian = !BitConverter.IsLittleEndian;
         public static ulong shortSize = sizeof(short);

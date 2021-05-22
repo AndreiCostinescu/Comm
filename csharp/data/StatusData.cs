@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace DesignAIRobotics.Comm.data {
+namespace Comm.data {
     public class StatusData : CommunicationData {
         public static readonly ulong headerSize = sizeof(int);
 

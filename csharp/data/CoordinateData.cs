@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DesignAIRobotics.Comm.data {
+namespace Comm.data {
     public class CoordinateData : CommunicationData {
         public readonly static ulong headerSize = 2 * sizeof(int) + 2 * sizeof(double) + sizeof(long);
 
