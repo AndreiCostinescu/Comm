@@ -1,7 +1,7 @@
 import numpy as np
-from python.comm.comm_data.StatusData import StatusData
-from python.comm.communication.Communication import Communication, SocketType, SocketPartner, MessageType
-from python.comm.comm_socket.Buffer import Buffer
+from comm.comm_data.StatusData import StatusData
+from comm.communication.Communication import Communication, SocketType, SocketPartner
+from comm.comm_utils.Buffer import Buffer
 from threading import Thread
 from time import sleep
 
@@ -42,7 +42,7 @@ def sendAngles():
     while not quitFlag:
         buffer = calculateAngle(buffer, True)
         angleData.setData(buffer.getBuffer(), buffer.getBufferContentSize())
-        if not comm.sendData(SocketType.UDP, angleData, False):
+        if not comm.transmitData(SocketType.UDP, angleData, False, False):
             print("Could not send udp data... ", comm.getErrorString())
         sleep(0.5)
 

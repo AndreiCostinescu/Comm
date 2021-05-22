@@ -1,6 +1,6 @@
-from python.comm.comm_data.StatusData import StatusData
-from python.comm.communication.Communication import Communication, SocketType, SocketPartner, MessageType
-from python.comm.comm_socket.utils import strcmp
+from comm.comm_data.StatusData import StatusData
+from comm.communication.Communication import Communication, SocketType, SocketPartner
+from comm.comm_utils.utils import strcmp
 from threading import Thread
 from time import sleep
 
@@ -17,7 +17,7 @@ def server_1(socketType: SocketType):
 
     while True:
         print(x, ": In while loop, waiting for connection on ", p.getMyself(socketType).getStringAddress(), "...")
-        assert (p.recvData(socketType, status, 0, verbose) or p.getErrorCode() == -1);
+        assert (p.recvData(socketType, status, False, False, 0, verbose) or p.getErrorCode() == -1);
         if p.getErrorCode() == -1:
             sleep(0.5)
             continue
@@ -31,7 +31,7 @@ def server_1(socketType: SocketType):
             status.setData("Bine!")
             sleep(0.5)
             print("\n\n")
-            assert (p.sendData(socketType, status, False, -1, verbose))
+            assert (p.transmitData(socketType, status, False, False, -1, verbose))
             break
         sleep(0.5)
 
@@ -50,11 +50,11 @@ def test_1(socketType: SocketType):
     print(x, ": Created status data")
     sleep(1)
     print("\n\n")
-    assert (p.sendData(socketType, status, False, -1, verbose))
+    assert (p.transmitData(socketType, status, False, False, -1, verbose))
     print(x, ": Sent status data")
     sleep(1)
     print("\n\n")
-    assert (p.recvData(socketType, status, -1, verbose))
+    assert (p.recvData(socketType, status, False, False, -1, verbose))
     print(x, ": Received status data")
     print(x, ": Received: \"", status.getData(), "\" from partner", sep="")
     assert (strcmp(status.getData(), "Bine!") == 0)

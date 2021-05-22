@@ -1,5 +1,5 @@
-from python.comm.comm_data.StatusData import StatusData
-from python.comm.communication.Communication import Communication, SocketType, SocketPartner, MessageType
+from comm.comm_data.StatusData import StatusData
+from comm.communication.Communication import Communication, SocketType, SocketPartner, MessageType
 from threading import Thread
 
 quitFlag = False
@@ -14,7 +14,7 @@ def createUDPEcho(socketType: SocketType):
     status = StatusData()
     global quitFlag
     while not quitFlag:
-        recvSuccess, messageType = comm.recvMessageType(socketType, 0, verbose)
+        recvSuccess, messageType = comm.recvMessageType(socketType, False, 0, verbose)
         if not recvSuccess:
             print("Error when recvMessageType:", comm.getErrorCode(), "-", comm.getErrorString())
             quitFlag = True
@@ -25,7 +25,7 @@ def createUDPEcho(socketType: SocketType):
         if messageType == MessageType.STATUS:
             print("Connection from", comm.getPartner(socketType).getStringAddress())
             comm.setOverwritePartner(socketType, False)
-            recvSuccess, status = comm.recvData(socketType, status, -1, verbose)  # type: bool, StatusData
+            recvSuccess, status = comm.recvData(socketType, status, False, True, -1, verbose)  # type: bool, StatusData
             if not recvSuccess:
                 print("Error when recvData (status): ", comm.getErrorCode(), ", ", comm.getErrorString(), sep="")
                 quitFlag = True

@@ -1,10 +1,10 @@
 import cv2 as cv
-from python.comm.comm_data.ImageData import ImageData
-from python.comm.comm_data.Messages import Messages
-from python.comm.comm_data.StatusData import StatusData
-from python.comm.communication.Communication import Communication, SocketType, SocketPartner, MessageType
-from python.comm.communication.TCPServer import TCPServer
-from python.comm.comm_socket.utils import strcmp
+from comm.comm_data.ImageData import ImageData
+from comm.comm_data.Messages import Messages
+from comm.comm_data.StatusData import StatusData
+from comm.communication.Communication import Communication, SocketType, SocketPartner, MessageType
+from comm.communication.TCPServer import TCPServer
+from comm.comm_utils.utils import strcmp
 from threading import Thread
 from time import sleep
 
@@ -24,7 +24,7 @@ def createUDPEcho(socketType: SocketType):
         if npImage is not None:
             cv.imshow("Received Image", npImage)
             cv.waitKey(5)
-        recvSuccess, messageType = comm.recvMessageType(socketType, 0, verbose)
+        recvSuccess, messageType = comm.recvMessageType(socketType, False, 0, verbose)
         if not recvSuccess:
             print("Error when recvMessageType:", comm.getErrorCode(), "-", comm.getErrorString())
             quitFlag = True
@@ -36,7 +36,7 @@ def createUDPEcho(socketType: SocketType):
         if messageType == MessageType.IMAGE:
             print("Connection from", comm.getPartner(socketType).getStringAddress())
             comm.setOverwritePartner(socketType, False)
-            recvSuccess, status = comm.recvData(socketType, image, -1, verbose)  # type: bool, ImageData
+            recvSuccess, status = comm.recvData(socketType, image, False, True, -1, verbose)  # type: bool, ImageData
             if not recvSuccess:
                 if comm.getErrorCode() >= 0:
                     print("Error when recvData (status): ", comm.getErrorCode(), ", ", comm.getErrorString(), sep="")
@@ -64,7 +64,7 @@ def imageStream(comm: Communication, threadID: int):
         if npImage is not None:
             cv.imshow("Received Image " + str(threadID), npImage)
             cv.waitKey(5)
-        recvSuccess, messageType = comm.recvMessageType(socketType, 0, verbose)
+        recvSuccess, messageType = comm.recvMessageType(socketType, False, 0, verbose)
         if not recvSuccess:
             print("Error when recvMessageType:", comm.getErrorCode(), "-", comm.getErrorString())
             break
@@ -73,7 +73,7 @@ def imageStream(comm: Communication, threadID: int):
         else:
             sleep(0.5)
         if messageType == MessageType.IMAGE:
-            recvSuccess, image = comm.recvData(socketType, image, -1, verbose)  # type: bool, ImageData
+            recvSuccess, image = comm.recvData(socketType, image, False, True, -1, verbose)  # type: bool, ImageData
             if not recvSuccess:
                 if comm.getErrorCode() >= 0:
                     print("Error when recvData (image): ", comm.getErrorCode(), ", ", comm.getErrorString(), sep="")
@@ -86,7 +86,7 @@ def imageStream(comm: Communication, threadID: int):
             print("Received image with id", image.id, "and shape", image.image.shape)
             npImage = image.image
         elif messageType == MessageType.STATUS:
-            recvSuccess, status = comm.recvData(socketType, status, -1, verbose)  # type: bool, StatusData
+            recvSuccess, status = comm.recvData(socketType, status, False, True, -1, verbose)  # type: bool, StatusData
             if not recvSuccess:
                 if comm.getErrorCode() >= 0:
                     print("Error when recvData (status): ", comm.getErrorCode(), ", ", comm.getErrorString(), sep="")
