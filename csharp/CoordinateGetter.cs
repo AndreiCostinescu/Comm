@@ -32,7 +32,7 @@ namespace Comm {
             data.set("buttonDwn", this.buttonDwn);
             data.set("x", x);
             data.set("y", y);
-            data.set("time", (long)(DateTime.Now - this.startTime).Milliseconds);
+            data.set("time", (long)(DateTime.Now - this.startTime).TotalMilliseconds);
             return true;
         }
 
