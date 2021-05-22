@@ -42,7 +42,7 @@ namespace Comm.utils {
             return IPAddress.NetworkToHostOrder(BitConverter.ToInt64(buffer, start));
         }
 
-        public static void floatToNetworkBytes(byte[] buffer, int start, double value) {
+        public static void floatToNetworkBytes(byte[] buffer, int start, float value) {
             Utils.memcpy(buffer, (ulong)start, BitConverter.GetBytes(value), 0, floatSize);
         }
 
