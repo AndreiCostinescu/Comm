@@ -84,8 +84,9 @@ class Communication:
         if withHeader:
             self.recvHeader.setData(0, 0, 0)
         dataLocalDeserializeBuffer, expectedSize = self.preReceiveMessageType(dataStart)
-        receiveResult, _, _ = self.doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries,
-                                             verbose)
+        assert (dataLocalDeserializeBuffer is None)
+        receiveResult = self.doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries,
+                                       verbose)
         return self.postReceiveMessageType(receiveResult, dataStart)
 
     def recvData(self, socketType: SocketType, data: CommunicationData, withHeader: bool, gotMessageType: bool = True,
@@ -95,7 +96,6 @@ class Communication:
         deserializeState = int(gotMessageType)
         localRetriesThreshold = 0
         localRetries = localRetriesThreshold
-        dataLocalDeserializeBuffer = None
         dataStart = 4 if withHeader else 0
         messageType = data.getMessageType()
         while not deserializationDone and localRetries >= 0:
@@ -103,11 +103,18 @@ class Communication:
             if withHeader:
                 self.recvHeader.setData(deserializeState, 0, 0)
             dataLocalDeserializeBuffer, expectedSize = self.preReceiveData(dataStart, data, withHeader)
-            receiveResult, dataLocalDeserializeBuffer, expectedSize = \
-                self.doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries, verbose)
-            if not self.postReceiveData(data, deserializeState, localRetries, receivedSomething, deserializationDone,
-                                        messageType, dataStart, localRetriesThreshold, receiveResult, withHeader,
-                                        verbose):
+            if dataLocalDeserializeBuffer is not None:
+                receiveResult, dataLocalDeserializeBuffer, expectedSize = \
+                    self.doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries, verbose)
+            else:
+                receiveResult = self.doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader,
+                                               retries, verbose)
+
+            postReceiveResult, data, deserializeState, localRetries, receivedSomething, deserializationDone = \
+                self.postReceiveData(data, deserializeState, localRetries, receivedSomething, deserializationDone,
+                                     messageType, dataStart, localRetriesThreshold, receiveResult, withHeader,
+                                     verbose)
+            if not postReceiveResult:
                 return False
 
         if receivedSomething and not deserializationDone:
@@ -152,8 +159,12 @@ class Communication:
                           "; expectedSize =", expectedSize, "; deserializeState =", deserializeState)
 
             # do receive
-            receiveResult, dataLocalDeserializeBuffer, expectedSize = \
-                self.doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries, verbose)
+            if dataLocalDeserializeBuffer is not None:
+                receiveResult, dataLocalDeserializeBuffer, expectedSize = \
+                    self.doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries, verbose)
+            else:
+                receiveResult = self.doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader,
+                                               retries, verbose)
 
             # post receive
             if deserializeState == 0:
@@ -297,8 +308,8 @@ class Communication:
         expectedSize = dataStart + recvData.getExpectedDataSize()
         return dataLocalDeserializeBuffer, expectedSize
 
-    def doReceive(self, socketType: SocketType, dataLocalDeserializeBuffer: bytes, expectedSize: int, withHeader: bool,
-                  retries: int, verbose: bool) -> Tuple[bool, bytes, int]:
+    def doReceive(self, socketType: SocketType, dataLocalDeserializeBuffer: Optional[bytes], expectedSize: int,
+                  withHeader: bool, retries: int, verbose: bool) -> bool or Tuple[bool, bytes, int]:
         if dataLocalDeserializeBuffer is not None:
             assert (not withHeader)
             return self.recv((socketType, dataLocalDeserializeBuffer, expectedSize, expectedSize), None, retries,
