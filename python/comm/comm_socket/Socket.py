@@ -431,7 +431,7 @@ class Socket:
             self.recvBuffer.setBufferContentSize(localReceivedBytes)
             localReceivedBytes -= 4
             if verbose:
-                print("Should have received", self.recvBuffer.getShort(2), ", received" + localReceivedBytes)
+                print("Should have received", self.recvBuffer.getShort(2), ", received", localReceivedBytes)
         if verbose:
             print("Post receive... localReceivedBytes =", localReceivedBytes, "; overwritePartner =", overwritePartner)
 
@@ -468,7 +468,7 @@ class Socket:
                 for x in receivedBufferData[:min(localReceivedBytes, 50)]:
                     print(int(x), end=" ")
                 print()
-            memcpy(buffer, receivedBytes, self.recvBuffer.getBuffer(), dataStart, localReceivedBytes)
+            buffer = memcpy(buffer, receivedBytes, self.recvBuffer.getBuffer(), dataStart, localReceivedBytes)
         self.recvBuffer.setBufferContentSize(0)
 
         if verbose:
