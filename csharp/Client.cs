@@ -142,7 +142,9 @@ namespace Comm {
                 }
                 sent = this.send(partner, SocketType.TCP, coordinate);
                 if (!sent) {
-                    Console.WriteLine("Error when sending coordinate data!");
+                    if (partner.getErrorCode() != 0) {
+                        Console.WriteLine("Error when sending coordinate data!");
+                    }
                     this.commQuit = true;
                     break;
                 }
@@ -196,17 +198,15 @@ namespace Comm {
                     if (image.isImageDeserialized()) {
                         // Console.WriteLine("Image deserialized correctly!");
                         receivedImage = image.getImage();
-                        // TODO: show image!
                         if (messageID % verboseMod == 0) {
                             Console.WriteLine("Image " + messageID + " is deserialized correctly!\n\t" + receivedImage.height + "x" + receivedImage.width + ": " + receivedImage.type + "; " + receivedImage.opencvBytes + "B");
                         }
-                        // Console.WriteLine("Previous height: " + this.robotView.recvImage.Height + "; width: " + this.robotView.recvImage.Width);
                         /*
+                        // Console.WriteLine("Previous height: " + this.robotView.recvImage.Height + "; width: " + this.robotView.recvImage.Width);
                         this.robotView.recvImage.MinimumHeightRequest = this.robotView.recvImage.Height;
                         this.robotView.recvImage.MinimumWidthRequest = this.robotView.recvImage.Width;
                         this.robotView.recvImageStream.Value = GenerateImageSource(receivedImage);
                         //*/
-                        Console.WriteLine("Image " + messageID + " deserialized correctly!");
                     } else {
                         Console.WriteLine("Error in deserializing image...");
                     }
@@ -276,7 +276,8 @@ namespace Comm {
             s.setCommand("control");
             // s.setCommand("stop");
             if (!this.send(this.serverPartner, SocketType.UDP_HEADER, s)) {
-                Console.WriteLine("Can not send ready to udp: " + this.serverPartner.getPartnerString(SocketType.UDP_HEADER) + ". error = " + this.serverPartner.getErrorString());
+                Console.WriteLine("Can not send " + s.getData() + " to udp: " + this.serverPartner.getPartnerString(SocketType.UDP_HEADER) + 
+                                  ". error = " + this.serverPartner.getErrorString());
                 this.commQuit = true;
                 return;
             }
@@ -341,12 +342,6 @@ namespace Comm {
                 this.state = CommunicatorState.COMMUNICATOR_ACTIVE;
 
                 // recv the udp port 
-                StatusData s = new StatusData();
-                if (!this.listenFor(this.serverPartner, SocketType.TCP, s, null, -1, -1, 10)) {
-                    this.commQuit = true;
-                    return;
-                }
-
                 MessageType messageType = MessageType.NOTHING;
                 while (this.continueCommunicationLoop(1)) {
                     if (!this.listen(this.serverPartner, SocketType.TCP, ref messageType, ref this.dataCollection, 10)) {
@@ -374,7 +369,7 @@ namespace Comm {
 
                 int serverUDPPort;
                 try {
-                    serverUDPPort = Int32.Parse(s.getData());
+                    serverUDPPort = Int32.Parse(status.getData());
                 } catch (Exception e) {
                     Console.WriteLine("Caught exception when trying to convert the received string udp port to int: " + e.ToString());
                     this.commQuit = true;
