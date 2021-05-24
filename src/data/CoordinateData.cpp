@@ -99,6 +99,26 @@ void CoordinateData::set(const std::vector<std::pair<std::string, void *>> &valu
     }
 }
 
+void CoordinateData::setID(int _id) {
+    this->id = _id;
+}
+
+void CoordinateData::setX(double _x) {
+    this->x = _x;
+}
+
+void CoordinateData::setY(double _y) {
+    this->y = _y;
+}
+
+void CoordinateData::setTime(long long _time) {
+    this->time = _time;
+}
+
+void CoordinateData::setTouch(bool _touch) {
+    this->touch = _touch;
+}
+
 int CoordinateData::getID() const {
     return this->id;
 }

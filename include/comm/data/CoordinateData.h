@@ -28,6 +28,16 @@ namespace comm {
 
         void set(const std::vector<std::pair<std::string, void *>> &values);
 
+        void setID(int _id);
+
+        void setX(double _x);
+
+        void setY(double _y);
+
+        void setTime(long long _time);
+
+        void setTouch(bool _touch);
+
         [[nodiscard]] int getID() const;
 
         [[nodiscard]] double getX() const;
