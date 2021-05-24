@@ -45,3 +45,7 @@ target_link_libraries(${EXE} ${MASTER_LIBRARIES})
 set(EXE "TestSendImage")
 add_executable(${EXE} testSendImage.cpp)
 target_link_libraries(${EXE} ${MASTER_LIBRARIES})
+
+set(EXE "TestCommunication")
+add_executable(${EXE} testCommunication.cpp)
+target_link_libraries(${EXE} ${MASTER_LIBRARIES})
