@@ -41,7 +41,7 @@ namespace Comm.communication {
             this.errorCode = 0;
 
             bool serializeDone = false;
-            int dataStart = (withHeader) ? 4 : 0;
+            int dataStart = 0;
             byte serializationState = 0;
             while (!serializeDone) {
                 if (withHeader) {
@@ -94,7 +94,7 @@ namespace Comm.communication {
             bool receiveResult;
             byte[] dataLocalDeserializeBuffer = null;
             ulong expectedSize = 0;
-            int dataStart = (withHeader) ? 4 : 0;
+            int dataStart = 0;
             this.errorCode = 0;
             if (withHeader) {
                 this.recvHeader.setData(0, 0, 0);
@@ -110,7 +110,7 @@ namespace Comm.communication {
             int deserializeState = (int)(gotMessageType ? 1 : 0), localRetriesThreshold = 0, localRetries = localRetriesThreshold;
             byte[] dataLocalDeserializeBuffer = null;
             ulong expectedSize = 0;
-            int dataStart = (withHeader) ? 4 : 0;
+            int dataStart = 0;
             MessageType messageType = data.getMessageType();
             while (!deserializationDone && localRetries >= 0) {
                 this.errorCode = 0;
@@ -144,15 +144,13 @@ namespace Comm.communication {
 
         public bool receiveData(SocketType socketType, DataCollection data, bool withHeader, int retries = 0, bool verbose = false) {
             bool deserializationDone = false, receiveResult, receivedSomething = false;
-            int deserializeState = 0, dataStart = 0;
+            int deserializeState = 0;
             int localRetriesThreshold = 0, localRetries = localRetriesThreshold;  // 10
             ulong expectedSize = 0;
             byte[] dataLocalDeserializeBuffer = null;
             MessageType messageType = 0;
             CommunicationData recvData = null;
-            if (withHeader) {
-                dataStart = 4;
-            }
+            int dataStart = 0;
 
             while (!deserializationDone && localRetries >= 0) {
                 this.errorCode = 0;

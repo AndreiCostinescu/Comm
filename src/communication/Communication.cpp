@@ -39,7 +39,9 @@ bool Communication::transmitData(SocketType socketType, CommunicationData *data,
     this->errorCode = 0;
 
     bool serializeDone = false;
-    int dataStart = (withHeader) ? 4 : 0, serializationState = 0;
+    // int dataStart = (withHeader) ? 4 : 0;
+    int dataStart = 0;
+    int serializationState = 0;
     while (!serializeDone) {
         if (withHeader) {
             this->sendHeader.setData(serializationState, 0, 0);
@@ -93,7 +95,8 @@ bool Communication::recvMessageType(SocketType socketType, MessageType &messageT
     bool receiveResult;
     char *dataLocalDeserializeBuffer;
     uint64_t expectedSize;
-    int dataStart = (withHeader) ? 4 : 0;
+    // int dataStart = (withHeader) ? 4 : 0;
+    int dataStart = 0;
     this->errorCode = 0;
     if (withHeader) {
         this->recvHeader.setData(0, 0, 0);
@@ -109,7 +112,8 @@ bool Communication::recvData(SocketType socketType, CommunicationData *data, boo
     int deserializeState = (int) gotMessageType, localRetriesThreshold = 0, localRetries = localRetriesThreshold;
     char *dataLocalDeserializeBuffer = nullptr;
     uint64_t expectedSize;
-    int dataStart = (withHeader) ? 4 : 0;
+    // int dataStart = (withHeader) ? 4 : 0;
+    int dataStart = 0;
     MessageType messageType = data->getMessageType();
     while (!deserializationDone && localRetries >= 0) {
         this->errorCode = 0;
@@ -148,15 +152,14 @@ bool Communication::recvData(SocketType socketType, CommunicationData *data, boo
 bool Communication::receiveData(SocketType socketType, DataCollection *data, bool withHeader, int retries,
                                 bool verbose) {
     bool deserializationDone = false, receiveResult, receivedSomething = false;
-    int deserializeState = 0, dataStart = 0;
+    int deserializeState = 0;
     int localRetriesThreshold = 0, localRetries = localRetriesThreshold;  // 10
     uint64_t expectedSize;
     char *dataLocalDeserializeBuffer = nullptr;
     MessageType messageType;
     CommunicationData *recvData = nullptr;
-    if (withHeader) {
-        dataStart = 4;
-    }
+    // int dataStart = (withHeader) ? 4 : 0;
+    int dataStart = 0;
 
     while (!deserializationDone && localRetries >= 0) {
         this->errorCode = 0;

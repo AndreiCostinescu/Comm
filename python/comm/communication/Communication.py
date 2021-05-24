@@ -39,7 +39,7 @@ class Communication:
         self.errorCode = 0
 
         serializeDone = False
-        dataStart = 4 if withHeader else 0
+        dataStart = 0
         serializationState = 0
         while not serializeDone:
             if withHeader:
@@ -79,7 +79,7 @@ class Communication:
 
     def recvMessageType(self, socketType: SocketType, withHeader: bool, retries: int = 0,
                         verbose: bool = False) -> Tuple[bool, MessageType]:
-        dataStart = 4 if withHeader else 0
+        dataStart = 0
         self.errorCode = 0
         if withHeader:
             self.recvHeader.setData(0, 0, 0)
@@ -96,7 +96,7 @@ class Communication:
         deserializeState = int(gotMessageType)
         localRetriesThreshold = 0
         localRetries = localRetriesThreshold
-        dataStart = 4 if withHeader else 0
+        dataStart = 0
         messageType = data.getMessageType()
         while not deserializationDone and localRetries >= 0:
             self.errorCode = 0
@@ -138,13 +138,11 @@ class Communication:
         deserializationDone = False
         receivedSomething = False
         deserializeState = 0
-        dataStart = 0
         localRetriesThreshold = 0  # 10
         localRetries = localRetriesThreshold
         messageType = None
         recvData = None
-        if withHeader:
-            dataStart = 4
+        dataStart = 0
 
         while not deserializationDone and localRetries >= 0:
             self.errorCode = 0
