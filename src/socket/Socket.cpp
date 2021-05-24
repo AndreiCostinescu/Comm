@@ -356,10 +356,6 @@ void Socket::initMyself(bool withBind) {
 bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode, SerializationHeader *header,
                          const int sendSize, const int sentBytes, const char sendIteration, const bool verbose) {
     bool withHeader = (header != nullptr || this->protocol == UDP_HEADER);
-    if (!withHeader) {
-        throw runtime_error("In communication we should always use the header!");
-    }
-
     if (withHeader) {
         if (header != nullptr) {
             this->sendBuffer->setChar((char) header->getSerializationIteration(), 0);
@@ -521,10 +517,6 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
     }
 
     bool withHeader = (expectedHeader != nullptr || this->protocol == UDP_HEADER);
-    if (!withHeader) {
-        assert(false);
-    }
-
     int dataStart = (withHeader) ? 4 : 0;
     if (withHeader && receiveIteration == 0 && !this->recvBuffer->empty()) {
         localReceivedBytes = (int) this->recvBuffer->getBufferContentSize();
