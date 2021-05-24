@@ -393,7 +393,7 @@ namespace Comm.communication {
                     recvData.resetDeserializeState();
                     return false;
                 } else if (this.getErrorCode() == -2) {
-                    Console.WriteLine("Stop loop: Only part of the data has been received before new message started...; deserializeState = " + deserializeState);
+                    Console.WriteLine("Stop loop: Only part of the data (" + MessageTypeConverter.messageTypeToString(messageType) + ") has been received before new message started...; deserializeState = " + deserializeState);
                     recvData.resetDeserializeState();
                     return false;
                 }

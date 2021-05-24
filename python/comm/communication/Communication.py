@@ -337,8 +337,8 @@ class Communication:
                 recvData.resetDeserializeState()
                 return False, recvData, deserializeState, localRetries, receivedSomething, deserializationDone
             elif self.getErrorCode() == -2:
-                print("Stop loop: Only part of the data has been received before new message started...",
-                      "deserializeState =", deserializeState)
+                print("Stop loop: Only part of the data (", MessageType.messageTypeToString(messageType),
+                      ") has been received before new message started... deserializeState = ", deserializeState, sep="")
                 recvData.resetDeserializeState()
                 return False, recvData, deserializeState, localRetries, receivedSomething, deserializationDone
 

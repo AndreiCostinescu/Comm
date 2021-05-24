@@ -445,8 +445,9 @@ bool Communication::postReceiveData(CommunicationData *&recvData, int &deseriali
             recvData->resetDeserializeState();
             return false;
         } else if (this->getErrorCode() == -2) {
-            (*cerror) << "Stop loop: Only part of the data has been received before new message started... "
-                      << "; deserializeState = " << deserializeState << endl;
+            (*cerror) << "Stop loop: Only part of the data (" << messageTypeToString(messageType)
+                      << ") has been received before new message started...; deserializeState = "
+                      << deserializeState << endl;
             recvData->resetDeserializeState();
             return false;
         }
