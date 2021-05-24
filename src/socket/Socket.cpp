@@ -356,6 +356,10 @@ void Socket::initMyself(bool withBind) {
 bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode, SerializationHeader *header,
                          const int sendSize, const int sentBytes, const char sendIteration, const bool verbose) {
     bool withHeader = (header != nullptr || this->protocol == UDP_HEADER);
+    if (!withHeader) {
+        throw runtime_error("In communication we should always use the header!");
+    }
+
     if (withHeader) {
         if (header != nullptr) {
             this->sendBuffer->setChar((char) header->getSerializationIteration(), 0);
@@ -397,8 +401,9 @@ bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode
             throw runtime_error("Unknown protocol: " + to_string(this->protocol));
         }
     }
-    if (verbose) {
-        cout << "Post send: managed to send localBytesSent = " << localBytesSent << endl;
+    if (true || verbose) {
+        cout << "Post send: already sent = " << sentBytes << "B; managed to send localBytesSent = " << localBytesSent
+             << endl;
         /*
         for (int i = 0; i < localBytesSent; i++) {
             cout << (int) buffer[i + sentBytes] << ", ";
@@ -484,14 +489,14 @@ bool Socket::_sendBytes(const char *buffer, uint64_t bufferLength, int &errorCod
     return true;
 }
 
-bool Socket::checkCorrectReceivePartner(bool &overwritePartner, const bool recvFirstMessage) {
+bool Socket::checkCorrectReceivePartner(bool &overwritePartner, const int receiveIteration) {
     if (this->protocol == SocketType::TCP) {
         return true;
     }
 
     assert (overwritePartner || this->partner != nullptr);
     if (overwritePartner) {
-        assert (!recvFirstMessage);
+        assert (receiveIteration == 0);
         // if overwritePartner is desired, choose first partner and do not overwrite until recv is finished!
         if (this->partner == nullptr) {
             this->partner = new SocketPartner(this->recvAddress);
@@ -508,7 +513,7 @@ bool Socket::checkCorrectReceivePartner(bool &overwritePartner, const bool recvF
 
 bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwritePartner, bool &recvFromCorrectPartner,
                             SerializationHeader *expectedHeader, const int receiveSize, const uint64_t receivedBytes,
-                            const bool recvFirstMessage, const bool verbose) {
+                            const int receiveIteration, const bool verbose) {
     setErrnoZero();
     recvFromCorrectPartner = true;  // needed because there are return paths before recomputing the value :)
     if (verbose) {
@@ -516,8 +521,12 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
     }
 
     bool withHeader = (expectedHeader != nullptr || this->protocol == UDP_HEADER);
+    if (!withHeader) {
+        assert(false);
+    }
+
     int dataStart = (withHeader) ? 4 : 0;
-    if (withHeader && !recvFirstMessage && !this->recvBuffer->empty()) {
+    if (withHeader && receiveIteration == 0 && !this->recvBuffer->empty()) {
         localReceivedBytes = (int) this->recvBuffer->getBufferContentSize();
     } else {
         switch (this->protocol) {
@@ -554,7 +563,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
         }
     }
     if (verbose) {
-        printLastError();
+        // printLastError();
         cout << "Post receive... localReceivedBytes = " << localReceivedBytes << "; overwritePartner = "
              << overwritePartner << endl;
     }
@@ -563,7 +572,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
         return true;
     }
 
-    recvFromCorrectPartner = this->checkCorrectReceivePartner(overwritePartner, recvFirstMessage);
+    recvFromCorrectPartner = this->checkCorrectReceivePartner(overwritePartner, receiveIteration);
     if (!recvFromCorrectPartner) {
         this->recvBuffer->setBufferContentSize(0);
         return true;
@@ -574,6 +583,8 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
         if (expectedHeader != nullptr && this->recvBuffer->getChar(0) != expectedHeader->getSerializationIteration()) {
             // received different serialization state... check if the partner is the same
             // interrupt receive! and don't reset the recvBuffer to keep data for next recv!
+            cout << "Serialization Iteration check failed: got " << (int) this->recvBuffer->getChar(0)
+                 << "; localReceivedBytes from receive call = " << localReceivedBytes << endl;
             localReceivedBytes = -2;
             setErrnoZero();  // <- to ensure that this will be interpreted as a timeout :)
             return true;
@@ -581,16 +592,18 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
 
         // check send iteration
         auto sendIteration = (unsigned char) this->recvBuffer->getChar(1);
-        if (recvFirstMessage && sendIteration == 0) {
-            // Received start of another message... interrupt receive!
-            // And don't reset the recvBuffer to keep data for next recv!
-            localReceivedBytes = -2;
-            setErrnoZero();  // <- to ensure that this will be interpreted as a timeout :)
-            return true;
-        }
-        if (!recvFirstMessage && sendIteration > 0) {
-            // wrong data, ignore, pretend like nothing was received (like recv from wrong partner)
-            recvFromCorrectPartner = false;
+        if (receiveIteration != sendIteration) {
+            cout << "Send Iteration check failed: got " << sendIteration << ", expected " << receiveIteration << endl;
+            if (receiveIteration == 0 && sendIteration > 0) {
+                // wrong data, ignore, pretend like nothing was received (like recv from wrong partner)
+                recvFromCorrectPartner = false;
+            } else {
+                // Received start of another message... interrupt receive!
+                // And don't reset the recvBuffer to keep data for next recv!
+                localReceivedBytes = -2;
+                setErrnoZero();  // <- to ensure that this will be interpreted as a timeout :)
+                return true;
+            }
         }
     }
     if (recvFromCorrectPartner) {
@@ -606,8 +619,9 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
     }
     this->recvBuffer->setBufferContentSize(0);
 
-    if (verbose) {
-        cout << "Post receive... managed to receive localReceivedBytes = " << localReceivedBytes << endl;
+    if (true || verbose) {
+        cout << "Post receive... managed to receive localReceivedBytes = " << localReceivedBytes
+             << " in addition to the received " << receivedBytes << "!" << endl;
         /*
         for (int i = 0; i < localReceivedBytes; i++) {
             cout << (int) buffer[i + receivedBytes] << ", ";
@@ -707,6 +721,7 @@ bool Socket::_receiveBytes(char *buffer, uint64_t expectedLength, int &errorCode
     bool recvFirstMessage = false, retry, recvFromCorrectPartner = false;
     bool overwritePartner = (this->partner == nullptr || !this->partner->isInitialized() ||
                              this->partner->getOverwrite());
+    int receiveIteration = 0;
     while (receivedBytes < expectedLength) {
         receiveSize = (int) min(expectedLength - receivedBytes, maxPossibleReceiveBytes);
         // wait to receive data from socket (and retry when timeout occurs)
@@ -715,7 +730,7 @@ bool Socket::_receiveBytes(char *buffer, uint64_t expectedLength, int &errorCode
                 assert (false);
             }
             if (!this->performReceive(buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner,
-                                      expectedHeader, receiveSize, receivedBytes, recvFirstMessage, verbose)) {
+                                      expectedHeader, receiveSize, receivedBytes, receiveIteration, verbose)) {
                 return false;
             }
             if (!checkErrno(errorCode, "Socket::_receiveBytes - after actual receive")) {
@@ -742,6 +757,7 @@ bool Socket::_receiveBytes(char *buffer, uint64_t expectedLength, int &errorCode
             return false;
         }
         receivedBytes += localReceivedBytes;
+        receiveIteration += recvFirstMessage;
     }
     assert(receivedBytes == expectedLength);
     if (verbose) {

@@ -91,11 +91,11 @@ namespace comm {
         bool _sendBytes(const char *buffer, uint64_t bufferLength, int &errorCode,
                         SerializationHeader *header, int retries = 0, bool verbose = false);
 
-        bool checkCorrectReceivePartner(bool &overwritePartner, bool recvFirstMessage);
+        bool checkCorrectReceivePartner(bool &overwritePartner, int receiveIteration);
 
         bool performReceive(char *buffer, int &localReceivedBytes, bool &overwritePartner, bool &recvFromCorrectPartner,
                             SerializationHeader *expectedHeader, int receiveSize, uint64_t receivedBytes,
-                            bool recvFirstMessage, bool verbose = false);
+                            int receiveIteration, bool verbose = false);
 
         static bool interpretReceiveResult(int &errorCode, int &localReceivedBytes, bool &recvFirstMessage,
                                            bool recvFromCorrectPartner, bool verbose = false);
