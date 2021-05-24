@@ -576,7 +576,14 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
             // received different serialization state... check if the partner is the same
             // interrupt receive! and don't reset the recvBuffer to keep data for next recv!
             cout << "Serialization Iteration check failed: got " << (int) this->recvBuffer->getChar(0)
-                 << "; localReceivedBytes from receive call = " << localReceivedBytes << endl;
+                 << "; localReceivedBytes from receive call = " << localReceivedBytes + 4 << endl;
+            if (localReceivedBytes < 20) {
+                cout << "Trailing bytes: ";
+                for (int i = 0; i < localReceivedBytes + 4; i++) {
+                    cout << (int) this->recvBuffer->getChar(i) << ", ";
+                }
+                cout << endl;
+            }
             localReceivedBytes = -2;
             setErrnoZero();  // <- to ensure that this will be interpreted as a timeout :)
             return true;
