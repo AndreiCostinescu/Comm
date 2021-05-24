@@ -210,7 +210,7 @@ void Buffer::prepareBuffer(uint64_t desiredSize) {
     }
 }
 
-void Buffer::checkBufferContentSize(unsigned long long size, bool modifySize) {
+void Buffer::checkBufferContentSize(uint64_t size, bool modifySize) {
     if (size > this->bufferContentSize) {
         if (modifySize) {
             this->prepareBuffer(size);
