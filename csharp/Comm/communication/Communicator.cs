@@ -40,8 +40,9 @@ namespace Comm.communication {
             return false;
         }
 
-        public static bool syphon(Communication comm, SocketType socketType, ref MessageType messageType, CommunicationData data,
-                                  ref bool quitFlag, int retries = 0, bool verbose = false, int syphonRetries = 10) {
+        public static bool syphon(Communication comm, SocketType socketType, ref MessageType messageType,
+                                  CommunicationData data, bool withHeader, ref bool quitFlag, int retries = 0,
+                                  bool verbose = false, int syphonRetries = 10) {
             switch (messageType) {
                 case MessageType.NOTHING: {
                     return true;
@@ -54,7 +55,7 @@ namespace Comm.communication {
                     }
                     int localRetriesBeforeFail = (syphonRetries < 1) ? 1 : syphonRetries;
                     while (!quitFlag && localRetriesBeforeFail > 0) {
-                        if (!comm.recvData(socketType, data, false, true, retries, verbose)) {
+                        if (!comm.recvData(socketType, data, withHeader, true, retries, verbose)) {
                             if (comm.getErrorCode() == -1) {
                                 localRetriesBeforeFail--;
                                 continue;
@@ -73,8 +74,10 @@ namespace Comm.communication {
             }
         }
 
-        public static bool listen(Communication comm, SocketType socketType, ref MessageType messageType, ref DataCollection _dataCollection, ref bool quitFlag, int retries = 0, bool verbose = false) {
-            if (!comm.recvMessageType(socketType, ref messageType, false, retries, verbose)) {
+        public static bool listen(Communication comm, SocketType socketType, ref MessageType messageType,
+                                  ref DataCollection _dataCollection, bool withHeader, ref bool quitFlag,
+                                  int retries = 0, bool verbose = false) {
+            if (!comm.recvMessageType(socketType, ref messageType, withHeader, retries, verbose)) {
                 if (isReceiveErrorOk(comm.getErrorCode(), ref messageType, true)) {
                     return true;
                 }
