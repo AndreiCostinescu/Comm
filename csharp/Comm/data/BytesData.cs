@@ -5,7 +5,7 @@ namespace Comm.data {
     class BytesData : CommunicationData {
         const int headerSize = sizeof(int);
 
-        public BytesData(int size) {
+        public BytesData(int size = 0) {
             this.data = new utils.Buffer((ulong)size);
             this.expectedDataSize = 0;
 

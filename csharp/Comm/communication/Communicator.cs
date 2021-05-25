@@ -90,7 +90,7 @@ namespace Comm.communication {
 
             CommunicationData data = _dataCollection.get(messageType);
             MessageType receivedMessageType = messageType;
-            if (!Communicator.syphon(comm, socketType, ref messageType, data, ref quitFlag, retries, verbose)) {
+            if (!Communicator.syphon(comm, socketType, ref messageType, data, withHeader, ref quitFlag, retries, verbose)) {
                 if (!quitFlag) {
                     Console.WriteLine("Error when syphoning data " + MessageTypeConverter.messageTypeToString(receivedMessageType) + "... setting \"quit\"");
                 }
@@ -102,13 +102,13 @@ namespace Comm.communication {
             return true;
         }
 
-        public static bool listenFor(Communication comm, SocketType socketType, CommunicationData data, ref bool quitFlag,
+        public static bool listenFor(Communication comm, SocketType socketType, CommunicationData data, bool withHeader, ref bool quitFlag,
                                      Reference<bool> timeoutResult = null, int countIgnoreOther = -1, int countIgnore = -1,
                                      int retries = 0, bool verbose = false) {
             Debug.Assert(data != null);
             MessageType messageType = MessageType.NOTHING;
             while (!quitFlag) {
-                if (!comm.recvMessageType(socketType, ref messageType, false, retries, verbose)) {
+                if (!comm.recvMessageType(socketType, ref messageType, withHeader, retries, verbose)) {
                     if (isReceiveErrorOk(comm.getErrorCode(), ref messageType, true)) {
                         continue;
                     }
@@ -119,7 +119,7 @@ namespace Comm.communication {
                     if (messageType != MessageType.NOTHING) {
                         Console.WriteLine("Wrong messageType... expected " + MessageTypeConverter.messageTypeToString(data.getMessageType()) + "; got " + MessageTypeConverter.messageTypeToString(messageType));
                     }
-                    if (!syphon(comm, socketType, ref messageType, null, ref quitFlag, retries, verbose)) {
+                    if (!syphon(comm, socketType, ref messageType, null, withHeader, ref quitFlag, retries, verbose)) {
                         return false;
                     }
                     // it can happen that messageType becomes NOTHING because we don't receive any data in Communicator::syphon!
@@ -143,7 +143,7 @@ namespace Comm.communication {
                 return false;
             }
             while (!quitFlag) {
-                if (!syphon(comm, socketType, ref messageType, data, ref quitFlag, retries, verbose)) {
+                if (!syphon(comm, socketType, ref messageType, data, withHeader, ref quitFlag, retries, verbose)) {
                     if (comm.getErrorCode() < 0) {
                         continue;
                     }

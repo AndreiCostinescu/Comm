@@ -122,7 +122,7 @@ namespace Comm {
                 if (messageID % verboseMod == 0) {
                     Console.WriteLine("Send coordinate data: " + coordinate.getID() + ", " + coordinate.getX() + ", " + coordinate.getY() + ", " + coordinate.getTime() + ", " + coordinate.getTouch());
                 }
-                sent = this.send(partner, SocketType.TCP, coordinate);
+                sent = this.send(partner, SocketType.TCP, coordinate, true);
                 if (!sent) {
                     if (partner.getErrorCode() != 0) {
                         Console.WriteLine("Error when sending coordinate data!");
@@ -215,7 +215,6 @@ namespace Comm {
                     if (image.isImageDeserialized()) {
                         // Console.WriteLine("Image deserialized correctly!");
                         BitmapModel receivedImage = image.getImage();
-                        // TODO: show image!
                         if (messageID % verboseMod == 0) {
                             Console.WriteLine("Image " + messageID + " is deserialized correctly!\n\t" + receivedImage.height + "x" + receivedImage.width + ": " + receivedImage.type + "; " + receivedImage.opencvBytes + "B");
                         }
@@ -232,7 +231,7 @@ namespace Comm {
             if (this.quit) {
                 Console.WriteLine("User quit");
                 status.setCommand("quit");
-                this.send(this.serverPartner, SocketType.TCP, status);
+                this.send(this.serverPartner, SocketType.TCP, status, true);
             } else if (this.commQuit) {
                 Console.WriteLine("Server quit");
             } else if (this.beActive != null && Comm.utils.Utils.strcmp(this.beActive, Comm.data.Messages.STOP_MESSAGE) == 0) {
@@ -248,7 +247,7 @@ namespace Comm {
             StatusData s = new StatusData();
             s.setCommand("control");
             // s.setCommand("stop");
-            if (!this.send(this.serverPartner, SocketType.UDP_HEADER, s)) {
+            if (!this.send(this.serverPartner, SocketType.UDP_HEADER, s, true)) {
                 Console.WriteLine("Can not send " + s.getData() + " to udp: " + this.serverPartner.getPartnerString(SocketType.UDP_HEADER) + 
                                   ". error = " + this.serverPartner.getErrorString());
                 this.commQuit = true;
@@ -317,7 +316,7 @@ namespace Comm {
                 // recv the udp port 
                 MessageType messageType = MessageType.NOTHING;
                 while (this.continueCommunicationLoop(1)) {
-                    if (!this.listen(this.serverPartner, SocketType.TCP, ref messageType, ref this.dataCollection, 10)) {
+                    if (!this.listen(this.serverPartner, SocketType.TCP, ref messageType, ref this.dataCollection, true, 10)) {
                         Console.WriteLine("Can not receive data from " + this.serverPartner.getPartnerString(SocketType.TCP) + 
                                           "; error " + this.serverPartner.getErrorString());
                         Console.WriteLine("Can not receive the expected udp port from " + this.serverPartner.getPartnerString(SocketType.TCP) + 
@@ -404,7 +403,7 @@ namespace Comm {
             MessageType messageType = MessageType.NOTHING;
             // cout << "Listening for data..." << endl;
             StatusData status = (StatusData) dataCollection.get(MessageType.STATUS);
-            if (!this.listen(partner, type, ref messageType, ref dataCollection)) {
+            if (!this.listen(partner, type, ref messageType, ref dataCollection, true)) {
                 status.reset();
                 return messageType;
             }
@@ -423,7 +422,7 @@ namespace Comm {
             if (Comm.utils.Utils.strcmp(listenResult, Comm.data.Messages.PING_MESSAGE) == 0) {
                 status.setStatus(CommunicatorStateConverter.convertCommunicatorStateToStatus(this.state));
                 Console.WriteLine("Sending to server " + status.getData());
-                if (!this.send(partner, SocketType.TCP, status)) {
+                if (!this.send(partner, SocketType.TCP, status, true)) {
                     Console.WriteLine("Can not send ping response to " + partner.getPartnerString(SocketType.TCP));
                 } else {
                     Console.WriteLine("Sent!");

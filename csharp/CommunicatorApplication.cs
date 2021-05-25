@@ -30,26 +30,26 @@ namespace Comm {
             this.quit = true;
         }
 
-        protected bool send(Communication comm, SocketType socketType, CommunicationData data, int retries = 0, bool verbose = false) {
-            return Communicator.send(comm, socketType, data, false, true, retries, verbose);
+        protected bool send(Communication comm, SocketType socketType, CommunicationData data, bool withHeader, int retries = 0, bool verbose = false) {
+            return Communicator.send(comm, socketType, data, withHeader, true, retries, verbose);
         }
 
         protected bool send(Communication comm, SocketType socketType, byte[] data, int dataSize, int retries = 0, bool verbose = false) {
             return Communicator.send(comm, socketType, data, dataSize, retries, verbose);
         }
 
-        protected bool syphon(Communication comm, SocketType socketType, ref MessageType messageType, CommunicationData data, int retries = 0, bool verbose = false, int syphonRetries = 10) {
-            return Communicator.syphon(comm, socketType, ref messageType, data, ref this.quit, retries, verbose);
+        protected bool syphon(Communication comm, SocketType socketType, ref MessageType messageType, CommunicationData data, bool withHeader, int retries = 0, bool verbose = false, int syphonRetries = 10) {
+            return Communicator.syphon(comm, socketType, ref messageType, data, withHeader, ref this.quit, retries, verbose);
         }
 
-        protected bool listen(Communication comm, SocketType socketType, ref MessageType messageType, ref DataCollection _dataCollection, int retries = 0, bool verbose = false) {
-            return Communicator.listen(comm, socketType, ref messageType, ref _dataCollection, ref this.quit, retries, verbose);
+        protected bool listen(Communication comm, SocketType socketType, ref MessageType messageType, ref DataCollection _dataCollection, bool withHeader, int retries = 0, bool verbose = false) {
+            return Communicator.listen(comm, socketType, ref messageType, ref _dataCollection, withHeader, ref this.quit, retries, verbose);
         }
 
-        protected bool listenFor(Communication comm, SocketType socketType, CommunicationData data,
+        protected bool listenFor(Communication comm, SocketType socketType, CommunicationData data, bool withHeader,
                                  Reference<bool> timeoutResult = null, int countIgnoreOther = -1,
                                  int countOther = -1, int retries = 0, bool verbose = false) {
-            return Communicator.listenFor(comm, socketType, data, ref this.quit, timeoutResult, countIgnoreOther, countOther, retries, verbose);
+            return Communicator.listenFor(comm, socketType, data, withHeader, ref this.quit, timeoutResult, countIgnoreOther, countOther, retries, verbose);
         }
 
         protected virtual void _preMain() { }
