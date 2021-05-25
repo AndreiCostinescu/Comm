@@ -402,7 +402,7 @@ bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode
              << endl;
         /*
         for (int i = 0; i < localBytesSent; i++) {
-            cout << (int) buffer[i + sentBytes] << ", ";
+            cout << (unsigned int) buffer[i + sentBytes] << ", ";
         }
         cout << endl;
         //*/
@@ -540,7 +540,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
             assert (this->recvBuffer->getBuffer() != nullptr);
             this->recvAddressLength = sizeof(this->recvAddress);
             receiveAmount = recvfrom(this->socket, this->recvBuffer->getBuffer(), receiveSize, 0,
-                                      (struct sockaddr *) (&this->recvAddress), &this->recvAddressLength);
+                                     (struct sockaddr *) (&this->recvAddress), &this->recvAddressLength);
             localReceivedBytes += receiveAmount;
             receiveSize = 0;
             break;
@@ -566,7 +566,11 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
     int remainingBufferBytes = -receiveSize;
     assert (remainingBufferBytes == 0 || this->protocol == SocketType::TCP);
 
-    if (withHeader && localReceivedBytes >= 0) {
+    if (localReceivedBytes <= 0) {
+        return true;
+    }
+
+    if (withHeader && localReceivedBytes > 0) {
         if (localReceivedBytes < 4) {
             cout << "Wrong protocol for this socket!!!" << endl;
             localReceivedBytes = -1;
@@ -579,17 +583,13 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                  << ", received " << localReceivedBytes << endl;
             cout << "First bytes: ";
             for (int i = 0; i < min(localReceivedBytes, 20) + 4; i++) {
-                cout << (int) this->recvBuffer->getChar(i) << ", ";
+                cout << (unsigned int) this->recvBuffer->getChar(i) << ", ";
             }
             if (localReceivedBytes > 20) {
                 cout << "...";
             }
             cout << endl;
         }
-    }
-
-    if (localReceivedBytes < 0) {
-        return true;
     }
 
     recvFromCorrectPartner = this->checkCorrectReceivePartner(overwritePartner, receiveIteration);
@@ -607,7 +607,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                  << "; localReceivedBytes from receive call = " << localReceivedBytes + 4 << endl;
             cout << "Trailing bytes: ";
             for (int i = 0; i < min(localReceivedBytes, 20) + 4; i++) {
-                cout << (int) this->recvBuffer->getChar(i) << ", ";
+                cout << (unsigned int) this->recvBuffer->getChar(i) << ", ";
             }
             if (localReceivedBytes > 20) {
                 cout << "...";
@@ -639,7 +639,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
             cout << "Received data: ";
             const char *receivedBufferData = this->recvBuffer->getBuffer() + dataStart;
             for (int i = 0; i < min(localReceivedBytes, 50); i++) {
-                cout << (int) receivedBufferData[i] << " ";
+                cout << (unsigned int) receivedBufferData[i] << " ";
             }
             cout << endl;
         }
@@ -658,7 +658,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
              << " in addition to the received " << receivedBytes << "!" << endl;
         /*
         for (int i = 0; i < localReceivedBytes; i++) {
-            cout << (int) buffer[i + receivedBytes] << ", ";
+            cout << (unsigned int) buffer[i + receivedBytes] << ", ";
         }
         cout << endl;
         //*/

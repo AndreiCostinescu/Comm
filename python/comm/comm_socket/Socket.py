@@ -384,13 +384,13 @@ class Socket:
 
         return True, errorCode
 
-    def checkCorrectReceivePartner(self, overwritePartner: bool, recvFirstMessage: bool):
+    def checkCorrectReceivePartner(self, overwritePartner: bool, receiveIteration: int):
         if self.protocol == SocketType.TCP:
             return True, overwritePartner
 
         assert (overwritePartner or self.partner is not None)
         if overwritePartner:
-            assert (not recvFirstMessage)
+            assert (receiveIteration == 0)
             # if overwritePartner is desired, choose first partner and do not overwrite until recv is finished!
             if self.partner is None:
                 self.partner = SocketPartner.SocketPartner(self.recvAddress, False)
@@ -403,26 +403,51 @@ class Socket:
         return True, overwritePartner
 
     def performReceive(self, buffer: bytes, expectedHeader: Optional[SerializationHeader], overwritePartner: bool,
-                       receiveSize: int, receivedBytes: int, recvFirstMessage: bool,
+                       receiveSize: int, receivedBytes: int, receiveIteration: int,
                        verbose: bool = False) -> Tuple[bool, bytes, int, bool, bool]:
-
         recvFromCorrectPartner = True
         withHeader = (expectedHeader is not None or self.protocol == SocketType.UDP_HEADER)
+        localVerbose = receiveSize > 100  # type: bool
         dataStart = 4 if withHeader else 0
-        if withHeader and not recvFirstMessage and not self.recvBuffer.empty():
+        receiveAmount = 0
+        receiveBuffer = ""
+        receiveSize += dataStart
+        localReceivedBytes = 0
+
+        if withHeader and receiveIteration == 0 and not self.recvBuffer.empty():
+            print("USING THE LOCAL RECEIVED BYTES VALUE FROM THE PREVIOUS ITERATION!")
             localReceivedBytes = self.recvBuffer.getBufferContentSize()
-        elif self.protocol in [SocketType.UDP, SocketType.UDP_HEADER]:
-            assert (self.recvBuffer.empty())
-            assert (self.recvBuffer.getBuffer() is not None)
-            self.recvBuffer.buffer, self.recvAddress = self.socket.recvfrom(dataStart + receiveSize)
-            localReceivedBytes = len(self.recvBuffer.buffer)
+        # print("LocalReceivedBytes before switch:", localReceivedBytes)
+        if self.protocol in [SocketType.UDP, SocketType.UDP_HEADER]:
+            if localReceivedBytes > 0:
+                # udp respects the boundaries of messages -> what we previously received was a (full) package / message!
+                receiveSize = 0
+            else:
+                assert (self.recvBuffer.empty())
+                assert (self.recvBuffer.getBuffer() is not None)
+                self.recvBuffer.buffer, self.recvAddress = self.socket.recvfrom(receiveSize)
+                receiveAmount = len(self.recvBuffer.buffer)
+                localReceivedBytes += receiveAmount
+                receiveSize = 0
         elif self.protocol == SocketType.TCP:
-            self.recvBuffer.buffer = self.socket.recv(dataStart + receiveSize)
-            localReceivedBytes = len(self.recvBuffer.buffer)
+            # tcp does not respect the boundaries of messages -> read until we get the receiveSize!
+            receiveSize -= localReceivedBytes
+            while receiveSize > 0:
+                receiveBuffer = self.socket.recv(receiveSize)
+                receiveAmount = len(receiveBuffer)
+                localReceivedBytes += receiveAmount
+                self.recvBuffer.buffer += receiveBuffer
+                if receiveAmount <= 0:
+                    break
         else:
             raise RuntimeError("Unknown protocol: " + str(self.protocol))
+        remainingBufferBytes = -receiveSize
+        assert (remainingBufferBytes == 0 or self.protocol == SocketType.TCP)
 
-        if withHeader and localReceivedBytes >= 0:
+        if localReceivedBytes <= 0:
+            return True, buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner
+
+        if withHeader and localReceivedBytes > 0:
             if localReceivedBytes < 4:
                 print("Wrong protocol for this socket!!!")
                 localReceivedBytes = -1
@@ -432,13 +457,15 @@ class Socket:
             localReceivedBytes -= 4
             if verbose:
                 print("Should have received", self.recvBuffer.getShort(2), ", received", localReceivedBytes)
+                print("First bytes: ", end="")
+                print(*self.recvBuffer.buffer[:min(localReceivedBytes, 20) + 4], sep=",", end="")
+                if localReceivedBytes > 20:
+                    print("...", end="")
+                print()
         if verbose:
             print("Post receive... localReceivedBytes =", localReceivedBytes, "; overwritePartner =", overwritePartner)
 
-        if localReceivedBytes < 0:
-            return True, buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner
-
-        recvFromCorrectPartner, overwritePartner = self.checkCorrectReceivePartner(overwritePartner, recvFirstMessage)
+        recvFromCorrectPartner, overwritePartner = self.checkCorrectReceivePartner(overwritePartner, receiveIteration)
         if not recvFromCorrectPartner:
             self.recvBuffer.setBufferContentSize(0)
             return True, buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner
@@ -448,19 +475,28 @@ class Socket:
             if expectedHeader is not None and self.recvBuffer.getChar(0) != expectedHeader.getSerializationIteration():
                 # received different serialization state...check if the partner is the same
                 # interrupt receive! and don't reset the recvBuffer to keep data for next recv!
+                print("Serialization Iteration check failed: got", int(self.recvBuffer.getChar(0)),
+                      "; localReceivedBytes from receive call =", localReceivedBytes + 4)
+                print("Trailing bytes: ", end="")
+                print(*self.recvBuffer.buffer[:min(localReceivedBytes, 20) + 4], sep=",", end="")
+                if localReceivedBytes > 20:
+                    print("...", end="")
+                print()
                 localReceivedBytes = -2
                 return True, buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner
 
             # check send iteration
             sendIteration = self.recvBuffer.getChar(1)
-            if recvFirstMessage and sendIteration == 0:
-                # Received start of another message... interrupt receive!
-                # And don't reset the recvBuffer to keep data for next recv!
-                localReceivedBytes = -2
-                return True, buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner
-            if not recvFirstMessage and sendIteration > 0:
-                # wrong data, ignore, pretend like nothing was received (like recv from wrong partner)
-                recvFromCorrectPartner = False
+            if receiveIteration != sendIteration:
+                print("Send Iteration check failed: got", sendIteration, "; expected", receiveIteration)
+                if receiveIteration == 0 and sendIteration > 0:
+                    # wrong data, ignore, pretend like nothing was received (like recv from wrong partner)
+                    recvFromCorrectPartner = False
+                else:
+                    # Received start of another message... interrupt receive!
+                    # And don't reset the recvBuffer to keep data for next recv!
+                    localReceivedBytes = -2
+                    return True, buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner
         if recvFromCorrectPartner:
             if verbose:
                 print("Received data: ", end="")
@@ -469,10 +505,16 @@ class Socket:
                     print(int(x), end=" ")
                 print()
             buffer = memcpy(buffer, receivedBytes, self.recvBuffer.getBuffer(), dataStart, localReceivedBytes)
-        self.recvBuffer.setBufferContentSize(0)
+            if remainingBufferBytes > 0:
+                print("HELP: COPYING TCP DATA!")
+                # can happen in TCP if we read more than expected...
+                self.recvBuffer.buffer = memcpy(self.recvBuffer.buffer, 0, self.recvBuffer.buffer,
+                                                localReceivedBytes, remainingBufferBytes)
+        self.recvBuffer.setBufferContentSize(remainingBufferBytes)
 
         if verbose:
-            print("Post receive... managed to receive localReceivedBytes =", localReceivedBytes)
+            print("Post receive... managed to receive localReceivedBytes = ", localReceivedBytes,
+                  " in addition to the already received ", receivedBytes, "!", sep="")
             """
             for x in buffer[receivedBytes:receivedBytes + localReceivedBytes]:
                 print(int(x), ", ", sep="", end="")
@@ -482,12 +524,12 @@ class Socket:
 
     def interpretReceiveResult(self, buffer: bytes, errorCode: int, expectedHeader: Optional[SerializationHeader],
                                localReceivedBytes: int, receiveSize: int, receivedBytes: int, overwritePartner: bool,
-                               recvFirstMessage: bool, recvFromCorrectPartner: bool,
+                               recvFirstMessage: bool, receiveIteration: int, recvFromCorrectPartner: bool,
                                verbose: bool = False) -> Tuple[bool, bytes, int, int, bool, bool, bool]:
         try:
             success, buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner = \
                 self.performReceive(buffer, expectedHeader, overwritePartner, receiveSize, receivedBytes,
-                                    recvFirstMessage, verbose)
+                                    receiveIteration, verbose)
             if not success:
                 return (False, buffer, errorCode, localReceivedBytes, overwritePartner, recvFirstMessage,
                         recvFromCorrectPartner)
@@ -574,6 +616,7 @@ class Socket:
         recvFirstMessage = False
         recvFromCorrectPartner = True
         overwritePartner = self.partner is None or (not self.partner.isInitialized() or self.partner.getOverwrite())
+        receiveIteration = 0
         while receivedBytes < expectedLength:
             receiveSize = min(expectedLength - receivedBytes, maxPossibleReceiveBytes)
             # wait to receive data from socket (and retry when timeout occurs) do
@@ -587,7 +630,7 @@ class Socket:
                 (success, buffer, errorCode, localReceivedBytes, overwritePartner, recvFirstMessage,
                  recvFromCorrectPartner) = \
                     self.interpretReceiveResult(buffer, errorCode, expectedHeader, localReceivedBytes, receiveSize,
-                                                receivedBytes, overwritePartner, recvFirstMessage,
+                                                receivedBytes, overwritePartner, recvFirstMessage, receiveIteration,
                                                 recvFromCorrectPartner, verbose)
                 if not success:
                     return False, buffer, errorCode
@@ -605,6 +648,7 @@ class Socket:
                 return False, buffer, errorCode
 
             receivedBytes += localReceivedBytes
+            receiveIteration += recvFirstMessage
 
         assert (receivedBytes == expectedLength), "{} vs. {}".format(receivedBytes, expectedLength)
         if verbose:
