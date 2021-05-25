@@ -407,10 +407,7 @@ class Socket:
                        verbose: bool = False) -> Tuple[bool, bytes, int, bool, bool]:
         recvFromCorrectPartner = True
         withHeader = (expectedHeader is not None or self.protocol == SocketType.UDP_HEADER)
-        localVerbose = receiveSize > 100  # type: bool
         dataStart = 4 if withHeader else 0
-        receiveAmount = 0
-        receiveBuffer = ""
         receiveSize += dataStart
         localReceivedBytes = 0
 

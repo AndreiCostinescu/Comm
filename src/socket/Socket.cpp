@@ -517,7 +517,6 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
     }
 
     bool withHeader = (expectedHeader != nullptr || this->protocol == UDP_HEADER);
-    bool localVerbose = receiveSize > 100;
     int dataStart = (withHeader) ? 4 : 0;
     int receiveAmount = 0;
     receiveSize += dataStart;
@@ -603,7 +602,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
         if (expectedHeader != nullptr && this->recvBuffer->getChar(0) != expectedHeader->getSerializationIteration()) {
             // received different serialization state... check if the partner is the same
             // interrupt receive! and don't reset the recvBuffer to keep data for next recv!
-            cout << "Serialization Iteration check failed: got " << (int) this->recvBuffer->getChar(0)
+            cout << "Serialization Iteration check failed: got " << (unsigned int) this->recvBuffer->getChar(0)
                  << "; localReceivedBytes from receive call = " << localReceivedBytes + 4 << endl;
             cout << "Trailing bytes: ";
             for (int i = 0; i < min(localReceivedBytes, 20) + 4; i++) {
