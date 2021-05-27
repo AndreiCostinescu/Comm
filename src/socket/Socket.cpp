@@ -402,7 +402,7 @@ bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode
              << endl;
         /*
         for (int i = 0; i < localBytesSent; i++) {
-            cout << (unsigned int) buffer[i + sentBytes] << ", ";
+            cout << (int) ((unsigned char) buffer[i + sentBytes]) << ", ";
         }
         cout << endl;
         //*/
@@ -577,9 +577,10 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
     int remainingBufferBytes = -receiveSize;
     assert (remainingBufferBytes == 0 || this->protocol == SocketType::TCP);
 
-    if (localReceivedBytes <= 0) {
+    if (receiveAmount <= 0) {
         return true;
     }
+    assert (remainingBufferBytes >= 0);
 
     if (withHeader && localReceivedBytes > 0) {
         if (localReceivedBytes < 4) {
@@ -594,7 +595,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                  << ", received " << localReceivedBytes << endl;
             cout << "First bytes: ";
             for (int i = 0; i < min(localReceivedBytes, 20) + 4; i++) {
-                cout << (unsigned int) this->recvBuffer->getChar(i) << ", ";
+                cout << (int) ((unsigned char) this->recvBuffer->getChar(i)) << ", ";
             }
             if (localReceivedBytes > 20) {
                 cout << "...";
@@ -614,11 +615,11 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
         if (expectedHeader != nullptr && this->recvBuffer->getChar(0) != expectedHeader->getSerializationIteration()) {
             // received different serialization state... check if the partner is the same
             // interrupt receive! and don't reset the recvBuffer to keep data for next recv!
-            cout << "Serialization Iteration check failed: got " << (unsigned int) this->recvBuffer->getChar(0)
+            cout << "Serialization Iteration check failed: got " << (int) ((unsigned char) this->recvBuffer->getChar(0))
                  << "; localReceivedBytes from receive call = " << localReceivedBytes + 4 << endl;
             cout << "Trailing bytes: ";
             for (int i = 0; i < min(localReceivedBytes, 20) + 4; i++) {
-                cout << (unsigned int) this->recvBuffer->getChar(i) << ", ";
+                cout << (int) ((unsigned char) this->recvBuffer->getChar(i)) << ", ";
             }
             if (localReceivedBytes > 20) {
                 cout << "...";
@@ -650,7 +651,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
             cout << "Received data: ";
             const char *receivedBufferData = this->recvBuffer->getBuffer() + dataStart;
             for (int i = 0; i < min(localReceivedBytes, 50); i++) {
-                cout << (unsigned int) receivedBufferData[i] << " ";
+                cout << (int) ((unsigned char) receivedBufferData[i]) << " ";
             }
             cout << endl;
         }
@@ -669,7 +670,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
              << " in addition to the received " << receivedBytes << "!" << endl;
         /*
         for (int i = 0; i < localReceivedBytes; i++) {
-            cout << (unsigned int) buffer[i + receivedBytes] << ", ";
+            cout << (int) ((unsigned char) buffer[i + receivedBytes]) << ", ";
         }
         cout << endl;
         //*/
