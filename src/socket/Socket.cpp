@@ -524,7 +524,9 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
     localReceivedBytes = 0;
     if (withHeader && receiveIteration == 0 && !this->recvBuffer->empty()) {
         cout << "USING THE LOCAL RECEIVED BYTES VALUE FROM THE PREVIOUS ITERATION!" << endl;
-        localReceivedBytes += (int) this->recvBuffer->getBufferContentSize();
+        receiveAmount = (int) this->recvBuffer->getBufferContentSize();
+        localReceivedBytes += receiveAmount;
+        assert (receiveAmount > 0);
     }
     // cout << "LocalReceivedBytes before switch: " << localReceivedBytes << endl;
     switch (this->protocol) {
@@ -662,6 +664,9 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
             memcpy(this->recvBuffer->getBuffer(), this->recvBuffer->getBuffer() + localReceivedBytes,
                    remainingBufferBytes * sizeof(char));
         }
+    }
+    if (remainingBufferBytes < 0) {
+        cout << "ERROR, the next call will throw a bad alloc!!!" << endl;
     }
     this->recvBuffer->setBufferContentSize(remainingBufferBytes);
 
