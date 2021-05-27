@@ -547,13 +547,25 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
         case TCP: {
             // tcp does not respect the boundaries of messages -> read until we get the receiveSize!
             receiveSize -= localReceivedBytes;
-            while (receiveSize > 0) {
+            int localRetries = 10;
+            while (receiveSize > 0 && localRetries > 0) {
                 // cout << "Waiting to receive " << receiveSize << " bytes" << endl;
                 receiveAmount = recv(this->socket, this->recvBuffer->getBuffer() + localReceivedBytes, receiveSize, 0);
+                if (receiveAmount > 0 && receiveAmount != receiveSize) {
+                    cout << "Waiting to receive " << receiveSize << " bytes, received " << receiveAmount << endl;
+                }
                 localReceivedBytes += receiveAmount;
                 receiveSize -= receiveAmount;
+                // Determine if timeout or error!
                 if (receiveAmount <= 0) {
-                    break;
+                    int errorCode = getLastError();
+                    if (errorCode == SOCKET_TIMEOUT || errorCode == SOCKET_AGAIN || errorCode == SOCKET_WOULDBLOCK) {
+                        // timeout
+                        cout << "TIMEOUT IN TCP RECEIVE!!!" << endl;
+                        localRetries--;
+                    } else {
+                        break;
+                    }
                 }
             }
             break;
