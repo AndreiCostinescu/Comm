@@ -224,12 +224,11 @@ bool Communication::receiveData(SocketType socketType, DataCollection *data, boo
     return true;
 }
 
-bool Communication::receiveRaw(SocketType socketType, char *&data, int dataLength, int retries, bool verbose) {
+bool Communication::receiveRaw(SocketType socketType, char *&data, bool &receivedData, int retries, bool verbose) {
+    receivedData = false;
     if (data == nullptr) {
         return false;
     }
-
-    throw runtime_error("Not Implemented!");
 
     this->recvBuffer.setReferenceToData(data, 0);
     this->errorCode = 0;
@@ -244,6 +243,7 @@ bool Communication::receiveRaw(SocketType socketType, char *&data, int dataLengt
         }
         return false;
     }
+    receivedData = this->errorCode >= 0;
     return true;
 }
 

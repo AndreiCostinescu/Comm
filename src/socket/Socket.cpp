@@ -773,8 +773,12 @@ bool Socket::_receiveBytes(char *buffer, uint64_t expectedLength, int &errorCode
     bool overwritePartner = (this->partner == nullptr || !this->partner->isInitialized() ||
                              this->partner->getOverwrite());
     int receiveIteration = 0;
-    while (receivedBytes < expectedLength) {
-        receiveSize = (int) min(expectedLength - receivedBytes, maxPossibleReceiveBytes);
+    while (expectedLength == 0 || receivedBytes < expectedLength) {
+        if (expectedLength == 0) {
+            receiveSize = (int) maxPossibleReceiveBytes;
+        } else {
+            receiveSize = (int) min(expectedLength - receivedBytes, maxPossibleReceiveBytes);
+        }
         // wait to receive data from socket (and retry when timeout occurs)
         do {
             if (!checkErrno(errorCode, "Socket::_receiveBytes - begin do-while")) {
@@ -809,11 +813,14 @@ bool Socket::_receiveBytes(char *buffer, uint64_t expectedLength, int &errorCode
         }
         receivedBytes += localReceivedBytes;
         receiveIteration += recvFirstMessage;
+        if (expectedLength == 0) {
+            break;
+        }
     }
-    assert(receivedBytes == expectedLength);
+    assert(expectedLength == 0 || receivedBytes == expectedLength);
     if (verbose) {
-        cout << this_thread::get_id() << ": Exiting _receiveBytes function having received = " << expectedLength
-             << "B to " << ((this->partner == nullptr) ? "any" : this->partner->getStringAddress()) << "!" << endl;
+        cout << this_thread::get_id() << ": Exiting _receiveBytes function having received = " << receivedBytes
+             << "B from " << ((this->partner == nullptr) ? "any" : this->partner->getStringAddress()) << "!" << endl;
     }
     return true;
 }
