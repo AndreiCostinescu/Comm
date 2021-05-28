@@ -54,7 +54,9 @@ typedef int SocketAddressLength;
 
 typedef int SOCKET;
 
+#ifndef INVALID_SOCKET
 #define INVALID_SOCKET (SOCKET)(-1)
+#endif
 #define SOCKET_ERROR -1
 #define SOCKET_TIMEOUT ETIMEDOUT
 #define SOCKET_CONNRESET ECONNRESET
