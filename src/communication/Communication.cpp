@@ -233,15 +233,20 @@ bool Communication::receiveRaw(SocketType socketType, char *&data, bool &receive
     this->recvBuffer.setReferenceToData(data, 0);
     this->errorCode = 0;
     if (!this->recv(socketType, false, retries, verbose)) {
-        if (this->errorCode == 0) {
+        if (this->errorCode == -1) {
             if (verbose) {
-                cout << "Socket closed: Can not receive raw serialized bytes..." << endl;
+                cout << "Received nothing..." << endl;
             }
         } else {
-            printLastError();
-            (*cerror) << "Can not receive raw serialized bytes... error " << this->errorCode << endl;
+            if (verbose && this->errorCode == 0) {
+                cout << "Socket closed: Can not receive raw serialized bytes..." << endl;
+            }
+            if (this->errorCode != 0) {
+                printLastError();
+                (*cerror) << "Can not receive raw serialized bytes... error " << this->errorCode << endl;
+            }
+            return false;
         }
-        return false;
     }
     receivedData = this->errorCode >= 0;
     return true;
