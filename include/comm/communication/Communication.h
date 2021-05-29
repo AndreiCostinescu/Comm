@@ -37,7 +37,7 @@ namespace comm {
         bool receiveData(SocketType socketType, DataCollection *data, bool withHeader, int retries = 0,
                          bool verbose = false);
 
-        bool receiveRaw(SocketType socketType, char *&data, int dataLength, int retries = 0, bool verbose = false);
+        bool receiveRaw(SocketType socketType, char *&data, bool &receivedData, int retries = 0, bool verbose = false);
 
         void createSocket(SocketType socketType, SocketPartner *partner = nullptr, int myPort = 0, int sendTimeout = -1,
                           int recvTimeout = -1);

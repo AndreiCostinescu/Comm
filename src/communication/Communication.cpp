@@ -224,26 +224,31 @@ bool Communication::receiveData(SocketType socketType, DataCollection *data, boo
     return true;
 }
 
-bool Communication::receiveRaw(SocketType socketType, char *&data, int dataLength, int retries, bool verbose) {
+bool Communication::receiveRaw(SocketType socketType, char *&data, bool &receivedData, int retries, bool verbose) {
+    receivedData = false;
     if (data == nullptr) {
         return false;
     }
 
-    throw runtime_error("Not Implemented!");
-
     this->recvBuffer.setReferenceToData(data, 0);
     this->errorCode = 0;
     if (!this->recv(socketType, false, retries, verbose)) {
-        if (this->errorCode == 0) {
+        if (this->errorCode == -1) {
             if (verbose) {
-                cout << "Socket closed: Can not receive raw serialized bytes..." << endl;
+                cout << "Received nothing..." << endl;
             }
         } else {
-            printLastError();
-            (*cerror) << "Can not receive raw serialized bytes... error " << this->errorCode << endl;
+            if (verbose && this->errorCode == 0) {
+                cout << "Socket closed: Can not receive raw serialized bytes..." << endl;
+            }
+            if (this->errorCode != 0) {
+                printLastError();
+                (*cerror) << "Can not receive raw serialized bytes... error " << this->errorCode << endl;
+            }
+            return false;
         }
-        return false;
     }
+    receivedData = this->errorCode >= 0;
     return true;
 }
 
