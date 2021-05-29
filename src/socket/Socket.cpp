@@ -516,10 +516,15 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
         cout << "Pre receive... already recvBytes = " << receivedBytes << endl;
     }
 
-    bool withHeader = (expectedHeader != nullptr || this->protocol == UDP_HEADER);
+    int localVerbose = false;
+    bool withHeader = (expectedHeader != nullptr || this->protocol == SocketType::UDP_HEADER);
     int dataStart = (withHeader) ? 4 : 0;
     int receiveAmount = 0;
     receiveSize += dataStart;
+
+    if (localVerbose && receiveSize > 100 && receiveSize != 65500 + dataStart) {
+        cout << "WEIRD RECEIVE_SIZE = " << receiveSize << endl;
+    }
 
     localReceivedBytes = 0;
     if (withHeader && receiveIteration == 0 && !this->recvBuffer->empty()) {
@@ -542,6 +547,10 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
             this->recvAddressLength = sizeof(this->recvAddress);
             receiveAmount = recvfrom(this->socket, this->recvBuffer->getBuffer(), receiveSize, 0,
                                      (struct sockaddr *) (&this->recvAddress), &this->recvAddressLength);
+            if (receiveAmount <= 0) {
+                localReceivedBytes = receiveAmount;
+                return true;
+            }
             localReceivedBytes += receiveAmount;
             receiveSize = 0;
             break;
@@ -549,26 +558,50 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
         case TCP: {
             // tcp does not respect the boundaries of messages -> read until we get the receiveSize!
             receiveSize -= localReceivedBytes;
-            int localRetries = 10;
+            int localRetries = 10, iterationCounter = 0;
             while (receiveSize > 0 && localRetries > 0) {
                 // cout << "Waiting to receive " << receiveSize << " bytes" << endl;
                 receiveAmount = recv(this->socket, this->recvBuffer->getBuffer() + localReceivedBytes, receiveSize, 0);
                 if (receiveAmount > 0 && receiveAmount != receiveSize) {
                     cout << "Waiting to receive " << receiveSize << " bytes, received " << receiveAmount << endl;
                 }
-                localReceivedBytes += receiveAmount;
-                receiveSize -= receiveAmount;
                 // Determine if timeout or error!
                 if (receiveAmount <= 0) {
                     int errorCode = getLastError();
-                    if (errorCode == SOCKET_TIMEOUT || errorCode == SOCKET_AGAIN || errorCode == SOCKET_WOULDBLOCK) {
+                    if (receiveAmount < 0 && (errorCode == 0 || errorCode == SOCKET_TIMEOUT ||
+                                              errorCode == SOCKET_AGAIN || errorCode == SOCKET_WOULDBLOCK)) {
                         // timeout
+                        if (iterationCounter == 0) {
+                            // honestly received nothing
+                            localReceivedBytes = receiveAmount;
+                            return true;
+                        }
                         cout << "TIMEOUT IN TCP RECEIVE!!!" << endl;
                         localRetries--;
                     } else {
-                        break;
+                        cout << "BREAK BECAUSE OF ERROR: " << errorCode << "; " << getLastErrorString(errorCode)
+                             << endl;
+                        localReceivedBytes = receiveAmount;
+                        return true;
+                    }
+                } else {
+                    localReceivedBytes += receiveAmount;
+                    receiveSize -= receiveAmount;
+                    this->recvBuffer->setBufferContentSize(localReceivedBytes);
+                }
+                if (withHeader && expectedHeader != nullptr && localReceivedBytes > 0) {
+                    if (expectedHeader->getSerializationIteration() != this->recvBuffer->getChar(0)) {
+                        cout << "Serialization wrong: " << expectedHeader->getSerializationIteration() << " vs. "
+                             << this->recvBuffer->getChar(0) << endl;
                     }
                 }
+                iterationCounter++;
+            }
+            if (localRetries == 0) {
+                cout << "Couldn't receive data from TCP; There will be an error..." << endl;
+                // latency; network issues...
+                localReceivedBytes = -3;
+                return false;
             }
             break;
         }
@@ -577,9 +610,11 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
         }
     }
     int remainingBufferBytes = -receiveSize;
-    assert (remainingBufferBytes == 0 || this->protocol == SocketType::TCP);
+    assert ((receiveSize <= 0 || remainingBufferBytes >= 0));
+    assert ((remainingBufferBytes == 0 || this->protocol == SocketType::TCP));
 
     if (receiveAmount <= 0) {
+        localReceivedBytes = receiveAmount;
         return true;
     }
     assert (remainingBufferBytes >= 0);
@@ -618,7 +653,8 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
             // received different serialization state... check if the partner is the same
             // interrupt receive! and don't reset the recvBuffer to keep data for next recv!
             cout << "Serialization Iteration check failed: got " << (int) ((unsigned char) this->recvBuffer->getChar(0))
-                 << "; localReceivedBytes from receive call = " << localReceivedBytes + 4 << endl;
+                 << "; localReceivedBytes from receive call = " << localReceivedBytes + 4 << "; receiveAmount = "
+                 << receiveAmount << endl;
             cout << "Trailing bytes: ";
             for (int i = 0; i < min(localReceivedBytes, 20) + 4; i++) {
                 cout << (int) ((unsigned char) this->recvBuffer->getChar(i)) << ", ";
@@ -706,12 +742,12 @@ bool Socket::interpretReceiveResult(int &errorCode, int &localReceivedBytes, boo
         }
         return false;
     } else {
-        if (localReceivedBytes != -1 && localReceivedBytes != -2) {
+        if (localReceivedBytes > -1 || localReceivedBytes < -3) {
             cout << "The next assertion will fail: localReceivedBytes = " << localReceivedBytes << endl;
         }
-        assert (localReceivedBytes == -1 || localReceivedBytes == -2);
-        if (localReceivedBytes == -2) {
-            errorCode = -2;
+        assert (localReceivedBytes <= -1 && localReceivedBytes >= -3);
+        if (localReceivedBytes == -2 || localReceivedBytes == -3) {
+            errorCode = localReceivedBytes;
             return false;
         }
         // only set the errorCode here, because when there is an error, localReceivedBytes is set to -1!

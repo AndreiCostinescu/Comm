@@ -455,6 +455,11 @@ bool Communication::postReceiveData(CommunicationData *&recvData, int &deseriali
                       << deserializeState << endl;
             recvData->resetDeserializeState();
             return false;
+        } else if (this->getErrorCode() == -3) {
+            (*cerror) << "Stop loop: NETWORK ERRORS when receiving " << messageTypeToString(messageType)
+                      << "... Maybe there was a send error...; deserializeState = " << deserializeState << endl;
+            recvData->resetDeserializeState();
+            return false;
         }
     }
 
