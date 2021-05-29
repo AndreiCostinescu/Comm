@@ -117,9 +117,11 @@ bool Communicator::_syphon(Communication *comm, SocketType socketType, MessageTy
         case MessageType::NOTHING: {
             return true;
         }
-        case MessageType::COORDINATE:
+        case MessageType::STATUS:
         case MessageType::IMAGE:
-        case MessageType::STATUS: {
+        case MessageType::COORDINATE:
+        case MessageType::BYTES:
+        case MessageType::IMAGE_ENCODE: {
             int localSyphonRetries = (syphonRetries < 1) ? 1 : syphonRetries;
             while (notQuit() && localSyphonRetries > 0) {
                 if (!comm->recvData(socketType, data, withHeader, true, retries, verbose)) {
