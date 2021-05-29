@@ -20,6 +20,8 @@ MessageType comm::stringToMessageType(const string &s) {
         return MessageType::COORDINATE;
     } else if (s == "bytes") {
         return MessageType::BYTES;
+    } else if (s == "image_encode") {
+        return MessageType::IMAGE_ENCODE;
     }
     throw runtime_error("Can not convert " + s + " to MessageType enum");
 }
@@ -40,6 +42,9 @@ string comm::messageTypeToString(const MessageType &messageType) {
         }
         case MessageType::BYTES: {
             return "bytes";
+        }
+        case MessageType::IMAGE_ENCODE: {
+            return "image_encode";
         }
         default: {
             throw runtime_error("Undefined MessageType: " + to_string(int(messageType)));

@@ -37,7 +37,7 @@ set(MASTER_LIBRARIES ${EXTERNAL_LIBRARIES})
 set(UTILS_STUFF src/utils/NetworkIncludes.cpp src/utils/Buffer.cpp src/utils/SerializationHeader.cpp include/comm/utils/utils.hpp src/utils/NetworkData.cpp)
 set(SOCKET_STUFF src/socket/SocketPartner.cpp src/socket/SocketType.cpp src/socket/Socket.cpp src/socket/utils.cpp)
 SET(COMMUNICATION_STUFF src/communication/Communication.cpp src/communication/TCPServer.cpp src/communication/Communicator.cpp)
-SET(DATA_STUFF src/data/MessageType.cpp src/data/messages.cpp src/data/CommunicationData.cpp src/data/CoordinateData.cpp src/data/ImageData.cpp src/data/StatusData.cpp src/data/dataUtils.cpp src/data/CommunicatorState.cpp src/data/DataCollection.cpp src/data/BytesData.cpp)
+SET(DATA_STUFF src/data/MessageType.cpp src/data/messages.cpp src/data/CommunicationData.cpp src/data/CoordinateData.cpp src/data/ImageData.cpp src/data/StatusData.cpp src/data/dataUtils.cpp src/data/CommunicatorState.cpp src/data/DataCollection.cpp src/data/BytesData.cpp src/data/ImageEncodeData.cpp)
 
 set(COMM_LIB "Communication")
 add_library(${COMM_LIB} SHARED ${COMMUNICATION_STUFF} ${DATA_STUFF} ${SOCKET_STUFF} ${UTILS_STUFF})

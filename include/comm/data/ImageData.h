@@ -48,7 +48,7 @@ namespace comm {
 
         [[nodiscard]] bool isImageDeserialized() const;
 
-    private:
+    protected:
         cv::Mat image;
         int id, imageHeight, imageWidth, imageType, contentSize;
         bool imageDeserialized;

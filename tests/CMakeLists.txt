@@ -49,3 +49,7 @@ target_link_libraries(${EXE} ${MASTER_LIBRARIES})
 set(EXE "TestCommunication")
 add_executable(${EXE} testCommunication.cpp)
 target_link_libraries(${EXE} ${MASTER_LIBRARIES})
+
+set(EXE "TestImageEncodeData")
+add_executable(${EXE} testImageEncodeData.cpp)
+target_link_libraries(${EXE} ${MASTER_LIBRARIES})

@@ -42,7 +42,7 @@ bool ImageData::serialize(Buffer *buffer, int start, bool forceCopy, bool verbos
                 char *dataBuffer = buffer->getBuffer();
                 cout << "Serialized content: ";
                 for (int i = 0; i < ImageData::headerSize; i++) {
-                    cout << ((int) dataBuffer[start + i]) << " ";
+                    cout << ((int) (unsigned char) dataBuffer[start + i]) << " ";
                 }
                 cout << endl;
             }

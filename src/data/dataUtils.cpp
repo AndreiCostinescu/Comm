@@ -6,6 +6,7 @@
 #include <comm/data/BytesData.h>
 #include <comm/data/CoordinateData.h>
 #include <comm/data/ImageData.h>
+#include <comm/data/ImageEncodeData.h>
 #include <comm/data/StatusData.h>
 #include <stdexcept>
 
@@ -28,6 +29,9 @@ CommunicationData *comm::createCommunicationDataPtr(const MessageType &messageTy
         }
         case MessageType::BYTES: {
             return new BytesData();
+        }
+        case MessageType::IMAGE_ENCODE: {
+            return new ImageEncodeData();
         }
         default : {
             throw runtime_error("Unknown message type: " + to_string(messageType));
