@@ -27,8 +27,8 @@ SerializationHeader::SerializationHeader(int header) : SerializationHeader() {
 }
 
 SerializationHeader::SerializationHeader(unsigned char serializationIteration, unsigned char sendIteration,
-                                         unsigned short sendSize) : SerializationHeader() {
-    this->setData(serializationIteration, sendIteration, sendSize);
+                                         unsigned short sendSize, bool local) : SerializationHeader() {
+    this->setData(serializationIteration, sendIteration, sendSize, local);
 }
 
 SerializationHeader::~SerializationHeader() {
@@ -91,6 +91,10 @@ void SerializationHeader::setBuffer(Buffer &buffer, bool setLocal, int start) co
     buffer.setInt(this->getInt(setLocal), start);
 }
 
+void SerializationHeader::setSyphonUntilFirstMessage(bool _syphonUntilFirstMessage) {
+    this->syphonUntilFirstMessage = _syphonUntilFirstMessage;
+}
+
 unsigned char SerializationHeader::getSerializationIteration() const {
     if (this->passedBuffer == nullptr) {
         return this->localBuffer[0];
@@ -123,4 +127,8 @@ unsigned short SerializationHeader::getSendSize(bool getLocal) const {
 
 int SerializationHeader::getInt(bool getLocal) const {
     return (this->getSerializationIteration() << 24) + (this->getSendIteration() << 16) + this->getSendSize(getLocal);
+}
+
+bool SerializationHeader::getSyphonUntilFirstMessage() const {
+    return this->syphonUntilFirstMessage;
 }

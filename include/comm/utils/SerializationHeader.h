@@ -19,7 +19,7 @@ namespace comm {
         explicit SerializationHeader(int header);
 
         explicit SerializationHeader(unsigned char serializationIteration, unsigned char sendIteration,
-                                     unsigned short sendSize);
+                                     unsigned short sendSize, bool local = true);
 
         virtual ~SerializationHeader();
 
@@ -40,6 +40,8 @@ namespace comm {
 
         void setBuffer(Buffer &buffer, bool setLocal, int start = 0) const;
 
+        void setSyphonUntilFirstMessage(bool _syphonUntilFirstMessage);
+
         [[nodiscard]] unsigned char getSerializationIteration() const;
 
         [[nodiscard]] unsigned char getSendIteration() const;
@@ -48,9 +50,11 @@ namespace comm {
 
         [[nodiscard]] int getInt(bool getLocal = true) const;
 
+        [[nodiscard]] bool getSyphonUntilFirstMessage() const;
+
     private:
         char *localBuffer;
-        bool created;
+        bool created, syphonUntilFirstMessage;
         Buffer *passedBuffer;
     };
 }
