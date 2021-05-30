@@ -527,6 +527,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
     }
 
     localReceivedBytes = 0;
+    recvFromCorrectPartner = true;
     if (withHeader && receiveIteration == 0 && !this->recvBuffer->empty()) {
         cout << "USING THE LOCAL RECEIVED BYTES VALUE FROM THE PREVIOUS ITERATION!" << endl;
         receiveAmount = (int) this->recvBuffer->getBufferContentSize();
@@ -534,23 +535,65 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
         assert (receiveAmount > 0);
     }
     // cout << "LocalReceivedBytes before switch: " << localReceivedBytes << endl;
+    int serializationIteration = -1, sendIteration = -1;
     switch (this->protocol) {
         case UDP:
         case UDP_HEADER: {
             if (localReceivedBytes > 0) {
                 // udp respects the boundaries of messages -> what we previously received was a (full) package/message!
                 receiveSize = 0;
+                if (withHeader && localReceivedBytes >= 4) {
+                    serializationIteration = (int) ((unsigned char) this->recvBuffer->getChar(0));
+                    sendIteration = (int) ((unsigned char) this->recvBuffer->getChar(1));
+                }
                 break;
             }
             assert (this->recvBuffer->empty());
             assert (this->recvBuffer->getBuffer() != nullptr);
-            this->recvAddressLength = sizeof(this->recvAddress);
-            receiveAmount = recvfrom(this->socket, this->recvBuffer->getBuffer(), receiveSize, 0,
-                                     (struct sockaddr *) (&this->recvAddress), &this->recvAddressLength);
-            if (receiveAmount <= 0) {
-                localReceivedBytes = receiveAmount;
-                return true;
-            }
+
+            bool doneReceive = false, startSyphon = false, serializationError = false;
+            int localSerializationIteration = -1, localSendIteration = -1, localReceiveAmount;
+            do {
+                // receive
+                this->recvAddressLength = sizeof(this->recvAddress);
+                receiveAmount = recvfrom(this->socket, this->recvBuffer->getBuffer(), this->recvBuffer->getBufferSize(),
+                                         0, (struct sockaddr *) (&this->recvAddress), &this->recvAddressLength);
+                if (receiveAmount <= 0) {
+                    cout << "BREAK BECAUSE OF ERROR: " << getLastError() << "; " << getLastErrorString() << endl;
+                    localReceivedBytes = receiveAmount;
+                    this->recvBuffer->setBufferContentSize(0);
+                    return true;
+                }
+                recvFromCorrectPartner = this->checkCorrectReceivePartner(overwritePartner, receiveIteration);
+                this->recvBuffer->setBufferContentSize(receiveAmount);
+                if (!startSyphon && withHeader && receiveAmount >= 4) {
+                    serializationIteration = (int) ((unsigned char) this->recvBuffer->getChar(0));
+                    sendIteration = (int) ((unsigned char) this->recvBuffer->getChar(1));
+                }
+
+                if (startSyphon) {
+                    assert (withHeader && expectedHeader != nullptr);
+                    localSerializationIteration = (int) ((unsigned char) this->recvBuffer->getChar(0));
+                    localSendIteration = (int) ((unsigned char) this->recvBuffer->getChar(1));
+                    cout << "localSerializationIteration: " << localSerializationIteration << endl;
+                    cout << "localSendIteration: " << localSendIteration << endl;
+                    doneReceive = (recvFromCorrectPartner && localSerializationIteration == 0 &&
+                                   localSerializationIteration == localSendIteration);
+                } else if (recvFromCorrectPartner && expectedHeader != nullptr &&
+                           expectedHeader->getSyphonUntilFirstMessage() &&
+                           (serializationIteration != expectedHeader->getSerializationIteration() ||
+                            sendIteration != receiveIteration)) {
+                    cout << "serializationIteration: " << serializationIteration << ", expected "
+                         << (int) expectedHeader->getSerializationIteration() << endl;
+                    cout << "sendIteration: " << sendIteration << ", expected "
+                         << receiveIteration << endl;
+                    doneReceive = (serializationIteration == 0 && serializationIteration == sendIteration);
+                    startSyphon = !doneReceive;
+                } else {
+                    doneReceive = true;
+                }
+            } while (!doneReceive);
+
             localReceivedBytes += receiveAmount;
             receiveSize = 0;
             break;
@@ -603,6 +646,10 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                 localReceivedBytes = -3;
                 return false;
             }
+            if (withHeader && localReceivedBytes > 4) {
+                serializationIteration = (int) ((unsigned char) this->recvBuffer->getChar(0));
+                sendIteration = (int) ((unsigned char) this->recvBuffer->getChar(1));
+            }
             break;
         }
         default : {
@@ -613,13 +660,17 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
     assert ((receiveSize <= 0 || remainingBufferBytes >= 0));
     assert ((remainingBufferBytes == 0 || this->protocol == SocketType::TCP));
 
-    if (receiveAmount <= 0) {
-        localReceivedBytes = receiveAmount;
+    if (!recvFromCorrectPartner || receiveAmount <= 0) {
+        if (receiveAmount <= 0) {
+            localReceivedBytes = receiveAmount;
+        }
+        this->recvBuffer->setBufferContentSize(0);
         return true;
     }
     assert (remainingBufferBytes >= 0);
+    assert (localReceivedBytes > 0);
 
-    if (withHeader && localReceivedBytes > 0) {
+    if (withHeader) {
         if (localReceivedBytes < 4) {
             cout << "Wrong protocol for this socket!!!" << endl;
             localReceivedBytes = -1;
@@ -639,20 +690,14 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
             }
             cout << endl;
         }
-    }
 
-    recvFromCorrectPartner = this->checkCorrectReceivePartner(overwritePartner, receiveIteration);
-    if (!recvFromCorrectPartner) {
-        this->recvBuffer->setBufferContentSize(0);
-        return true;
-    }
-
-    if (withHeader) {
+        bool syphonedWronglySerializedData = (expectedHeader != nullptr &&
+                                              expectedHeader->getSyphonUntilFirstMessage());
         // check serialization iteration
-        if (expectedHeader != nullptr && this->recvBuffer->getChar(0) != expectedHeader->getSerializationIteration()) {
+        if (expectedHeader != nullptr && serializationIteration != expectedHeader->getSerializationIteration()) {
             // received different serialization state... check if the partner is the same
             // interrupt receive! and don't reset the recvBuffer to keep data for next recv!
-            cout << "Serialization Iteration check failed: got " << (int) ((unsigned char) this->recvBuffer->getChar(0))
+            cout << "Serialization Iteration check failed: got " << serializationIteration
                  << "; localReceivedBytes from receive call = " << localReceivedBytes + 4 << "; receiveAmount = "
                  << receiveAmount << endl;
             cout << "Trailing bytes: ";
@@ -665,23 +710,30 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
             cout << endl;
             localReceivedBytes = -2;
             setErrnoZero();  // <- to ensure that this will be interpreted as a timeout :)
+            // keep buffer contents if the wrong data has been syphoned or if it's the start of another message!
+            if (!syphonedWronglySerializedData && serializationIteration != 0) {
+                this->recvBuffer->setBufferContentSize(0);
+            }
             return true;
         }
 
         // check send iteration
-        auto sendIteration = (unsigned char) this->recvBuffer->getChar(1);
         if (receiveIteration != sendIteration) {
             cout << "Send Iteration check failed: got " << sendIteration << ", expected " << receiveIteration << endl;
-            if (receiveIteration == 0 && sendIteration > 0) {
+            // keep buffer contents if the wrong data has been syphoned or if it's the start of another message!
+            if (!syphonedWronglySerializedData && (serializationIteration != 0 || sendIteration != 0)) {
+                this->recvBuffer->setBufferContentSize(0);
+            }
+            if (receiveIteration == 0) {
+                assert (sendIteration > 0);
                 // wrong data, ignore, pretend like nothing was received (like recv from wrong partner)
                 recvFromCorrectPartner = false;
             } else {
-                // Received start of another message... interrupt receive!
-                // And don't reset the recvBuffer to keep data for next recv!
+                // (receiveIteration != 0 || sendIteration == 0) - interrupt receive!
                 localReceivedBytes = -2;
                 setErrnoZero();  // <- to ensure that this will be interpreted as a timeout :)
-                return true;
             }
+            return true;
         }
     }
     if (recvFromCorrectPartner) {
