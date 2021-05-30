@@ -693,12 +693,12 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
             }
             cout << endl;
         }
-        memcpy(buffer + receivedBytes, this->recvBuffer->getBuffer() + dataStart, localReceivedBytes * sizeof(char));
+        memcpy(buffer + receivedBytes, this->recvBuffer->getBuffer() + dataStart, localReceivedBytes);
         if (remainingBufferBytes > 0) {
             cout << "HELP: COPYING TCP DATA!" << endl;
             // can happen in TCP if we read more than expected...
             memcpy(this->recvBuffer->getBuffer(), this->recvBuffer->getBuffer() + localReceivedBytes,
-                   remainingBufferBytes * sizeof(char));
+                   remainingBufferBytes);
         }
     }
     if (remainingBufferBytes < 0) {
