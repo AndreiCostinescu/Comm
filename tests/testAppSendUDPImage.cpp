@@ -30,7 +30,7 @@ void createUDPServer() {
     StatusData status;
     MessageType messageType;
     while (!quit) {
-        if (!comm.recvMessageType(SocketType::UDP, messageType, false)) {
+        if (!comm.recvMessageType(SocketType::UDP, messageType, false, false)) {
             cout << "Error when recvMessageType: " << comm.getErrorCode() << ", " << comm.getErrorString() << endl;
             quit = true;
             break;
@@ -38,7 +38,7 @@ void createUDPServer() {
         if (messageType == MessageType::STATUS) {
             cout << "Connection from " << comm.getPartner(SocketType::UDP)->getStringAddress() << endl;
             comm.setOverwritePartner(SocketType::UDP, false);
-            if (!comm.recvData(SocketType::UDP, &status, false, true,-1, true)) {
+            if (!comm.recvData(SocketType::UDP, &status, false, false, true, -1, true)) {
                 cout << "Error when recvData (status): " << comm.getErrorCode() << ", " << comm.getErrorString()
                      << endl;
                 quit = true;
@@ -102,10 +102,10 @@ void createUDPClient() {
     }
 
     namedWindow("Received UDP image");
-    int i=0;
+    int i = 0;
     while (i <= 10) {
         cout << "At i = " << i << endl;
-        if (!comm.recvMessageType(SocketType::UDP, messageType, false)) {
+        if (!comm.recvMessageType(SocketType::UDP, messageType, false, false)) {
             cout << "Error when recvMessageType: " << comm.getErrorCode() << ", " << comm.getErrorString() << endl;
             quit = true;
             break;
@@ -114,7 +114,7 @@ void createUDPClient() {
             cout << "Expected image but received " << messageTypeToString(messageType) << endl;
             break;
         }
-        if (!comm.recvData(SocketType::UDP, &image, false, true)) {
+        if (!comm.recvData(SocketType::UDP, &image, false, false, true)) {
             cout << "Error when recvData (status): " << comm.getErrorCode() << ", " << comm.getErrorString() << endl;
             quit = true;
             break;

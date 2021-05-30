@@ -22,13 +22,15 @@ int port = 8400, imageCap = 100, coordCap = 24, modVerbose = 20;
 Mat *lena;
 
 void receiveData(Communication &p, SocketType socketType, CommunicationData *data, bool withHeader,
-                 bool withMessageType, MessageType expectedMessageType, int retries = 0, bool verbose = false) {
+                 bool withMessageType, bool syphonWronglySerializedData, MessageType expectedMessageType,
+                 int retries = 0, bool verbose = false) {
     if (withMessageType) {
         MessageType messageType;
-        assert (p.recvMessageType(socketType, messageType, withHeader, retries, verbose));
+        assert (p.recvMessageType(socketType, messageType, withHeader, syphonWronglySerializedData, retries, verbose));
         assert (messageType == expectedMessageType);
     }
-    assert(p.recvData(socketType, data, withHeader, withMessageType, retries, verbose));
+    assert(p.recvData(socketType, data, withHeader, syphonWronglySerializedData, withMessageType, retries, verbose) ||
+           (socketType != SocketType::TCP && withHeader && p.getErrorCode() == -2));
 }
 
 void sendCoordinate(Communication &p, SocketType socketType, CoordinateData &c, int cap, bool withHeader,
@@ -44,9 +46,10 @@ void sendCoordinate(Communication &p, SocketType socketType, CoordinateData &c, 
 }
 
 void receiveCoordinate(Communication &p, SocketType socketType, CoordinateData &c, int cap, bool withHeader,
-                       bool withMessageType, int retries = 0, bool verbose = false) {
+                       bool withMessageType, bool syphonWronglySerializedData, int retries = 0, bool verbose = false) {
     do {
-        receiveData(p, socketType, &c, withHeader, withMessageType, MessageType::COORDINATE, retries, verbose);
+        receiveData(p, socketType, &c, withHeader, withMessageType, syphonWronglySerializedData,
+                    MessageType::COORDINATE, retries, verbose);
         if (p.getErrorCode() == -1) {
             continue;
         }
@@ -56,8 +59,8 @@ void receiveCoordinate(Communication &p, SocketType socketType, CoordinateData &
 }
 
 void sendImage(Communication &p, SocketType socketType, ImageData &i, int cap, bool withHeader, bool withMessageType,
-               int retries = 0, bool verbose = false) {
-    if (socketType != SocketType::TCP) {
+               bool syphonWronglySerializedData, int retries = 0, bool verbose = false) {
+    if (socketType != SocketType::TCP && !syphonWronglySerializedData) {
         return;
     }
 
@@ -72,14 +75,15 @@ void sendImage(Communication &p, SocketType socketType, ImageData &i, int cap, b
 }
 
 void receiveImage(Communication &p, SocketType socketType, ImageData &i, int cap, bool withHeader, bool withMessageType,
-                  int retries = 0, bool verbose = false) {
-    if (socketType != SocketType::TCP) {
+                  bool syphonWronglySerializedData, int retries = 0, bool verbose = false) {
+    if (socketType != SocketType::TCP && !syphonWronglySerializedData) {
         return;
     }
 
     do {
-        receiveData(p, socketType, &i, withHeader, withMessageType, MessageType::IMAGE, retries, verbose);
-        if (p.getErrorCode() == -1) {
+        receiveData(p, socketType, &i, withHeader, withMessageType, syphonWronglySerializedData, MessageType::IMAGE,
+                    retries, verbose);
+        if (p.getErrorCode() == -1 || p.getErrorCode() == -2) {
             continue;
         }
         assert (i.isImageDeserialized());
@@ -90,7 +94,7 @@ void receiveImage(Communication &p, SocketType socketType, ImageData &i, int cap
     } while (i.getID() < cap);
 }
 
-void sender(SocketType socketType, bool withHeader, bool withMessageType) {
+void sender(SocketType socketType, bool withHeader, bool withMessageType, bool syphonWronglySerializedData) {
     this_thread::sleep_for(std::chrono::seconds(1));
 
     Communication p;
@@ -106,7 +110,7 @@ void sender(SocketType socketType, bool withHeader, bool withMessageType) {
     s.setData(to_string(commPort).c_str());
     assert(p.transmitData(SocketType::TCP, &s, withHeader, withMessageType));
 
-    receiveData(p, socketType, &s, withHeader, withMessageType, MessageType::STATUS);
+    receiveData(p, socketType, &s, withHeader, withMessageType, syphonWronglySerializedData, MessageType::STATUS);
     assert(strcmp(s.getData(), "hello") == 0);
 
     this_thread::sleep_for(chrono::seconds(2));
@@ -122,7 +126,7 @@ void sender(SocketType socketType, bool withHeader, bool withMessageType) {
     cout << "\n\n";
 
     CoordinateData c;
-    receiveCoordinate(p, socketType, c, coordCap, withHeader, withMessageType);
+    receiveCoordinate(p, socketType, c, coordCap, withHeader, withMessageType, syphonWronglySerializedData);
 
     c.setID(0);
     sendCoordinate(p, socketType, c, coordCap, withHeader, withMessageType, 0, 1);
@@ -130,17 +134,17 @@ void sender(SocketType socketType, bool withHeader, bool withMessageType) {
     cout << "\n\n";
 
     ImageData i;
-    receiveImage(p, socketType, i, imageCap, withHeader, withMessageType);
+    receiveImage(p, socketType, i, imageCap, withHeader, withMessageType, syphonWronglySerializedData);
 
     i.setID(i.getID() + 1);
     resize(*lena, *lena, Size(), 2, 2, INTER_CUBIC);
     i.setImage(*lena);
-    sendImage(p, socketType, i, 2 * imageCap, withHeader, withMessageType);
+    sendImage(p, socketType, i, 2 * imageCap, withHeader, withMessageType, syphonWronglySerializedData);
 
     cout << "Sender finished normally" << endl;
 }
 
-void receiver(SocketType socketType, bool withHeader, bool withMessageType) {
+void receiver(SocketType socketType, bool withHeader, bool withMessageType, bool syphonWronglySerializedData) {
     TCPServer server(port);
     Communication *comm, p;
     while (true) {
@@ -154,7 +158,7 @@ void receiver(SocketType socketType, bool withHeader, bool withMessageType) {
     p.setSocketTimeouts(SocketType::TCP, 2000, 500);
 
     StatusData s;
-    receiveData(p, SocketType::TCP, &s, withHeader, withMessageType, MessageType::STATUS);
+    receiveData(p, SocketType::TCP, &s, withHeader, withMessageType, syphonWronglySerializedData, MessageType::STATUS);
     assert(s.getData() != nullptr);
     cout << "Received communication port: " << stoi(s.getData()) << endl;
     if (socketType != SocketType::TCP) {
@@ -171,7 +175,8 @@ void receiver(SocketType socketType, bool withHeader, bool withMessageType) {
 
     BytesData b;
     this_thread::sleep_for(chrono::milliseconds(20));
-    receiveData(p, socketType, &b, withHeader, withMessageType, MessageType::BYTES, 0, false);
+    receiveData(p, socketType, &b, withHeader, withMessageType, syphonWronglySerializedData, MessageType::BYTES, 0,
+                false);
     cout << "Date: " << (int) b.getChar(0) << "." << (int) b.getChar(1) << "." << b.getShort(2) << "\n";
     this_thread::sleep_for(chrono::seconds(2));
     cout << "\n\n";
@@ -180,34 +185,40 @@ void receiver(SocketType socketType, bool withHeader, bool withMessageType) {
     c.setID(0);
     sendCoordinate(p, socketType, c, coordCap, withHeader, withMessageType, 1, 0);
 
-    receiveCoordinate(p, socketType, c, coordCap, withHeader, withMessageType);
+    receiveCoordinate(p, socketType, c, coordCap, withHeader, withMessageType, syphonWronglySerializedData);
     this_thread::sleep_for(chrono::seconds(2));
     cout << "\n\n";
 
     ImageData i;
     i.setID(0);
     i.setImage(*lena);
-    sendImage(p, socketType, i, imageCap, withHeader, withMessageType);
+    sendImage(p, socketType, i, imageCap, withHeader, withMessageType, syphonWronglySerializedData);
 
-    receiveImage(p, socketType, i, 2 * imageCap, withHeader, withMessageType);
+    receiveImage(p, socketType, i, 2 * imageCap, withHeader, withMessageType, syphonWronglySerializedData);
     cout << "Receiver finished normally!" << endl;
 }
 
 int main() {
     cout << "Hello World!" << endl;
+    const bool boolValues[] = {false, true};
+    for (auto socketType : {SocketType::UDP, SocketType::UDP_HEADER, SocketType::TCP}) {
+        for (auto withHeader: boolValues) {
+            for (auto withMessageType: boolValues) {
+                for (int i = 0; i < ((withHeader && socketType != SocketType::TCP) ? 2 : 1); i++) {
+                    bool syphonWronglySerializedData = boolValues[i];
+                    lena = new Mat(imread("../../data/Lena.png"));
 
-    for (auto socketType : {SocketType::TCP, SocketType::UDP, SocketType::UDP_HEADER}) {
-        for (auto withHeader: {false, true}) {
-            for (auto withMessageType: {false, true}) {
-                lena = new Mat(imread("../../data/Lena.png"));
-                cout << "Starting test: " << socketType << ", " << withHeader << ", " << withMessageType << "\n\n";
+                    cout << "Starting test: " << socketType << ", " << withHeader << ", " << withMessageType << ", "
+                         << syphonWronglySerializedData << "\n\n";
 
-                thread t(sender, socketType, withHeader, withMessageType);
-                receiver(socketType, withHeader, withMessageType);
-                t.join();
+                    thread t(sender, socketType, withHeader, withMessageType, syphonWronglySerializedData);
+                    receiver(socketType, withHeader, withMessageType, syphonWronglySerializedData);
+                    t.join();
 
-                cout << "Finishing test: " << socketType << ", " << withHeader << ", " << withMessageType << "\n\n\n\n";
-                delete lena;
+                    cout << "Finishing test: " << socketType << ", " << withHeader << ", " << withMessageType << ", "
+                         << syphonWronglySerializedData << "\n\n\n\n";
+                    delete lena;
+                }
             }
         }
     }

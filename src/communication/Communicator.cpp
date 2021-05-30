@@ -124,7 +124,7 @@ bool Communicator::_syphon(Communication *comm, SocketType socketType, MessageTy
         case MessageType::IMAGE_ENCODE: {
             int localSyphonRetries = (syphonRetries < 1) ? 1 : syphonRetries;
             while (notQuit() && localSyphonRetries > 0) {
-                if (!comm->recvData(socketType, data, withHeader, true, retries, verbose)) {
+                if (!comm->recvData(socketType, data, withHeader, true, true, retries, verbose)) {
                     if (comm->getErrorCode() == -1) {
                         localSyphonRetries--;
                         continue;
@@ -147,7 +147,7 @@ bool Communicator::_listen(Communication *comm, SocketType socketType, MessageTy
                            DataCollection &_dataCollection, bool withHeader, const function<bool()> &notQuit,
                            int retries, bool verbose) {
     // cout << "Entering _listen function..." << endl;
-    if (!comm->recvMessageType(socketType, messageType, withHeader, retries, verbose)) {
+    if (!comm->recvMessageType(socketType, messageType, withHeader, true, retries, verbose)) {
         if (Communicator::isReceiveErrorOk(comm->getErrorCode(), &messageType, true)) {
             // cout << "Received NOTHING" << endl;
             return true;
@@ -177,12 +177,11 @@ bool Communicator::_listen(Communication *comm, SocketType socketType, MessageTy
 
 bool Communicator::_listenFor(Communication *comm, SocketType socketType, CommunicationData *data,
                               bool withHeader, const function<bool()> &notQuit, bool *timeoutResult,
-                              int countIgnoreOther,
-                              int countIgnore, int retries, bool verbose) {
+                              int countIgnoreOther, int countIgnore, int retries, bool verbose) {
     assert(data != nullptr);
     MessageType messageType;
     while (notQuit()) {
-        if (!comm->recvMessageType(socketType, messageType, withHeader, retries, verbose)) {
+        if (!comm->recvMessageType(socketType, messageType, withHeader, true, retries, verbose)) {
             if (Communicator::isReceiveErrorOk(comm->getErrorCode(), &messageType, true)) {
                 continue;
             }

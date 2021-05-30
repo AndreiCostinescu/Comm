@@ -36,7 +36,7 @@ void server_1() {
     }
 
     cout << x << ": Starting receive tcp status data..." << endl;
-    assert(p->recvData(SocketType::TCP, &status, false, false, -1, true));
+    assert(p->recvData(SocketType::TCP, &status, false, false, false, -1, true));
     cout << x << ": Received: \"" << status.getData() << "\" from partner" << endl;
 
     status.setData("start");
@@ -48,7 +48,7 @@ void server_1() {
     p->createSocket(SocketType::UDP, nullptr, port, 2000, 50);
     const char *message;
     while (true) {
-        assert(p->recvData(SocketType::UDP, &status, false, false) || p->getErrorCode() == -1);
+        assert(p->recvData(SocketType::UDP, &status, false, false, false) || p->getErrorCode() == -1);
         if (p->getErrorCode() == -1) {
             continue;
         }
@@ -87,7 +87,7 @@ void test_1() {
     cout << x << ": Created tcpStatus data" << endl;
     assert(p.transmitData(SocketType::TCP, &tcpStatus, false, false, -1, true));
     cout << x << ": Sent tcpStatus data" << endl;
-    assert(p.recvData(SocketType::TCP, &tcpStatus, false, false, -1, true));
+    assert(p.recvData(SocketType::TCP, &tcpStatus, false, false, false, -1, true));
     cout << x << ": Received tcpStatus data \"" << tcpStatus.getData() << "\" from partner" << endl;
     assert(strcmp(tcpStatus.getData(), "start") == 0);
 
@@ -100,7 +100,7 @@ void test_1() {
         // cout << x << ": set data for udp transmission" << endl;
         assert(p.transmitData(SocketType::UDP, &udpStatus, false, false));
         cout << x << ": sent udp data: " << udpStatus.getData() << endl;
-        assert(p.recvData(SocketType::TCP, &tcpStatus, false, false, 0) || p.getErrorCode() == -1);
+        assert(p.recvData(SocketType::TCP, &tcpStatus, false, false, false, 0) || p.getErrorCode() == -1);
         // cout << x << ": after tcp listen/recv" << endl;
         if (p.getErrorCode() == -1) {
             continue;
@@ -142,7 +142,7 @@ void server_2() {
     assert(p->transmitData(SocketType::TCP, &status, false, false, -1, true));
 
     cout << x << ": Starting receive tcp status data..." << endl;
-    assert(p->recvData(SocketType::TCP, &status, false, false, -1, true));
+    assert(p->recvData(SocketType::TCP, &status, false, false, false, -1, true));
     cout << x << ": Received: \"" << status.getData() << "\" from partner" << endl;
 
     delete p;
@@ -161,7 +161,7 @@ void test_2() {
     p.createSocket(SocketType::TCP, partner, -1, 2000, 50);
     cout << x << ": Created TCP partner communication" << endl;
 
-    assert(p.recvData(SocketType::TCP, &tcpStatus, false, false, -1, true));
+    assert(p.recvData(SocketType::TCP, &tcpStatus, false, false, false, -1, true));
     cout << x << ": Received tcpStatus data \"" << tcpStatus.getData() << "\" from partner" << endl;
 
     tcpStatus.setData("Robot 1");
