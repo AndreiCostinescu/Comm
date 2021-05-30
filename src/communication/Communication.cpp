@@ -90,8 +90,8 @@ bool Communication::sendRaw(SocketType socketType, const char *data, int dataSiz
     return true;
 }
 
-bool Communication::recvMessageType(SocketType socketType, MessageType &messageType, bool withHeader, int retries,
-                                    bool verbose) {
+bool Communication::recvMessageType(SocketType socketType, MessageType &messageType, bool withHeader,
+                                    bool syphonWronglySerializedData, int retries, bool verbose) {
     bool receiveResult;
     char *dataLocalDeserializeBuffer;
     uint64_t expectedSize;
@@ -100,14 +100,15 @@ bool Communication::recvMessageType(SocketType socketType, MessageType &messageT
     this->errorCode = 0;
     if (withHeader) {
         this->recvHeader.setData(0, 0, 0);
+        this->recvHeader.setSyphonUntilFirstMessage(syphonWronglySerializedData);
     }
     this->preReceiveMessageType(dataLocalDeserializeBuffer, expectedSize, dataStart);
     receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries, verbose);
     return this->postReceiveMessageType(messageType, receiveResult, dataStart);
 }
 
-bool Communication::recvData(SocketType socketType, CommunicationData *data, bool withHeader, bool gotMessageType,
-                             int retries, bool verbose) {
+bool Communication::recvData(SocketType socketType, CommunicationData *data, bool withHeader, bool syphonWrongSerialize,
+                             bool gotMessageType, int retries, bool verbose) {
     bool receiveResult, deserializationDone = false, receivedSomething = false;
     int deserializeState = (int) gotMessageType, localRetriesThreshold = 0, localRetries = localRetriesThreshold;
     char *dataLocalDeserializeBuffer = nullptr;
@@ -119,6 +120,7 @@ bool Communication::recvData(SocketType socketType, CommunicationData *data, boo
         this->errorCode = 0;
         if (withHeader) {
             this->recvHeader.setData(deserializeState, 0, 0);
+            this->recvHeader.setSyphonUntilFirstMessage(syphonWrongSerialize);
         }
         this->preReceiveData(dataLocalDeserializeBuffer, expectedSize, dataStart, data, withHeader);
         receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries,
@@ -149,8 +151,8 @@ bool Communication::recvData(SocketType socketType, CommunicationData *data, boo
     return true;
 }
 
-bool Communication::receiveData(SocketType socketType, DataCollection *data, bool withHeader, int retries,
-                                bool verbose) {
+bool Communication::receiveData(SocketType socketType, DataCollection *data, bool withHeader, bool syphonWrongSerialize,
+                                int retries, bool verbose) {
     bool deserializationDone = false, receiveResult, receivedSomething = false;
     int deserializeState = 0;
     int localRetriesThreshold = 0, localRetries = localRetriesThreshold;  // 10
@@ -163,6 +165,10 @@ bool Communication::receiveData(SocketType socketType, DataCollection *data, boo
 
     while (!deserializationDone && localRetries >= 0) {
         this->errorCode = 0;
+        if (withHeader) {
+            this->recvHeader.setData(deserializeState, 0, 0);
+            this->recvHeader.setSyphonUntilFirstMessage(syphonWrongSerialize);
+        }
 
         // receive setup
         if (deserializeState == 0) {
@@ -395,11 +401,6 @@ void Communication::preReceiveMessageType(char *&dataLocalDeserializeBuffer, uin
     dataLocalDeserializeBuffer = nullptr;
     expectedSize = dataStart + 1;
 }
-
-#pragma clang diagnostic pop
-
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "readability-convert-member-functions-to-static"
 
 void Communication::preReceiveData(char *&dataLocalDeserializeBuffer, uint64_t &expectedSize,
                                    const int dataStart, CommunicationData *const recvData, bool withHeader) {

@@ -28,14 +28,14 @@ namespace comm {
 
         bool sendRaw(SocketType socketType, const char *data, int dataSize, int retries = 0, bool verbose = false);
 
-        bool recvMessageType(SocketType socketType, MessageType &messageType, bool withHeader, int retries = 0,
-                             bool verbose = false);
+        bool recvMessageType(SocketType socketType, MessageType &messageType, bool withHeader,
+                             bool syphonWronglySerializedData, int retries = 0, bool verbose = false);
 
-        bool recvData(SocketType socketType, CommunicationData *data, bool withHeader, bool gotMessageType = true,
-                      int retries = 0, bool verbose = false);
+        bool recvData(SocketType socketType, CommunicationData *data, bool withHeader, bool syphonWrongSerialize,
+                      bool gotMessageType = true, int retries = 0, bool verbose = false);
 
-        bool receiveData(SocketType socketType, DataCollection *data, bool withHeader, int retries = 0,
-                         bool verbose = false);
+        bool receiveData(SocketType socketType, DataCollection *data, bool withHeader, bool syphonWrongSerialize,
+                         int retries = 0, bool verbose = false);
 
         bool receiveRaw(SocketType socketType, char *&data, bool &receivedData, int retries = 0, bool verbose = false);
 
