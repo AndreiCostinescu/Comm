@@ -61,3 +61,7 @@ target_link_libraries(${EXE} ${MASTER_LIBRARIES})
 set(EXE "TestSerializationHeaderError")
 add_executable(${EXE} testSerializationHeaderError.cpp)
 target_link_libraries(${EXE} ${MASTER_LIBRARIES})
+
+set(EXE "TestJsonUDP")
+add_executable(${EXE} testJsonUDP.cpp json.hpp)
+target_link_libraries(${EXE} ${MASTER_LIBRARIES})
