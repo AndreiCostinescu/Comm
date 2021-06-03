@@ -16,6 +16,7 @@ git clone https://github.com/AndreiCostinescu/Comm.git
 cd Comm
 mkdir build-release
 cd build-release
+# if on windows and you're using the gcc (mingw) toolchain add `-G "MinGW Makefiles"` to the command below
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 ```
