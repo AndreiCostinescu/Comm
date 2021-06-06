@@ -559,7 +559,11 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                 receiveAmount = recvfrom(this->socket, this->recvBuffer->getBuffer(), this->recvBuffer->getBufferSize(),
                                          0, (struct sockaddr *) (&this->recvAddress), &this->recvAddressLength);
                 if (receiveAmount <= 0) {
-                    cout << "BREAK BECAUSE OF ERROR: " << getLastError() << "; " << getLastErrorString() << endl;
+                    int errorCode = getLastError();
+                    if (!(errorCode == 0 || errorCode == SOCKET_TIMEOUT ||
+                         errorCode == SOCKET_AGAIN || errorCode == SOCKET_WOULDBLOCK)) {
+                        cout << "BREAK BECAUSE OF ERROR: " << getLastError() << "; " << getLastErrorString() << endl;
+                    }
                     localReceivedBytes = receiveAmount;
                     this->recvBuffer->setBufferContentSize(0);
                     return true;
