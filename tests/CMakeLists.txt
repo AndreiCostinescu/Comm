@@ -65,3 +65,7 @@ target_link_libraries(${EXE} ${MASTER_LIBRARIES})
 set(EXE "TestJsonUDP")
 add_executable(${EXE} testJsonUDP.cpp json.hpp)
 target_link_libraries(${EXE} ${MASTER_LIBRARIES})
+
+set(EXE "TestTelemetry")
+add_executable(${EXE} testTelemetry.cpp string_utils.cpp map_utils.hpp)
+target_link_libraries(${EXE} ${MASTER_LIBRARIES})

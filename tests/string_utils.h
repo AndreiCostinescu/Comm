@@ -12,4 +12,8 @@ std::vector<std::string> splitString(const std::string &message, const std::stri
 
 std::string trim(const std::string &str, const std::string &whitespace = " \t");
 
+bool startsWith(const std::string &str, const std::string &startQuery);
+
+bool endsWith(const std::string &str, const std::string &endQuery);
+
 #endif //COMMUNICATION_STRING_UTILS_H

@@ -33,3 +33,14 @@ string trim(const string &str, const string &whitespace) {
 
     return str.substr(strBegin, strEnd - strBegin + 1);
 }
+
+bool startsWith(const string &str, const string &startQuery) {
+    return (str.rfind(startQuery, 0) == 0);
+}
+
+bool endsWith(const string &str, const string &endQuery) {
+    if (str.length() >= endQuery.length()) {
+        return (0 == str.compare(str.length() - endQuery.length(), endQuery.length(), endQuery));
+    }
+    return false;
+}
