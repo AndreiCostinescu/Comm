@@ -139,6 +139,25 @@ bool Buffer::empty() const {
     return this->bufferContentSize == 0;
 }
 
+char *&Buffer::getBufferReference() {
+    switch (this->bufferType) {
+        case BUFFER_LOCAL: {
+            return this->buffer;
+        }
+        case BUFFER_REFERENCE: {
+            this->bufferType = BufferType::BUFFER_LOCAL;
+            return this->referenceBuffer;
+        }
+        case BUFFER_CONST_REFERENCE: {
+            // this->bufferType = BufferType::BUFFER_LOCAL;
+            throw runtime_error("The const reference buffer is a const buffer, call getConstBuffer()");
+        }
+        default: {
+            throw runtime_error("Unknown buffer type...");
+        }
+    }
+}
+
 char *Buffer::getBuffer() {
     char *result;
     switch (this->bufferType) {

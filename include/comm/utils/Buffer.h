@@ -52,6 +52,8 @@ namespace comm {
 
         [[nodiscard]] bool empty() const;
 
+        char *&getBufferReference();
+
         [[nodiscard]] char *getBuffer();
 
         [[nodiscard]] const char *getConstBuffer();
