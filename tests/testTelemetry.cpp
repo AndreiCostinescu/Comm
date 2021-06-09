@@ -165,8 +165,10 @@ int main(int argc, char **argv) {
                 }
                 robotID = id;
                 if (!mapContains(allRobotData, id, &currentRobotData)) {
+                    robotDataAccessLock.lock();
                     currentRobotData = new RobotTelemetryData((char) id);
                     allRobotData[id] = currentRobotData;
+                    robotDataAccessLock.unlock();
                 }
             } else if (startsWith(x, "p ") || x == "p") {
                 inputSplit = splitString(x, " ");
@@ -178,7 +180,9 @@ int main(int argc, char **argv) {
                 if (inputSplit.size() >= 3) {
                     poseValue = stod(inputSplit[2]);
                     if (currentRobotData != nullptr) {
+                        robotDataAccessLock.lock();
                         currentRobotData->setPose(poseIndex, poseValue);
+                        robotDataAccessLock.unlock();
                     }
                 }
 
@@ -193,7 +197,9 @@ int main(int argc, char **argv) {
                 if (inputSplit.size() >= 3) {
                     forceValue = stod(inputSplit[2]);
                     if (currentRobotData != nullptr) {
+                        robotDataAccessLock.lock();
                         currentRobotData->setForce(forceIndex, forceValue);
+                        robotDataAccessLock.unlock();
                     }
                 }
 
@@ -203,18 +209,26 @@ int main(int argc, char **argv) {
                     continue;
                 }
                 if (lastOperation == 1) {
+                    robotDataAccessLock.lock();
                     currentRobotData->incrementPose(poseIndex, -poseIncrement);
+                    robotDataAccessLock.unlock();
                 } else if (lastOperation == 2) {
+                    robotDataAccessLock.lock();
                     currentRobotData->incrementForce(forceIndex, -forceIncrement);
+                    robotDataAccessLock.unlock();
                 }
             } else if (x == "d" || x == "w") {
                 if (currentRobotData == nullptr) {
                     continue;
                 }
                 if (lastOperation == 1) {
+                    robotDataAccessLock.lock();
                     currentRobotData->incrementPose(poseIndex, poseIncrement);
+                    robotDataAccessLock.unlock();
                 } else if (lastOperation == 2) {
+                    robotDataAccessLock.lock();
                     currentRobotData->incrementForce(forceIndex, forceIncrement);
+                    robotDataAccessLock.unlock();
                 }
             } else if (x == "q") {
                 quitFlag = true;
