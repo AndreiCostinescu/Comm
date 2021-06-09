@@ -53,6 +53,7 @@ public:
         this->force[position] += increment;
     }
 
+private:
     char id;
     vector<double> pose;
     vector<double> force;
