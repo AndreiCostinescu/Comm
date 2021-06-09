@@ -171,7 +171,9 @@ int main(int argc, char **argv) {
             } else if (startsWith(x, "p ") || x == "p") {
                 inputSplit = splitString(x, " ");
                 if (inputSplit.size() >= 2) {
-                    poseIndex = stoi(inputSplit[1]);
+                    if (stoi(inputSplit[1]) >= 0 && stoi(inputSplit[1]) <= 6) {
+                        poseIndex = stoi(inputSplit[1]);
+                    }
                 }
                 if (inputSplit.size() >= 3) {
                     poseValue = stod(inputSplit[2]);
@@ -184,7 +186,9 @@ int main(int argc, char **argv) {
             } else if (startsWith(x, "f ") || x == "f") {
                 inputSplit = splitString(x, " ");
                 if (inputSplit.size() >= 2) {
-                    forceIndex = stoi(inputSplit[1]);
+                    if (stoi(inputSplit[1]) >= 0 && stoi(inputSplit[1]) <= 2) {
+                        forceIndex = stoi(inputSplit[1]);
+                    }
                 }
                 if (inputSplit.size() >= 3) {
                     forceValue = stod(inputSplit[2]);
