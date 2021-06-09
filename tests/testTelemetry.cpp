@@ -23,7 +23,29 @@ public:
                       -1.3079182927409807, 1.4561646920568387, 1.6326282576521236};
     }
 
-    void serialize(Buffer *buffer) const {
+    string stringifyData() {
+        string data = "Robot " + to_string((int) this->id);
+        data += "\nPose: ";
+        int dataShift = 1;
+        for (int i = 0; i < 7; i++) {
+            if (i != 0) {
+                data += ", ";
+            }
+            data += to_string(this->pose[i]);
+        }
+        data += "\nForce: ";
+        dataShift += 56;  // 7 * 8
+        for (int i = 0; i < 3; i++) {
+            if (i != 0) {
+                data += ", ";
+            }
+            data += to_string(this->force[i]);
+        }
+        data += "\n\n";
+        return data;
+    }
+
+    void serialize(Buffer *const buffer) const {
         buffer->setBufferContentSize(81);
         buffer->setChar(id, 0);
         int shift = 1;
@@ -33,6 +55,19 @@ public:
         shift += (int) (8 * this->pose.size());
         for (size_t i = 0; i < this->force.size(); i++) {
             buffer->setDouble(this->force[i], (int) (shift + i * 8));
+        }
+    }
+
+    void deserialize(Buffer *const buffer) {
+        assert (buffer->getBufferContentSize() >= 81);
+        this->id = buffer->getChar(0);
+        int dataShift = 1;
+        for (int i = 0; i < 7; i++) {
+            this->pose[i] = buffer->getDouble(dataShift + i * 8);
+        }
+        dataShift += 56;  // 7 * 8
+        for (int i = 0; i < 3; i++) {
+            this->force[i] = buffer->getDouble(dataShift + i * 8);
         }
     }
 
@@ -67,8 +102,8 @@ void receiveDataThread() {
     digitalTwinReceiver.createSocket(SocketType::UDP, nullptr, 8400, -1, 5);  // recv timeout 5ms
     Buffer telemetryBuffer;
     bool receivedData = false;
-    string data;
-    int dataShift;
+    auto *robotTelemetryData = new RobotTelemetryData(0);
+
     telemetryBuffer.setBufferContentSize(81);
     while (!quitFlag) {
         if (!digitalTwinReceiver.receiveRaw(SocketType::UDP, telemetryBuffer.getBufferReference(), receivedData)) {
@@ -76,27 +111,11 @@ void receiveDataThread() {
             quitFlag = true;
         }
         if (receivedData) {
-            data = "Received data from robot " + to_string((int) telemetryBuffer.getChar(0)) + "\n";
-            data += "Pose: ";
-            dataShift = 1;
-            for (int i = 0; i < 7; i++) {
-                if (i != 0) {
-                    data += ", ";
-                }
-                data += to_string(telemetryBuffer.getDouble(dataShift + i * 8));
-            }
-            data += "\nForce: ";
-            dataShift += 56;  // 7 * 8
-            for (int i = 0; i < 3; i++) {
-                if (i != 0) {
-                    data += ", ";
-                }
-                data += to_string(telemetryBuffer.getDouble(dataShift + i * 8));
-            }
-            data += "\n\n";
-            cout << data;
+            robotTelemetryData->deserialize(&telemetryBuffer);
+            cout << "Received data from " + robotTelemetryData->stringifyData();
         }
     }
+    delete robotTelemetryData;
 }
 
 void sendDataThread(const string &ip, int port, map<int, RobotTelemetryData *> *allRobotData) {
