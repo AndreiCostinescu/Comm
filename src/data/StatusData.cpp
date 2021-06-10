@@ -25,6 +25,10 @@ StatusData::StatusData(const string &command) : StatusData() {
     this->setCommand(command);
 }
 
+StatusData::StatusData(const char *data) : StatusData() {
+    this->setData(data);
+}
+
 MessageType StatusData::getMessageType() {
     return MessageType(this->getDataType());
 }

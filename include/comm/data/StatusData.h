@@ -20,6 +20,8 @@ namespace comm {
 
         explicit StatusData(const std::string &command);
 
+        explicit StatusData(const char *data);
+
         MessageType getMessageType() override;
 
         bool serialize(Buffer *buffer, int start, bool forceCopy, bool verbose) override;
