@@ -2,8 +2,8 @@
 // Created by ga78cat on 24.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_BUFFER_H
-#define PINAKOTHEKDRAWING_BUFFER_H
+#ifndef COMM_UTILS_BUFFER_H
+#define COMM_UTILS_BUFFER_H
 
 #include <cstdint>
 
@@ -83,4 +83,4 @@ namespace comm {
 }
 
 
-#endif //PINAKOTHEKDRAWING_BUFFER_H
+#endif //COMM_UTILS_BUFFER_H

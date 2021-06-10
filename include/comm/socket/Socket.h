@@ -2,8 +2,8 @@
 // Created by ga78cat on 12.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_SOCKET_H
-#define PINAKOTHEKDRAWING_SOCKET_H
+#ifndef COMM_SOCKET_SOCKET_H
+#define COMM_SOCKET_SOCKET_H
 
 #include <comm/socket/SocketPartner.h>
 #include <comm/socket/SocketType.h>
@@ -121,4 +121,4 @@ namespace comm {
     };
 }
 
-#endif //PINAKOTHEKDRAWING_SOCKET_H
+#endif //COMM_SOCKET_SOCKET_H

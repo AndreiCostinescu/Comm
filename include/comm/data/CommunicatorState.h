@@ -2,8 +2,8 @@
 // Created by ga78cat on 24.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_COMMUNICATORSTATE_H
-#define PINAKOTHEKDRAWING_COMMUNICATORSTATE_H
+#ifndef COMM_DATA_COMMUNICATORSTATE_H
+#define COMM_DATA_COMMUNICATORSTATE_H
 
 #include <string>
 
@@ -21,4 +21,4 @@ namespace comm {
     std::string convertCommunicatorStateToStatus(const CommunicatorState &communicatorState);
 }
 
-#endif //PINAKOTHEKDRAWING_COMMUNICATORSTATE_H
+#endif //COMM_DATA_COMMUNICATORSTATE_H

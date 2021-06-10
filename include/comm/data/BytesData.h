@@ -2,8 +2,8 @@
 // Created by Andrei on 25-Apr-21.
 //
 
-#ifndef COMMUNICATION_BYTESDATA_H
-#define COMMUNICATION_BYTESDATA_H
+#ifndef COMM_DATA_BYTESDATA_H
+#define COMM_DATA_BYTESDATA_H
 
 #include <comm/data/CommunicationData.h>
 #include <comm/utils/Buffer.h>
@@ -71,4 +71,4 @@ namespace comm {
 
 }
 
-#endif //COMMUNICATION_BYTESDATA_H
+#endif //COMM_DATA_BYTESDATA_H

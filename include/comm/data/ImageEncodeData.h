@@ -2,8 +2,8 @@
 // Created by Andrei on 29-May-21.
 //
 
-#ifndef COMMUNICATION_IMAGEENCODEDATA_H
-#define COMMUNICATION_IMAGEENCODEDATA_H
+#ifndef COMM_DATA_IMAGEENCODEDATA_H
+#define COMM_DATA_IMAGEENCODEDATA_H
 
 #include <comm/data/ImageData.h>
 #include <vector>
@@ -48,4 +48,4 @@ namespace comm{
     };
 }
 
-#endif //COMMUNICATION_IMAGEENCODEDATA_H
+#endif //COMM_DATA_IMAGEENCODEDATA_H

@@ -2,8 +2,8 @@
 // Created by ga78cat on 14.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_TCPSERVER_H
-#define PINAKOTHEKDRAWING_TCPSERVER_H
+#ifndef COMM_COMMUNICATION_TCPSERVER_H
+#define COMM_COMMUNICATION_TCPSERVER_H
 
 #include <comm/communication/Communication.h>
 #include <comm/socket/Socket.h>
@@ -31,4 +31,4 @@ namespace comm {
     };
 }
 
-#endif //PINAKOTHEKDRAWING_TCPSERVER_H
+#endif //COMM_COMMUNICATION_TCPSERVER_H

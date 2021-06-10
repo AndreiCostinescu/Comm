@@ -2,8 +2,8 @@
 // Created by ga78cat on 09.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_MESSAGETYPE_H
-#define PINAKOTHEKDRAWING_MESSAGETYPE_H
+#ifndef COMM_DATA_MESSAGETYPE_H
+#define COMM_DATA_MESSAGETYPE_H
 
 #include <stdexcept>
 #include <string>
@@ -24,4 +24,4 @@ namespace comm {
     std::string messageTypeToString(const MessageType &messageType);
 }
 
-#endif //PINAKOTHEKDRAWING_MESSAGETYPE_H
+#endif //COMM_DATA_MESSAGETYPE_H

@@ -2,8 +2,8 @@
 // Created by ga78cat on 11.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_NETWORKINCLUDES_H
-#define PINAKOTHEKDRAWING_NETWORKINCLUDES_H
+#ifndef COMM_UTILS_NETWORKINCLUDES_H
+#define COMM_UTILS_NETWORKINCLUDES_H
 
 #include <cerrno>
 #include <unistd.h>
@@ -79,4 +79,4 @@ namespace comm {
     extern std::ostream *cerror;
 }
 
-#endif //PINAKOTHEKDRAWING_NETWORKINCLUDES_H
+#endif //COMM_UTILS_NETWORKINCLUDES_H

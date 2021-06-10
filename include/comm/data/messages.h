@@ -2,8 +2,8 @@
 // Created by ga78cat on 16.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_MESSAGES_H
-#define PINAKOTHEKDRAWING_MESSAGES_H
+#ifndef COMM_DATA_MESSAGES_H
+#define COMM_DATA_MESSAGES_H
 
 namespace comm {
     extern const char *ACCEPT_MESSAGE;
@@ -43,4 +43,4 @@ namespace comm {
     extern const int QUIT_MESSAGE_LENGTH;
 }
 
-#endif //PINAKOTHEKDRAWING_MESSAGES_H
+#endif //COMM_DATA_MESSAGES_H

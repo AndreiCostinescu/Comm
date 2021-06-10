@@ -2,8 +2,8 @@
 // Created by ga78cat on 10.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_COORDINATEDATA_H
-#define PINAKOTHEKDRAWING_COORDINATEDATA_H
+#ifndef COMM_DATA_COORDINATEDATA_H
+#define COMM_DATA_COORDINATEDATA_H
 
 #include <comm/data/CommunicationData.h>
 #include <string>
@@ -56,4 +56,4 @@ namespace comm {
     };
 }
 
-#endif //PINAKOTHEKDRAWING_COORDINATEDATA_H
+#endif //COMM_DATA_COORDINATEDATA_H

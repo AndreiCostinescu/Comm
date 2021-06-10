@@ -2,8 +2,8 @@
 // Created by ga78cat on 14.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_COMMUNICATION_H
-#define PINAKOTHEKDRAWING_COMMUNICATION_H
+#ifndef COMM_COMMUNICATION_COMMUNICATION_H
+#define COMM_COMMUNICATION_COMMUNICATION_H
 
 #include <comm/data/CommunicationData.h>
 #include <comm/data/DataCollection.h>
@@ -117,4 +117,4 @@ namespace comm {
     };
 }
 
-#endif //PINAKOTHEKDRAWING_COMMUNICATION_H
+#endif //COMM_COMMUNICATION_COMMUNICATION_H

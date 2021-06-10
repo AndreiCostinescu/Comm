@@ -2,8 +2,8 @@
 // Created by ga78cat on 11.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_STATUSDATA_H
-#define PINAKOTHEKDRAWING_STATUSDATA_H
+#ifndef COMM_DATA_STATUSDATA_H
+#define COMM_DATA_STATUSDATA_H
 
 #include <comm/data/CommunicationData.h>
 #include <comm/utils/Buffer.h>
@@ -61,4 +61,4 @@ namespace comm {
     };
 }
 
-#endif //PINAKOTHEKDRAWING_STATUSDATA_H
+#endif //COMM_DATA_STATUSDATA_H

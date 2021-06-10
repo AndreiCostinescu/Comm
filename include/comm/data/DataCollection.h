@@ -2,8 +2,8 @@
 // Created by Andrei on 01-Apr-21.
 //
 
-#ifndef PINAKOTHEKDRAWING_DATACOLLECTION_H
-#define PINAKOTHEKDRAWING_DATACOLLECTION_H
+#ifndef COMM_DATA_DATACOLLECTION_H
+#define COMM_DATA_DATACOLLECTION_H
 
 #include <comm/data/CommunicationData.h>
 #include <map>
@@ -30,4 +30,4 @@ namespace comm {
 }
 
 
-#endif //PINAKOTHEKDRAWING_DATACOLLECTION_H
+#endif //COMM_DATA_DATACOLLECTION_H

@@ -2,8 +2,8 @@
 // Created by ga78cat on 16.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_UTILS_H
-#define PINAKOTHEKDRAWING_UTILS_H
+#ifndef COMM_SOCKET_UTILS_H
+#define COMM_SOCKET_UTILS_H
 
 #include <comm/utils/NetworkIncludes.h>
 #include <string>
@@ -50,4 +50,4 @@ namespace comm {
     bool comparePartners(const SocketAddress &p1, const SocketAddress &p2);
 }
 
-#endif //PINAKOTHEKDRAWING_UTILS_H
+#endif //COMM_SOCKET_UTILS_H

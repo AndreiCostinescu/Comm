@@ -2,8 +2,8 @@
 // Created by ga78cat on 12.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_UTILS_HPP
-#define PINAKOTHEKDRAWING_UTILS_HPP
+#ifndef COMM_UTILS_UTILS_HPP
+#define COMM_UTILS_UTILS_HPP
 
 #include <algorithm>
 #include <cassert>
@@ -97,4 +97,4 @@ T2 mapGet(const std::map<T1, T2> &container, const T1 &key) {
     return value;
 }
 
-#endif //PINAKOTHEKDRAWING_UTILS_HPP
+#endif //COMM_UTILS_UTILS_HPP

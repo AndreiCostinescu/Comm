@@ -2,8 +2,8 @@
 // Created by Andrei on 31-Mar-21.
 //
 
-#ifndef PINAKOTHEKDRAWING_SOCKETPARTNER_H
-#define PINAKOTHEKDRAWING_SOCKETPARTNER_H
+#ifndef COMM_SOCKET_SOCKETPARTNER_H
+#define COMM_SOCKET_SOCKETPARTNER_H
 
 #include <comm/utils/NetworkIncludes.h>
 #include <string>
@@ -54,4 +54,4 @@ namespace comm {
     };
 }
 
-#endif //PINAKOTHEKDRAWING_SOCKETPARTNER_H
+#endif //COMM_SOCKET_SOCKETPARTNER_H

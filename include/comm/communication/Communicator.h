@@ -2,8 +2,8 @@
 // Created by ga78cat on 24.03.2021.
 //
 
-#ifndef PINAKOTHEKDRAWING_COMMUNICATOR_H
-#define PINAKOTHEKDRAWING_COMMUNICATOR_H
+#ifndef COMM_COMMUNICATION_COMMUNICATOR_H
+#define COMM_COMMUNICATION_COMMUNICATOR_H
 
 #include <atomic>
 #include <comm/communication/Communication.h>
@@ -74,4 +74,4 @@ namespace comm {
     };
 }
 
-#endif //PINAKOTHEKDRAWING_COMMUNICATOR_H
+#endif //COMM_COMMUNICATION_COMMUNICATOR_H

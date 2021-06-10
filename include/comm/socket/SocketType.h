@@ -2,8 +2,8 @@
 // Created by Andrei on 15-Apr-21.
 //
 
-#ifndef PINAKOTHEKDRAWING_SOCKETTYPE_H
-#define PINAKOTHEKDRAWING_SOCKETTYPE_H
+#ifndef COMM_SOCKET_SOCKETTYPE_H
+#define COMM_SOCKET_SOCKETTYPE_H
 
 #include<string>
 
@@ -19,4 +19,4 @@ namespace comm {
     std::string socketTypeToString(SocketType socketType);
 }
 
-#endif //PINAKOTHEKDRAWING_SOCKETTYPE_H
+#endif //COMM_SOCKET_SOCKETTYPE_H

@@ -2,8 +2,8 @@
 // Created by Andrei on 15-May-21.
 //
 
-#ifndef COMMUNICATION_NETWORKDATA_H
-#define COMMUNICATION_NETWORKDATA_H
+#ifndef COMM_UTILS_NETWORKDATA_H
+#define COMM_UTILS_NETWORKDATA_H
 
 namespace comm {
     class NetworkData {
@@ -36,4 +36,4 @@ namespace comm {
     };
 }
 
-#endif //COMMUNICATION_NETWORKDATA_H
+#endif //COMM_UTILS_NETWORKDATA_H
