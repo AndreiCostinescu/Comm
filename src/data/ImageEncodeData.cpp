@@ -52,10 +52,6 @@ bool ImageEncodeData::serialize(Buffer *buffer, int start, bool forceCopy, bool 
     switch (this->serializeState) {
         case 0: {
             buffer->setBufferContentSize(start + ImageEncodeData::headerSize);
-            if (verbose) {
-                cout << "Serialize: " << this->image.rows << ", " << this->image.cols << ", " << this->image.type()
-                     << ", " << this->encodedContentSize << endl;
-            }
             buffer->setInt(this->id, start);
             buffer->setInt(this->image.rows, start + 4);
             buffer->setInt(this->image.cols, start + 8);
@@ -68,6 +64,8 @@ bool ImageEncodeData::serialize(Buffer *buffer, int start, bool forceCopy, bool 
             buffer->setInt(this->encodedContentSize, start + 16);
             buffer->setInt(this->encoding, start + 20);
             if (verbose) {
+                cout << "Serialize: " << this->image.rows << ", " << this->image.cols << ", " << this->image.type()
+                     << ", " << this->encodedContentSize << endl;
                 char *dataBuffer = buffer->getBuffer();
                 cout << "Serialized content: ";
                 for (int i = 0; i < ImageEncodeData::headerSize; i++) {
