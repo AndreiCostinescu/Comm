@@ -9,14 +9,12 @@ from typing import Optional
 
 class StatusData(CommunicationData):
     headerSize = 4
-    statusDataType = MessageType.STATUS.value[0]
 
     def __init__(self, value: str or int = None):
         super().__init__()
         self.data = None  # type: Optional[bytes]
         self.dataSize = 0
         self.dataLength = 0
-        self.dataType = 0
         if isinstance(value, int) and value > 0:
             self.data, self.dataLength = prepareBuffer(self.data, self.dataLength, value)
         elif isinstance(value, str):
@@ -25,8 +23,7 @@ class StatusData(CommunicationData):
             self.setData(value)
 
     def getMessageType(self):
-        # print("Status Data messageType:", self.getDataType())
-        return MessageType.intToMessageType(self.getDataType())
+        return MessageType.STATUS
 
     def serialize(self, buffer: Buffer, start: int, forceCopy: bool, verbose: bool) -> bool:
         if self.serializeState == 0:
@@ -78,7 +75,6 @@ class StatusData(CommunicationData):
 
     def reset(self):
         self.dataSize = -1
-        self.dataType = MessageType.NOTHING.value[0]  # .value returns a tuple
 
     def setData(self, _data: str or bytes, _dataSize: int = -1):
         if _data is None:
@@ -96,7 +92,6 @@ class StatusData(CommunicationData):
         self.data, self.dataLength = prepareBuffer(self.data, self.dataLength, _dataSize)
         self.data = memcpy(self.data, 0, _data, 0, _dataSize)
         self.dataSize = _dataSize
-        self.dataType = StatusData.statusDataType
 
     def getData(self) -> Optional[bytes]:
         if self.dataSize < 0:
@@ -105,6 +100,3 @@ class StatusData(CommunicationData):
 
     def getDataSize(self) -> int:
         return self.dataSize
-
-    def getDataType(self) -> int:
-        return self.dataType

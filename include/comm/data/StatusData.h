@@ -48,14 +48,9 @@ namespace comm {
 
         [[nodiscard]] int getDataSize() const;
 
-        [[nodiscard]] char getDataType() const;
-
     private:
-        static const char statusDataType;
-
         char *data;
         int dataSize, dataLength;
-        char dataType;
     };
 }
 

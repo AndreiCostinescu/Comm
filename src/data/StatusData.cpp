@@ -15,7 +15,7 @@ using namespace std;
 
 const int StatusData::headerSize = sizeof(int);
 
-StatusData::StatusData() : data(nullptr), dataLength(0), dataSize(0), dataType(0) {}
+StatusData::StatusData() : data(nullptr), dataLength(0), dataSize(0) {}
 
 StatusData::StatusData(int size) : StatusData() {
     prepareBuffer(this->data, this->dataLength, size);
@@ -26,7 +26,7 @@ StatusData::StatusData(const char *data) : StatusData() {
 }
 
 MessageType StatusData::getMessageType() {
-    return MessageType(this->getDataType());
+    return MessageType::STATUS;
 }
 
 bool StatusData::serialize(Buffer *buffer, int start, bool forceCopy, bool verbose) {
@@ -99,7 +99,6 @@ bool StatusData::deserialize(Buffer *buffer, int start, bool, bool verbose) {
 
 void StatusData::reset() {
     this->dataSize = -1;
-    this->dataType = MessageType::NOTHING;
 }
 
 void StatusData::setData(char *_data) {
@@ -122,7 +121,6 @@ void StatusData::setData(const char *_data, int _dataSize) {
     prepareBuffer(this->data, this->dataLength, _dataSize);
     memcpy(this->data, _data, _dataSize);
     this->dataSize = _dataSize;
-    this->dataType = StatusData::statusDataType;
 }
 
 void StatusData::setData(const string &_data) {
@@ -143,9 +141,3 @@ char *StatusData::getData() const {
 int StatusData::getDataSize() const {
     return this->dataSize;
 }
-
-char StatusData::getDataType() const {
-    return this->dataType;
-}
-
-const char StatusData::statusDataType = MessageType::STATUS;

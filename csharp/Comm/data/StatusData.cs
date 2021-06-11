@@ -10,7 +10,6 @@ namespace Comm.data {
             this.data = null;
             this.dataLength = 0;
             this.dataSize = 0;
-            this.dataType = 0;
         }
 
         public StatusData(string data) : this() {
@@ -18,11 +17,7 @@ namespace Comm.data {
         }
 
         public override MessageType getMessageType() {
-            if (Enum.IsDefined(typeof(MessageType), (int)this.getDataType())) {
-                return (MessageType)this.getDataType();
-            } else {
-                return MessageType.NOTHING;
-            }
+            return MessageType.STATUS;
         }
 
         public override bool serialize(utils.Buffer buffer, int start, bool forceCopy, bool verbose) {
@@ -94,7 +89,6 @@ namespace Comm.data {
 
         public void reset() {
             this.dataSize = -1;
-            this.dataType = (byte)MessageType.NOTHING;
         }
 
         public void setData(byte[] _data) {
@@ -109,7 +103,6 @@ namespace Comm.data {
             socket.Utils.prepareBuffer(ref this.data, ref this.dataLength, _dataSize);
             utils.Utils.memcpy(this.data, 0, _data, 0, (ulong)Math.Min(_data.Length, _dataSize));
             this.dataSize = _dataSize;
-            this.dataType = statusDataType;
         }
 
         public void setData(string _data) {
@@ -138,14 +131,7 @@ namespace Comm.data {
             return this.dataSize;
         }
 
-        public byte getDataType() {
-            return this.dataType;
-        }
-
-        private static readonly byte statusDataType = (byte)MessageType.STATUS;
-
         private byte[] data;
         private int dataSize, dataLength;
-        private byte dataType;
     };
 }
