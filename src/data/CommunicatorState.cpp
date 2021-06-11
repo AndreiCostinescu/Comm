@@ -3,6 +3,7 @@
 //
 
 #include <comm/data/CommunicatorState.h>
+#include <comm/data/messages.h>
 #include <stdexcept>
 
 using namespace comm;
@@ -36,16 +37,16 @@ string comm::communicatorStateToString(const CommunicatorState &communicatorStat
     }
 }
 
-string comm::convertCommunicatorStateToStatus(const CommunicatorState &communicatorState) {
+const char *comm::convertCommunicatorStateToStatus(const CommunicatorState &communicatorState) {
     switch (communicatorState) {
         case CommunicatorState::COMMUNICATOR_IDLE: {
-            return "idle";
+            return IDLE_MESSAGE;
         }
         case CommunicatorState::COMMUNICATOR_ACTIVE: {
-            return "active";
+            return ACTIVE_MESSAGE;
         }
         case CommunicatorState::COMMUNICATOR_DONE: {
-            return "done";
+            return DONE_MESSAGE;
         }
         default: {
             throw runtime_error("Unknown CommunicatorState " + to_string(int(communicatorState)));

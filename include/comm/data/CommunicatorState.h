@@ -18,7 +18,7 @@ namespace comm {
 
     std::string communicatorStateToString(const CommunicatorState &communicatorState);
 
-    std::string convertCommunicatorStateToStatus(const CommunicatorState &communicatorState);
+    const char *convertCommunicatorStateToStatus(const CommunicatorState &communicatorState);
 }
 
 #endif //COMM_DATA_COMMUNICATORSTATE_H

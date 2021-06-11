@@ -32,10 +32,6 @@ namespace comm {
 
         void reset();
 
-        void setCommand(const std::string &command);
-
-        void setStatus(const std::string &status);
-
         void setData(char *_data);
 
         void setData(char *_data, int _dataSize);

@@ -13,8 +13,8 @@ namespace Comm.data {
             this.dataType = 0;
         }
 
-        public StatusData(string command) : this() {
-            this.setCommand(command);
+        public StatusData(string data) : this() {
+            this.setData(data);
         }
 
         public override MessageType getMessageType() {
@@ -95,82 +95,6 @@ namespace Comm.data {
         public void reset() {
             this.dataSize = -1;
             this.dataType = (byte)MessageType.NOTHING;
-        }
-
-        public void setCommand(string command) {
-            string commandData = "";
-            if (command == "_reset") {
-                this.reset();
-                return;
-            } else if (command == "ping") {
-                commandData = Messages.PING_MESSAGE;
-                this.dataSize = Messages.PING_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            } else if (command == "quit") {
-                commandData = Messages.QUIT_MESSAGE;
-                this.dataSize = Messages.QUIT_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            } else if (command == "start") {
-                commandData = Messages.START_MESSAGE;
-                this.dataSize = Messages.START_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            } else if (command == "stop") {
-                commandData = Messages.STOP_MESSAGE;
-                this.dataSize = Messages.STOP_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            } else if (command == "wait") {
-                commandData = Messages.WAIT_MESSAGE;
-                this.dataSize = Messages.WAIT_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            } else if (command == "accept") {
-                commandData = Messages.ACCEPT_MESSAGE;
-                this.dataSize = Messages.ACCEPT_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            } else if (command == "ready") {
-                commandData = Messages.READY_MESSAGE;
-                this.dataSize = Messages.READY_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            } else if (command == "control") {
-                commandData = Messages.CONTROL_MESSAGE;
-                this.dataSize = Messages.CONTROL_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            } else if (command == "upload") {
-                commandData = Messages.UPLOAD_MESSAGE;
-                this.dataSize = Messages.UPLOAD_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            } else if (command == "select") {
-                commandData = Messages.SELECT_MESSAGE;
-                this.dataSize = Messages.SELECT_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            } else if (command == "reject") {
-                commandData = Messages.REJECT_MESSAGE;
-                this.dataSize = Messages.REJECT_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            }
-            socket.Utils.prepareBuffer(ref this.data, ref this.dataLength, this.dataSize);
-            this.setData(commandData, this.dataSize);
-        }
-
-        public void setStatus(string status) {
-            string statusData = "";
-            if (status == "_reset") {
-                this.reset();
-                return;
-            } else if (status == "idle") {
-                statusData = Messages.IDLE_MESSAGE;
-                this.dataSize = Messages.IDLE_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            } else if (status == "active") {
-                statusData = Messages.ACTIVE_MESSAGE;
-                this.dataSize = Messages.ACTIVE_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            } else if (status == "done") {
-                statusData = Messages.DONE_MESSAGE;
-                this.dataSize = Messages.DONE_MESSAGE_LENGTH;
-                this.dataType = (byte)MessageType.STATUS;
-            }
-            socket.Utils.prepareBuffer(ref this.data, ref this.dataLength, this.dataSize);
-            this.setData(statusData, this.dataSize);
         }
 
         public void setData(byte[] _data) {

@@ -2,6 +2,7 @@ from comm.communication.Communication import Communication
 from comm.comm_data.CommunicationData import CommunicationData
 from comm.comm_data.DataCollection import DataCollection
 from comm.comm_data.utils import createCommunicationData
+from comm.comm_data.Messages import Messages
 from comm.comm_data.MessageType import MessageType
 from comm.comm_data.StatusData import StatusData
 from comm.comm_socket.SocketType import SocketType
@@ -89,7 +90,7 @@ class Communicator:
             print("Error when receiving message type... setting \"quit\"")
             messageType = MessageType.STATUS
             status = _dataCollection.get(messageType)  # type: StatusData
-            status.setCommand("quit")
+            status.setData(Messages.QUIT_MESSAGE)
             return True, messageType, _dataCollection
 
         data = _dataCollection.get(messageType)
@@ -99,7 +100,7 @@ class Communicator:
             print("Error when syphoning data " + MessageType.messageTypeToString(messageType) + "... setting \"quit\"")
             messageType = MessageType.STATUS
             status = _dataCollection.get(messageType)  # type: StatusData
-            status.setCommand("quit")
+            status.setData(Messages.QUIT_MESSAGE)
 
         return True, messageType, _dataCollection
 

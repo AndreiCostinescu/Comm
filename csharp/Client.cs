@@ -230,7 +230,7 @@ namespace Comm {
             Console.WriteLine("After communication loop in recvDataFromServerLoop!");
             if (this.quit) {
                 Console.WriteLine("User quit");
-                status.setCommand("quit");
+                status.setData(MESSAGES.QUIT_MESSAGE);
                 this.send(this.serverPartner, SocketType.TCP, status, true);
             } else if (this.commQuit) {
                 Console.WriteLine("Server quit");
@@ -245,8 +245,8 @@ namespace Comm {
             Console.WriteLine("Entering communication loop!");
 
             StatusData s = new StatusData();
-            s.setCommand("control");
-            // s.setCommand("stop");
+            s.setData(Messages.CONTROL_MESSAGE);
+            // s.setData(Messages.STOP_MESSAGE);
             if (!this.send(this.serverPartner, SocketType.UDP_HEADER, s, true)) {
                 Console.WriteLine("Can not send " + s.getData() + " to udp: " + this.serverPartner.getPartnerString(SocketType.UDP_HEADER) + 
                                   ". error = " + this.serverPartner.getErrorString());
@@ -420,7 +420,7 @@ namespace Comm {
 
             string listenResult = status.getData();
             if (Comm.utils.Utils.strcmp(listenResult, Comm.data.Messages.PING_MESSAGE) == 0) {
-                status.setStatus(CommunicatorStateConverter.convertCommunicatorStateToStatus(this.state));
+                status.setData(CommunicatorStateConverter.convertCommunicatorStateToStatus(this.state));
                 Console.WriteLine("Sending to server " + status.getData());
                 if (!this.send(partner, SocketType.TCP, status, true)) {
                     Console.WriteLine("Can not send ping response to " + partner.getPartnerString(SocketType.TCP));

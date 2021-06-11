@@ -20,7 +20,7 @@ class StatusData(CommunicationData):
         if isinstance(value, int) and value > 0:
             self.data, self.dataLength = prepareBuffer(self.data, self.dataLength, value)
         elif isinstance(value, str):
-            self.setCommand(value)
+            self.setData(value)
         elif isinstance(value, bytes):
             self.setData(value)
 
@@ -79,85 +79,6 @@ class StatusData(CommunicationData):
     def reset(self):
         self.dataSize = -1
         self.dataType = MessageType.NOTHING.value[0]  # .value returns a tuple
-
-    def setCommand(self, command: str):
-        if command == "_reset":
-            self.reset()
-            return
-        elif command == "ping":
-            commandData = Messages.PING_MESSAGE
-            self.dataSize = Messages.PING_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        elif command == "quit":
-            commandData = Messages.QUIT_MESSAGE
-            self.dataSize = Messages.QUIT_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        elif command == "start":
-            commandData = Messages.START_MESSAGE
-            self.dataSize = Messages.START_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        elif command == "stop":
-            commandData = Messages.STOP_MESSAGE
-            self.dataSize = Messages.STOP_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        elif command == "wait":
-            commandData = Messages.WAIT_MESSAGE
-            self.dataSize = Messages.WAIT_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        elif command == "accept":
-            commandData = Messages.ACCEPT_MESSAGE
-            self.dataSize = Messages.ACCEPT_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        elif command == "ready":
-            commandData = Messages.READY_MESSAGE
-            self.dataSize = Messages.READY_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        elif command == "control":
-            commandData = Messages.CONTROL_MESSAGE
-            self.dataSize = Messages.CONTROL_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        elif command == "upload":
-            commandData = Messages.UPLOAD_MESSAGE
-            self.dataSize = Messages.UPLOAD_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        elif command == "select":
-            commandData = Messages.SELECT_MESSAGE
-            self.dataSize = Messages.SELECT_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        elif command == "reject":
-            commandData = Messages.REJECT_MESSAGE
-            self.dataSize = Messages.REJECT_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        else:
-            raise RuntimeError("Unknown command: " + command)
-
-        self.data, self.dataLength = prepareBuffer(self.data, self.dataLength, self.dataSize)
-        self.data = memcpy(self.data, 0, bytes(commandData, "ascii"), 0, self.dataSize)
-        assert (strcmp(commandData, self.data.decode()) == 0)
-        assert (strcmp(bytes(commandData, "ascii"), self.data) == 0)
-
-    def setStatus(self, status: str):
-        if status == "_reset":
-            self.reset()
-            return
-        elif status == "idle":
-            statusData = Messages.IDLE_MESSAGE
-            self.dataSize = Messages.IDLE_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        elif status == "active":
-            statusData = Messages.ACTIVE_MESSAGE
-            self.dataSize = Messages.ACTIVE_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        elif status == "done":
-            statusData = Messages.DONE_MESSAGE
-            self.dataSize = Messages.DONE_MESSAGE_LENGTH
-            self.dataType = MessageType.STATUS.value[0]
-        else:
-            raise RuntimeError("Unknown status: " + status)
-
-        self.data, self.dataLength = prepareBuffer(self.data, self.dataLength, self.dataSize)
-        self.data = memcpy(self.data, 0, statusData, 0, self.dataSize)
-        assert (strcmp(statusData, self.data) == 0)
 
     def setData(self, _data: str or bytes, _dataSize: int = -1):
         if _data is None:

@@ -39,13 +39,13 @@ namespace Comm.data {
         public static string convertCommunicatorStateToStatus(CommunicatorState communicatorState) {
             switch (communicatorState) {
                 case CommunicatorState.COMMUNICATOR_IDLE: {
-                    return "idle";
+                    return Messages.IDLE_MESSAGE;
                 }
                 case CommunicatorState.COMMUNICATOR_ACTIVE: {
-                    return "active";
+                    return Messages.ACTIVE_MESSAGE;
                 }
                 case CommunicatorState.COMMUNICATOR_DONE: {
-                    return "done";
+                    return Messages.DONE_MESSAGE;
                 }
                 default: {
                     throw new Exception("Unknown CommunicatorState " + communicatorState);

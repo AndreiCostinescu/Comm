@@ -21,10 +21,6 @@ StatusData::StatusData(int size) : StatusData() {
     prepareBuffer(this->data, this->dataLength, size);
 }
 
-StatusData::StatusData(const string &command) : StatusData() {
-    this->setCommand(command);
-}
-
 StatusData::StatusData(const char *data) : StatusData() {
     this->setData(data);
 }
@@ -104,84 +100,6 @@ bool StatusData::deserialize(Buffer *buffer, int start, bool, bool verbose) {
 void StatusData::reset() {
     this->dataSize = -1;
     this->dataType = MessageType::NOTHING;
-}
-
-void StatusData::setCommand(const std::string &command) {
-    const char *commandData;
-    if (command == "_reset") {
-        this->reset();
-        return;
-    } else if (command == "ping") {
-        commandData = PING_MESSAGE;
-        this->dataSize = PING_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    } else if (command == "quit") {
-        commandData = QUIT_MESSAGE;
-        this->dataSize = QUIT_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    } else if (command == "start") {
-        commandData = START_MESSAGE;
-        this->dataSize = START_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    } else if (command == "stop") {
-        commandData = STOP_MESSAGE;
-        this->dataSize = STOP_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    } else if (command == "wait") {
-        commandData = WAIT_MESSAGE;
-        this->dataSize = WAIT_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    } else if (command == "accept") {
-        commandData = ACCEPT_MESSAGE;
-        this->dataSize = ACCEPT_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    } else if (command == "ready") {
-        commandData = READY_MESSAGE;
-        this->dataSize = READY_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    } else if (command == "control") {
-        commandData = CONTROL_MESSAGE;
-        this->dataSize = CONTROL_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    } else if (command == "upload") {
-        commandData = UPLOAD_MESSAGE;
-        this->dataSize = UPLOAD_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    } else if (command == "select") {
-        commandData = SELECT_MESSAGE;
-        this->dataSize = SELECT_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    } else if (command == "reject") {
-        commandData = REJECT_MESSAGE;
-        this->dataSize = REJECT_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    }
-    prepareBuffer(this->data, this->dataLength, this->dataSize);
-    memcpy(this->data, commandData, this->dataSize);
-    assert(strcmp(commandData, this->data) == 0);
-}
-
-void StatusData::setStatus(const std::string &status) {
-    const char *statusData;
-    if (status == "_reset") {
-        this->reset();
-        return;
-    } else if (status == "idle") {
-        statusData = IDLE_MESSAGE;
-        this->dataSize = IDLE_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    } else if (status == "active") {
-        statusData = ACTIVE_MESSAGE;
-        this->dataSize = ACTIVE_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    } else if (status == "done") {
-        statusData = DONE_MESSAGE;
-        this->dataSize = DONE_MESSAGE_LENGTH;
-        this->dataType = MessageType::STATUS;
-    }
-    prepareBuffer(this->data, this->dataLength, this->dataSize);
-    memcpy(this->data, statusData, this->dataSize);
-    assert(strcmp(statusData, this->data) == 0);
 }
 
 void StatusData::setData(char *_data) {

@@ -1,4 +1,5 @@
 import enum
+from comm.comm_data.Messages import Messages
 
 
 class CommunicatorState(enum.Enum):
@@ -42,10 +43,10 @@ class CommunicatorState(enum.Enum):
     @staticmethod
     def convertCommunicatorStateToStatus(communicatorState: 'CommunicatorState'):
         if communicatorState == CommunicatorState.COMMUNICATOR_IDLE:
-            return "idle"
+            return Messages.IDLE_MESSAGE
         elif communicatorState == CommunicatorState.COMMUNICATOR_ACTIVE:
-            return "active"
+            return Messages.ACTIVE_MESSAGE
         elif communicatorState == CommunicatorState.COMMUNICATOR_DONE:
-            return "done"
+            return Messages.DONE_MESSAGE
         else:
             raise RuntimeError("Unknown CommunicatorState " + str(communicatorState))

@@ -84,7 +84,7 @@ namespace Comm.communication {
                 Console.WriteLine("Error when receiving message type... setting \"quit\"");
                 messageType = MessageType.STATUS;
                 StatusData status = (StatusData)_dataCollection.get(messageType);
-                status.setCommand("quit");
+                status.setData(Messages.QUIT_MESSAGE);
                 return true;
             }
 
@@ -97,7 +97,7 @@ namespace Comm.communication {
                 Console.WriteLine("Error when syphoning data " + MessageTypeConverter.messageTypeToString(messageType) + "... setting \"quit\"");
                 messageType = MessageType.STATUS;
                 StatusData status = (StatusData)_dataCollection.get(messageType);
-                status.setCommand("quit");
+                status.setData(Messages.QUIT_MESSAGE);
             }
             return true;
         }

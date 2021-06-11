@@ -6,6 +6,7 @@
 #include <comm/communication/Communicator.h>
 #include <comm/socket/utils.h>
 #include <comm/data/dataUtils.h>
+#include <comm/data/messages.h>
 #include <comm/data/StatusData.h>
 #include <iostream>
 #include <stdexcept>
@@ -155,7 +156,7 @@ bool Communicator::_listen(Communication *comm, SocketType socketType, MessageTy
         (*cerror) << "Error when receiving message type... setting \"quit\"" << endl;
         messageType = MessageType::STATUS;
         auto *status = (StatusData *) _dataCollection.get(messageType);
-        status->setCommand("quit");
+        status->setData(QUIT_MESSAGE);
         // cout << "Received NOTHING, set quit!" << endl;
         return true;
     }
@@ -170,7 +171,7 @@ bool Communicator::_listen(Communication *comm, SocketType socketType, MessageTy
         }
         messageType = MessageType::STATUS;
         auto *status = (StatusData *) _dataCollection.get(messageType);
-        status->setCommand("quit");
+        status->setData(QUIT_MESSAGE);
     }
     return true;
 }
