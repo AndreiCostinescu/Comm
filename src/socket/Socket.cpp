@@ -609,7 +609,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
             while (receiveSize > 0 && localRetries > 0) {
                 // cout << "Waiting to receive " << receiveSize << " bytes" << endl;
                 receiveAmount = recv(this->socket, this->recvBuffer->getBuffer() + localReceivedBytes, receiveSize, 0);
-                if (receiveAmount > 0 && receiveAmount != receiveSize) {
+                if (localVerbose && receiveAmount > 0 && receiveAmount != receiveSize) {
                     cout << "Waiting to receive " << receiveSize << " bytes, received " << receiveAmount << endl;
                 }
                 // Determine if timeout or error!
