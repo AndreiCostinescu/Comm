@@ -8,25 +8,30 @@ add_compile_options(-std=c++17 -pthread)
 option(PERCEPTRON_BUILD "Build the code on Perceptron computer" OFF)
 option(NUC_BUILD "Build the code on the NUC" ON)
 
-if (NUC_BUILD)
+option(WITH_OPENCV "Build the code with opencv" OFF)
 
-else (NUC_BUILD)
-    if (WIN32)
-        SET(OpenCV_DIR "C:/Program Files (x86)/opencv/opencv_4.4.0")
-    endif (WIN32)
-endif (NUC_BUILD)
+include_directories(include)
 
-if (PERCEPTRON_BUILD)
-    FIND_PACKAGE(OpenCV 3.2 REQUIRED)
-    # MESSAGE(${OpenCV_LIBS})
-    # MESSAGE(${OpenCV_INCLUDE_DIRS})
-else (PERCEPTRON_BUILD)
-    FIND_PACKAGE(OpenCV REQUIRED)
-endif (PERCEPTRON_BUILD)
+if (WITH_OPENCV)
+    if (NUC_BUILD)
 
-include_directories(include ${OpenCV_INCLUDE_DIRS})
+    else (NUC_BUILD)
+        if (WIN32)
+            SET(OpenCV_DIR "C:/Program Files (x86)/opencv/opencv_4.4.0")
+        endif (WIN32)
+    endif (NUC_BUILD)
 
-set(EXTERNAL_LIBRARIES ${OpenCV_LIBS})
+    if (PERCEPTRON_BUILD)
+        FIND_PACKAGE(OpenCV 3.2 REQUIRED)
+    else (PERCEPTRON_BUILD)
+        FIND_PACKAGE(OpenCV REQUIRED)
+    endif (PERCEPTRON_BUILD)
+
+    include_directories(${OpenCV_INCLUDE_DIRS})
+
+    set(EXTERNAL_LIBRARIES ${OpenCV_LIBS})
+endif ()
+
 if (WIN32)
     set(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} wsock32 ws2_32)
 else (WIN32)
@@ -42,10 +47,19 @@ SET(DATA_STUFF src/data/MessageType.cpp src/data/messages.cpp src/data/Communica
 set(COMM_LIB "Communication")
 add_library(${COMM_LIB} SHARED ${COMMUNICATION_STUFF} ${DATA_STUFF} ${SOCKET_STUFF} ${UTILS_STUFF})
 target_link_libraries(${COMM_LIB} ${MASTER_LIBRARIES})
+if (WITH_OPENCV)
+    # No idea what PUBLIC or PRIVATE does here...
+    target_compile_definitions(${COMM_LIB} PUBLIC -DWITH_OPENCV)
+endif ()
 
 set(COMM_LIB "${COMM_LIB}_static")
 add_library(${COMM_LIB} ${COMMUNICATION_STUFF} ${DATA_STUFF} ${SOCKET_STUFF} ${UTILS_STUFF})
 target_link_libraries(${COMM_LIB} ${MASTER_LIBRARIES})
+if (WITH_OPENCV)
+    # No idea what PUBLIC or PRIVATE does here...
+    target_compile_definitions(${COMM_LIB} PUBLIC -DWITH_OPENCV)
+endif ()
+
 set(MASTER_LIBRARIES ${COMM_LIB} ${MASTER_LIBRARIES})
 
 add_subdirectory(tests)

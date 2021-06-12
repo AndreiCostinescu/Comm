@@ -8,18 +8,54 @@
 #include <utility>
 
 using namespace comm;
-using namespace cv;
 using namespace std;
+#ifdef WITH_OPENCV
+using namespace cv;
+#endif
 
 const int ImageData::headerSize = 5 * sizeof(int);
 
-ImageData::ImageData()
-        : image(), id(-1), imageHeight(0), imageWidth(0), imageType(0), contentSize(0), imageDeserialized(true) {}
+int ImageData::getOpenCVType(int imageChannels, int bytesPerElement, bool unsignedValue, bool floatValue) {
+    int cvType = 0;
+    if (bytesPerElement == 1 && unsignedValue) {
+        cvType = 0;
+    } else if (bytesPerElement == 1) {
+        cvType = 1;
+    } else if (bytesPerElement == 2 && unsignedValue && !floatValue) {
+        cvType = 2;
+    } else if (bytesPerElement == 2 && !floatValue) {
+        cvType = 3;
+    } else if (bytesPerElement == 4 && !floatValue) {
+        cvType = 4;
+    } else if (bytesPerElement == 4) {
+        cvType = 5;
+    } else if (bytesPerElement == 8 && floatValue) {
+        cvType = 6;
+    } else if (bytesPerElement == 2 && floatValue) {
+        cvType = 7;
+    } else {
+        throw runtime_error("Can not convert data (" + to_string(imageChannels) + ", " + to_string(bytesPerElement) +
+                            ", " + to_string(unsignedValue) + ", " + to_string(floatValue) + ") to opencv type");
+    }
+    return cvType + ((imageChannels - 1) << 3);
+}
+
+ImageData::ImageData() : id(-1), imageHeight(0), imageWidth(0), imageType(0), contentSize(0), imageDeserialized(true),
+                         imageBytes(nullptr) {}
+
+ImageData::ImageData(uchar *imageBytes, int imageByteSize, int imageHeight, int imageWidth, int imageType, int id) :
+        id(id), imageHeight(imageHeight), imageWidth(imageWidth), imageType(imageType), contentSize(imageByteSize),
+        imageDeserialized(true), imageBytes(imageBytes) {}
+
+
+#ifdef WITH_OPENCV
 
 ImageData::ImageData(cv::Mat image, int id) : ImageData() {
     this->setID(id);
     this->setImage(std::move(image));
 }
+
+#endif
 
 MessageType ImageData::getMessageType() {
     return MessageType::IMAGE;
@@ -30,13 +66,13 @@ bool ImageData::serialize(Buffer *buffer, int start, bool forceCopy, bool verbos
         case 0: {
             buffer->setBufferContentSize(start + ImageData::headerSize);
             if (verbose) {
-                cout << "Serialize: " << this->image.rows << ", " << this->image.cols << ", " << this->image.type()
+                cout << "Serialize: " << this->imageHeight << ", " << this->imageWidth << ", " << this->imageType
                      << ", " << this->contentSize << endl;
             }
             buffer->setInt(this->id, start);
-            buffer->setInt(this->image.rows, start + 4);
-            buffer->setInt(this->image.cols, start + 8);
-            buffer->setInt(this->image.type(), start + 12);
+            buffer->setInt(this->imageHeight, start + 4);
+            buffer->setInt(this->imageWidth, start + 8);
+            buffer->setInt(this->imageType, start + 12);
             buffer->setInt(this->contentSize, start + 16);
             if (verbose) {
                 char *dataBuffer = buffer->getBuffer();
@@ -51,12 +87,12 @@ bool ImageData::serialize(Buffer *buffer, int start, bool forceCopy, bool verbos
         }
         case 1: {
             if (forceCopy) {
-                buffer->setData((char *) this->image.data, this->contentSize, start);
+                buffer->setData(this->getImageBytes(), this->contentSize, start);
             } else {
                 if (start != 0) {
                     throw runtime_error("Can not set a reference to data not starting at the first position!");
                 }
-                buffer->setConstReferenceToData((const char *) this->image.data, this->contentSize);
+                buffer->setConstReferenceToData(this->getImageBytes(), this->contentSize);
             }
             this->serializeState = 0;
             return true;
@@ -89,8 +125,13 @@ char *ImageData::getDeserializeBuffer() {
             return nullptr;
         }
         case 1: {
+            #ifdef WITH_OPENCV
             this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
             return reinterpret_cast<char *>(this->image.data);
+            #else
+            return nullptr;
+            #endif
+
         }
         default : {
             throw runtime_error("Impossible deserialize state... " + to_string(this->deserializeState));
@@ -111,10 +152,16 @@ bool ImageData::deserialize(Buffer *buffer, int start, bool forceCopy, bool verb
             return false;
         }
         case 1: {
+            #ifdef WITH_OPENCV
             if (forceCopy) {
                 // this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
                 memcpy(this->image.data, buffer->getBuffer() + start, this->contentSize);
+                this->imageBytes = this->image.data;
             }
+            #else
+            prepareBuffer((char *&) this->imageBytes, this->contentSize);
+            memcpy(this->imageBytes, buffer->getBuffer() + start, this->contentSize);
+            #endif
             this->imageDeserialized = true;
             this->deserializeState = 0;
             return true;
@@ -131,18 +178,34 @@ void ImageData::setID(int _id) {
     this->id = _id;
 }
 
-void ImageData::setImage(Mat _image, bool withSettingData) {
+#ifdef WITH_OPENCV
+
+void ImageData::setImage(Mat _image) {
     this->image = std::move(_image);
-    if (withSettingData) {
-        this->imageHeight = this->image.rows;
-        this->imageWidth = this->image.cols;
-        this->imageType = this->image.type();
-        this->contentSize = (int) this->image.step[0] * this->imageHeight;
-    }
+    this->imageBytes = this->image.data;
+    this->imageHeight = this->image.rows;
+    this->imageWidth = this->image.cols;
+    this->imageType = this->image.type();
+    this->contentSize = (int) this->image.step[0] * this->imageHeight;
 }
 
 Mat ImageData::getImage() const {
     return this->image;
+}
+
+#endif
+
+void ImageData::setImage(unsigned char *_imageBytes, int _imageByteSize, int _imageHeight, int _imageWidth,
+                         int _imageType) {
+    this->imageBytes = _imageBytes;
+    this->imageHeight = _imageHeight;
+    this->imageWidth = _imageWidth;
+    this->imageType = _imageType;
+    this->contentSize = _imageByteSize;
+    #if WITH_OPENCV
+    this->image = this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
+    memcpy(this->image.data, this->imageBytes, this->contentSize);
+    #endif
 }
 
 int ImageData::getID() const {
@@ -162,7 +225,7 @@ int ImageData::getType() const {
 }
 
 char *ImageData::getImageBytes() const {
-    return reinterpret_cast<char *>(this->image.data);
+    return reinterpret_cast<char *>(this->imageBytes);
 }
 
 int ImageData::getImageBytesSize() const {

@@ -8,7 +8,7 @@
 #include <comm/data/ImageData.h>
 #include <vector>
 
-namespace comm{
+namespace comm {
     class ImageEncodeData : public ImageData {
     public:
         static const int headerSize;
@@ -21,11 +21,16 @@ namespace comm{
 
         static std::string convertEncodingToString(Encoding encoding);
 
-        static Encoding convertStringToEncoding(const std::string& encoding);
+        static Encoding convertStringToEncoding(const std::string &encoding);
 
         ImageEncodeData();
 
+        #ifdef WITH_OPENCV
         ImageEncodeData(cv::Mat image, int id, Encoding encoding);
+        #endif
+
+        ImageEncodeData(const std::vector<uchar> &imageEncodedBytes, int imageHeight, int imageWidth, int imageType,
+                        int id, Encoding encoding);
 
         MessageType getMessageType() override;
 

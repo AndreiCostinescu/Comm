@@ -3,6 +3,7 @@
 //
 
 #include <comm/data/ImageEncodeData.h>
+#include <cassert>
 #include <utility>
 
 using namespace comm;
@@ -41,8 +42,17 @@ ImageEncodeData::Encoding ImageEncodeData::convertStringToEncoding(const string 
 
 ImageEncodeData::ImageEncodeData() : ImageData(), encoding(Encoding::PNG), encodedContentSize(0), encodedImage() {}
 
+#ifdef WITH_OPENCV
 ImageEncodeData::ImageEncodeData(cv::Mat image, int id, Encoding encoding) :
         ImageData(std::move(image), id), encoding(encoding), encodedContentSize(0), encodedImage() {}
+#endif
+
+ImageEncodeData::ImageEncodeData(const vector<uchar> &imageEncodedBytes, int imageHeight, int imageWidth, int imageType,
+                                 int id, Encoding encoding) :
+        ImageData(nullptr, 0, imageHeight, imageWidth, imageType, id), encoding(encoding),
+        encodedContentSize(0), encodedImage(imageEncodedBytes) {
+    this->encodedContentSize = this->encodedImage.size();
+}
 
 MessageType ImageEncodeData::getMessageType() {
     return MessageType::IMAGE_ENCODE;
@@ -53,18 +63,20 @@ bool ImageEncodeData::serialize(Buffer *buffer, int start, bool forceCopy, bool 
         case 0: {
             buffer->setBufferContentSize(start + ImageEncodeData::headerSize);
             buffer->setInt(this->id, start);
-            buffer->setInt(this->image.rows, start + 4);
-            buffer->setInt(this->image.cols, start + 8);
-            buffer->setInt(this->image.type(), start + 12);
+            buffer->setInt(this->imageHeight, start + 4);
+            buffer->setInt(this->imageWidth, start + 8);
+            buffer->setInt(this->imageType, start + 12);
 
+            #ifdef WITH_OPENCV
             cv::imencode("." + ImageEncodeData::convertEncodingToString(this->encoding), this->image,
                          this->encodedImage);
             this->encodedContentSize = this->encodedImage.size();
+            #endif
 
             buffer->setInt(this->encodedContentSize, start + 16);
             buffer->setInt(this->encoding, start + 20);
             if (verbose) {
-                cout << "Serialize: " << this->image.rows << ", " << this->image.cols << ", " << this->image.type()
+                cout << "Serialize: " << this->imageHeight << ", " << this->imageWidth << ", " << this->imageType
                      << ", " << this->encodedContentSize << endl;
                 char *dataBuffer = buffer->getBuffer();
                 cout << "Serialized content: ";
@@ -126,17 +138,21 @@ bool ImageEncodeData::deserialize(Buffer *buffer, int start, bool forceCopy, boo
         }
         case 1: {
             this->encodedImage.resize(this->encodedContentSize);
-            assert ((buffer->getBufferContentSize() - start) == this->encodedContentSize);
+            assert((buffer->getBufferContentSize() - start) == this->encodedContentSize);
 
             char *encodedBuffer = buffer->getBuffer();
             for (int i = 0; i < this->encodedContentSize; i++) {
                 this->encodedImage[i] = encodedBuffer[i];
             }
+            #ifdef WITH_OPENCV
             // TODO: change the flag depending on the image type!
             cv::imdecode(this->encodedImage, cv::IMREAD_COLOR, &this->image);
             if (this->image.data != nullptr) {
                 this->imageDeserialized = true;
             }
+            #else
+            this->imageDeserialized = true;
+            #endif
 
             this->deserializeState = 0;
             return true;

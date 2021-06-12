@@ -7,16 +7,33 @@
 
 #include <comm/data/CommunicationData.h>
 #include <comm/utils/Buffer.h>
+
+#ifdef WITH_OPENCV
+
 #include <opencv2/opencv.hpp>
+
+#else
+
+typedef unsigned char uchar;
+
+#endif
 
 namespace comm {
     class ImageData : public CommunicationData {
     public:
         static const int headerSize;
 
+        static int getOpenCVType(int imageChannels, int bytesPerElement, bool unsignedValue, bool floatValue);
+
         ImageData();
 
+        #ifdef WITH_OPENCV
+
         ImageData(cv::Mat image, int id);
+
+        #endif
+
+        ImageData(uchar *imageBytes, int imageByteSize, int imageHeight, int imageWidth, int imageType, int id);
 
         MessageType getMessageType() override;
 
@@ -30,9 +47,16 @@ namespace comm {
 
         void setID(int id);
 
-        void setImage(cv::Mat image, bool withSettingData = true);
+        #ifdef WITH_OPENCV
+
+        void setImage(cv::Mat image);
 
         [[nodiscard]] cv::Mat getImage() const;
+
+        #endif
+
+        void setImage(unsigned char *_imageBytes, int _imageByteSize, int _imageHeight, int _imageWidth,
+                      int _imageType);
 
         [[nodiscard]] int getID() const;
 
@@ -49,7 +73,10 @@ namespace comm {
         [[nodiscard]] bool isImageDeserialized() const;
 
     protected:
-        cv::Mat image;
+        #ifdef WITH_OPENCV
+        cv::Mat image{};
+        #endif
+        uchar *imageBytes;
         int id, imageHeight, imageWidth, imageType, contentSize;
         bool imageDeserialized;
     };
