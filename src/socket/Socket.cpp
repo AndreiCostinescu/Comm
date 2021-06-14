@@ -104,7 +104,7 @@ bool Socket::initialize() {
 
     if (this->partner != nullptr) {
         if (this->protocol == SocketType::TCP) {
-            cout << "Socket Initialization: connecting tcp socket..." << endl;
+            // cout << "Socket Initialization: connecting tcp socket..." << endl;
             if (::connect(this->socket, (struct sockaddr *) this->partner->getPartner(), sizeof(SocketAddress)) < 0) {
                 (*cerror) << "Connection failed due to port and ip problems" << endl;
                 throw runtime_error("Connection failed due to port and ip problems!");
@@ -222,7 +222,10 @@ bool Socket::isInitialized() const {
 void Socket::accept(Socket *&acceptSocket, bool verbose) const {
     delete acceptSocket;
     acceptSocket = new Socket(SocketPartner(false, true));
-    cout << "Socket Initialization: accepting tcp connection... " << acceptSocket->partner->getPartnerString() << endl;
+    if (verbose) {
+        cout << "Socket Initialization: accepting tcp connection... " << acceptSocket->partner->getPartnerString()
+             << endl;
+    }
     acceptSocket->socket = ::accept(this->socket, (struct sockaddr *) acceptSocket->getPartner()->getPartner(),
                                     &(acceptSocket->getPartner()->getPartnerSize()));
     if (verbose) {
@@ -233,7 +236,10 @@ void Socket::accept(Socket *&acceptSocket, bool verbose) const {
         throw runtime_error("Error on accept socket...");
     }
     acceptSocket->initMyself(false);
-    cout << "Socket Initialization: accepted tcp connection from " << acceptSocket->partner->getPartnerString() << endl;
+    if (verbose) {
+        cout << "Socket Initialization: accepted tcp connection from " << acceptSocket->partner->getPartnerString()
+             << endl;
+    }
     printSocketDetails(acceptSocket->socket);
 
     Socket::_setSocketBufferSizes(acceptSocket->socket);
@@ -328,12 +334,15 @@ void Socket::createSocket() {
     Socket::_setSocketBufferSizes(this->socket);
 }
 
-void Socket::initMyself(bool withBind) {
+void Socket::initMyself(bool withBind, bool verbose) {
     if (withBind) {
         // bind(int fd, struct sockaddr *local_addr, socklen_t addr_length)
         // bind() passes file descriptor, the address structure, and the length of the address structure
         // This bind() call will bind the socket to the current IP address on port 'portNumber'
-        cout << "Socket Initialization: binding socket to local " << this->myself->getPartnerString() << "..." << endl;
+        if (verbose) {
+            cout << "Socket Initialization: binding socket to local " << this->myself->getPartnerString() << "..."
+                 << endl;
+        }
         if (::bind(this->socket, (struct sockaddr *) this->myself->getPartner(), sizeof(SocketAddress)) < 0) {
             cout << this_thread::get_id() << ": Error " << getLastErrorString() << endl;
             (*cerror) << this_thread::get_id() << ": ERROR on binding" << endl;
@@ -350,7 +359,9 @@ void Socket::initMyself(bool withBind) {
             this->myself->setPartner(newAddress);
         }
     }
-    cout << "Socket Initialization: bound socket to local " << this->myself->getPartnerString() << "!" << endl;
+    if (verbose) {
+        cout << "Socket Initialization: bound socket to local " << this->myself->getPartnerString() << "!" << endl;
+    }
 }
 
 bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode, SerializationHeader *header,
@@ -562,7 +573,8 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                     int errorCode = getLastError();
                     if (!(errorCode == 0 || errorCode == SOCKET_TIMEOUT ||
                           errorCode == SOCKET_AGAIN || errorCode == SOCKET_WOULDBLOCK)) {
-                        cout << "BREAK BECAUSE OF ERROR: " << getLastError() << "; " << getLastErrorString() << endl;
+                        cout << "BREAK BECAUSE OF ERROR (UDP): receiveAmount = " << receiveAmount << "; "
+                             << getLastError() << "; " << getLastErrorString() << endl;
                     }
                     localReceivedBytes = receiveAmount;
                     this->recvBuffer->setBufferContentSize(0);
@@ -626,8 +638,8 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                         cout << "TIMEOUT IN TCP RECEIVE!!!" << endl;
                         localRetries--;
                     } else {
-                        cout << "BREAK BECAUSE OF ERROR: " << errorCode << "; " << getLastErrorString(errorCode)
-                             << endl;
+                        cout << "BREAK BECAUSE OF (TCP) ERROR: receive amount = " << receiveAmount << "; errorCode: "
+                             << errorCode  << "; " << getLastErrorString(errorCode) << endl;
                         localReceivedBytes = receiveAmount;
                         return true;
                     }

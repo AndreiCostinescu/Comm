@@ -80,7 +80,7 @@ namespace comm {
 
         void createSocket();
 
-        void initMyself(bool withBind = true);
+        void initMyself(bool withBind = true, bool verbose = false);
 
         bool performSend(const char *buffer, int &localBytesSent, int &errorCode, SerializationHeader *header,
                          int sendSize, int sentBytes, char sendIteration, bool verbose = false);
