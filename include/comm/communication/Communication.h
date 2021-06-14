@@ -88,7 +88,7 @@ namespace comm {
                             CommunicationData *recvData, bool withHeader);
 
         bool doReceive(SocketType socketType, char *&dataLocalDeserializeBuffer, uint64_t &expectedSize,
-                       bool withHeader, int retries, bool verbose);
+                       bool withHeader, int retries, bool expectingData, bool verbose);
 
         bool postReceiveMessageType(MessageType &messageType, bool receiveResult, int dataStart);
 
@@ -96,11 +96,10 @@ namespace comm {
                              bool &receivedSomething, bool &deserializationDone, MessageType messageType, int dataStart,
                              int localRetriesThreshold, bool receiveResult, bool withHeader, bool verbose);
 
-        virtual bool recv(SocketType socketType, bool withHeader, int retries, bool verbose);
+        virtual bool recv(SocketType socketType, bool withHeader, int retries, bool expectingData, bool verbose);
 
-        virtual bool recv(SocketType socketType, char *&buffer, uint64_t &bufferSize,
-                          uint64_t expectedBytes, SerializationHeader *expectedHeader, int retries,
-                          bool verbose);
+        virtual bool recv(SocketType socketType, char *&buffer, uint64_t &bufferSize, uint64_t expectedBytes,
+                          SerializationHeader *expectedHeader, int retries, bool expectingData, bool verbose);
 
         std::map<SocketType, Socket *> sockets;
         Buffer sendBuffer, recvBuffer;

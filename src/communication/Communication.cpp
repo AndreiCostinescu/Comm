@@ -103,7 +103,8 @@ bool Communication::recvMessageType(SocketType socketType, MessageType &messageT
         this->recvHeader.setSyphonUntilFirstMessage(syphonWronglySerializedData);
     }
     this->preReceiveMessageType(dataLocalDeserializeBuffer, expectedSize, dataStart);
-    receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries, verbose);
+    receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries, false,
+                                    verbose);
     return this->postReceiveMessageType(messageType, receiveResult, dataStart);
 }
 
@@ -124,7 +125,7 @@ bool Communication::recvData(SocketType socketType, CommunicationData *data, boo
         }
         this->preReceiveData(dataLocalDeserializeBuffer, expectedSize, dataStart, data, withHeader);
         receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries,
-                                        verbose);
+                                        true, verbose);
         if (!this->postReceiveData(data, deserializeState, localRetries, receivedSomething, deserializationDone,
                                    messageType, dataStart, localRetriesThreshold, receiveResult, withHeader, verbose)) {
             return false;
@@ -184,7 +185,7 @@ bool Communication::receiveData(SocketType socketType, DataCollection *data, boo
 
         // do receive
         receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries,
-                                        verbose);
+                                        (deserializeState != 0), verbose);
 
         // post receive
         if (deserializeState == 0) {
@@ -238,7 +239,7 @@ bool Communication::receiveRaw(SocketType socketType, char *&data, bool &receive
 
     this->recvBuffer.setReferenceToData(data, 0);
     this->errorCode = 0;
-    if (!this->recv(socketType, false, retries, verbose)) {
+    if (!this->recv(socketType, false, retries, false, verbose)) {
         if (this->errorCode == -1) {
             if (verbose) {
                 cout << "Received nothing..." << endl;
@@ -415,14 +416,14 @@ void Communication::preReceiveData(char *&dataLocalDeserializeBuffer, uint64_t &
 #pragma clang diagnostic pop
 
 bool Communication::doReceive(SocketType socketType, char *&dataLocalDeserializeBuffer, uint64_t &expectedSize,
-                              bool withHeader, int retries, bool verbose) {
+                              bool withHeader, int retries, bool expectingData, bool verbose) {
     if (dataLocalDeserializeBuffer != nullptr) {
         assert (!withHeader);
         return this->recv(socketType, dataLocalDeserializeBuffer, expectedSize, expectedSize, nullptr, retries,
-                          verbose);
+                          expectingData, verbose);
     } else {
         this->recvBuffer.setBufferContentSize(expectedSize);
-        return this->recv(socketType, withHeader, retries, verbose);
+        return this->recv(socketType, withHeader, retries, expectingData, verbose);
     }
 }
 
@@ -483,23 +484,24 @@ bool Communication::postReceiveData(CommunicationData *&recvData, int &deseriali
     return true;
 }
 
-bool Communication::recv(SocketType socketType, bool withHeader, int retries, bool verbose) {
+bool Communication::recv(SocketType socketType, bool withHeader, int retries, bool expectingData, bool verbose) {
     Socket *&socket = this->getSocket(socketType);
     if (socket == nullptr) {
         return false;
     }
     return socket->receiveBytes(this->recvBuffer, this->errorCode, (withHeader) ? &(this->recvHeader) : nullptr,
-                                retries, verbose);
+                                retries, expectingData, verbose);
 }
 
 bool Communication::recv(SocketType socketType, char *&buffer, uint64_t &bufferSize,
                          uint64_t expectedBytes, SerializationHeader *expectedHeader, int retries,
-                         bool verbose) {
+                         bool expectingData, bool verbose) {
     Socket *&socket = this->getSocket(socketType);
     if (socket == nullptr) {
         return false;
     }
-    return socket->receiveBytes(buffer, bufferSize, expectedBytes, this->errorCode, expectedHeader, retries, verbose);
+    return socket->receiveBytes(buffer, bufferSize, expectedBytes, this->errorCode, expectedHeader, retries,
+                                expectingData, verbose);
 }
 
 void Communication::_cleanupData() {

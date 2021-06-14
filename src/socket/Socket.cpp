@@ -256,15 +256,15 @@ bool Socket::sendBytes(Buffer &buffer, int &errorCode, SerializationHeader *head
 }
 
 bool Socket::receiveBytes(char *&buffer, uint64_t &bufferLength, uint64_t expectedLength, int &errorCode,
-                          SerializationHeader *expectedHeader, int retries, bool verbose) {
+                          SerializationHeader *expectedHeader, int retries, bool expectingData, bool verbose) {
     prepareBuffer(buffer, bufferLength, expectedLength);
-    return this->_receiveBytes(buffer, expectedLength, errorCode, expectedHeader, retries, verbose);
+    return this->_receiveBytes(buffer, expectedLength, errorCode, expectedHeader, retries, expectingData, verbose);
 }
 
 bool Socket::receiveBytes(Buffer &buffer, int &errorCode, SerializationHeader *expectedHeader, int retries,
-                          bool verbose) {
+                          bool expectingData, bool verbose) {
     return this->_receiveBytes(buffer.getBuffer(), buffer.getBufferContentSize(), errorCode, expectedHeader, retries,
-                               verbose);
+                               expectingData, verbose);
 }
 
 void Socket::_setSocketBufferSizes(SOCKET socket) {
@@ -520,7 +520,7 @@ bool Socket::checkCorrectReceivePartner(bool &overwritePartner, const int receiv
 
 bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwritePartner, bool &recvFromCorrectPartner,
                             SerializationHeader *expectedHeader, int receiveSize, const uint64_t receivedBytes,
-                            const int receiveIteration, const bool verbose) {
+                            const int receiveIteration, const bool expectingData, const bool verbose) {
     setErrnoZero();
     recvFromCorrectPartner = true;  // needed because there are return paths before recomputing the value :)
     if (verbose) {
@@ -630,7 +630,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                     if (receiveAmount < 0 && (errorCode == 0 || errorCode == SOCKET_TIMEOUT ||
                                               errorCode == SOCKET_AGAIN || errorCode == SOCKET_WOULDBLOCK)) {
                         // timeout
-                        if (iterationCounter == 0) {
+                        if (!expectingData && iterationCounter == 0) {
                             // honestly received nothing
                             localReceivedBytes = receiveAmount;
                             return true;
@@ -860,7 +860,7 @@ void Socket::setRetries(int &retries, bool &retry, const int maxRetries, const b
 }
 
 bool Socket::_receiveBytes(char *buffer, uint64_t expectedLength, int &errorCode, SerializationHeader *expectedHeader,
-                           int retries, bool verbose) {
+                           int retries, bool expectingData, bool verbose) {
     assert(this->recvBuffer != nullptr);
     if (!this->isInitialized()) {
         (*cerror) << "Can not receive with an uninitialized socket!" << endl;
@@ -891,7 +891,8 @@ bool Socket::_receiveBytes(char *buffer, uint64_t expectedLength, int &errorCode
                 assert (false);
             }
             if (!this->performReceive(buffer, localReceivedBytes, overwritePartner, recvFromCorrectPartner,
-                                      expectedHeader, receiveSize, receivedBytes, receiveIteration, verbose)) {
+                                      expectedHeader, receiveSize, receivedBytes, receiveIteration, expectingData,
+                                      verbose)) {
                 return false;
             }
             if (!checkErrno(errorCode, "Socket::_receiveBytes - after actual receive")) {

@@ -64,10 +64,11 @@ namespace comm {
                        bool verbose = false);
 
         bool receiveBytes(char *&buffer, uint64_t &bufferLength, uint64_t expectedLength,
-                          int &errorCode, SerializationHeader *expectedHeader, int retries = 0, bool verbose = false);
+                          int &errorCode, SerializationHeader *expectedHeader, int retries = 0,
+                          bool expectingData = false, bool verbose = false);
 
         bool receiveBytes(Buffer &buffer, int &errorCode, SerializationHeader *expectedHeader, int retries = 0,
-                          bool verbose = false);
+                          bool expectingData = false, bool verbose = false);
 
     private:
         static void _setSocketBufferSizes(SOCKET socket);
@@ -95,7 +96,7 @@ namespace comm {
 
         bool performReceive(char *buffer, int &localReceivedBytes, bool &overwritePartner, bool &recvFromCorrectPartner,
                             SerializationHeader *expectedHeader, int receiveSize, uint64_t receivedBytes,
-                            int receiveIteration, bool verbose = false);
+                            int receiveIteration, bool expectingData, bool verbose = false);
 
         static bool interpretReceiveResult(int &errorCode, int &localReceivedBytes, bool &recvFirstMessage,
                                            bool recvFromCorrectPartner, bool verbose = false);
@@ -104,7 +105,8 @@ namespace comm {
                                int localReceivedBytes, bool verbose = false);
 
         bool _receiveBytes(char *buffer, uint64_t expectedLength, int &errorCode,
-                           SerializationHeader *expectedHeader, int retries = 0, bool verbose = false);
+                           SerializationHeader *expectedHeader, int retries = 0, bool expectingData = false,
+                           bool verbose = false);
 
         SOCKET socket;
         SocketType protocol;
