@@ -247,12 +247,14 @@ void Socket::accept(Socket *&acceptSocket, bool verbose) const {
 }
 
 bool Socket::sendBytes(const char *buffer, uint64_t bufferLength, int &errorCode, SerializationHeader *header,
-                       int retries, bool verbose) {
-    return this->_sendBytes(buffer, bufferLength, errorCode, header, retries, verbose);
+                       int retries, bool keepForNextSend, bool verbose) {
+    return this->_sendBytes(buffer, bufferLength, errorCode, header, retries, keepForNextSend, verbose);
 }
 
-bool Socket::sendBytes(Buffer &buffer, int &errorCode, SerializationHeader *header, int retries, bool verbose) {
-    return this->_sendBytes(buffer.getBuffer(), buffer.getBufferContentSize(), errorCode, header, retries, verbose);
+bool Socket::sendBytes(Buffer &buffer, int &errorCode, SerializationHeader *header, int retries, bool keepForNextSend,
+                       bool verbose) {
+    return this->_sendBytes(buffer.getBuffer(), buffer.getBufferContentSize(), errorCode, header, retries,
+                            keepForNextSend, verbose);
 }
 
 bool Socket::receiveBytes(char *&buffer, uint64_t &bufferLength, uint64_t expectedLength, int &errorCode,
@@ -313,12 +315,12 @@ void Socket::createSocket() {
     }
 
     switch (this->protocol) {
-        case UDP:
-        case UDP_HEADER: {
+        case SocketType::UDP:
+        case SocketType::UDP_HEADER: {
             this->socket = ::socket(AF_INET, SOCK_DGRAM, 0);
             break;
         }
-        case TCP: {
+        case SocketType::TCP: {
             this->socket = ::socket(AF_INET, SOCK_STREAM, 0);
             break;
         }
@@ -365,63 +367,83 @@ void Socket::initMyself(bool withBind, bool verbose) {
 }
 
 bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode, SerializationHeader *header,
-                         const int sendSize, const int sentBytes, const char sendIteration, const bool verbose) {
-    bool withHeader = (header != nullptr || this->protocol == UDP_HEADER);
-    if (withHeader) {
-        if (header != nullptr) {
-            this->sendBuffer->setChar((char) header->getSerializationIteration(), 0);
+                         const int sendSize, const int sentBytes, const char sendIteration, const bool keepForNextSend,
+                         const bool verbose) {
+    bool withHeader = (header != nullptr || this->protocol == SocketType::UDP_HEADER);
+    int startingPosition = this->sendBuffer->getBufferContentSize();
+    if (startingPosition != 0 || keepForNextSend || withHeader) {
+        this->sendBuffer->setBufferContentSize(startingPosition + withHeader * 4 + sendSize);
+        if (withHeader) {
+            if (header != nullptr) {
+                this->sendBuffer->setChar((char) header->getSerializationIteration(), startingPosition);
+            } else {
+                this->sendBuffer->setChar(0, startingPosition);
+            }
+            this->sendBuffer->setChar(sendIteration, startingPosition + 1);
+            this->sendBuffer->setShort((short) sendSize, startingPosition + 2);
+            this->sendBuffer->setData(buffer + sentBytes, sendSize, startingPosition + 4);
         } else {
-            this->sendBuffer->setChar(0, 0);
+            this->sendBuffer->setData(buffer + sentBytes, sendSize, startingPosition);
         }
-        this->sendBuffer->setChar(sendIteration, 1);
-        this->sendBuffer->setShort((short) sendSize, 2);
-        this->sendBuffer->setData(buffer + sentBytes, sendSize, 4);
     } else {
         this->sendBuffer->setConstReferenceToData(buffer + sentBytes, sendSize);
     }
-    setErrnoZero();
-    if (verbose) {
-        cout << "Pre send: already sentBytes = " << sentBytes << "; sending " << sendSize << "B to " << this->socket
-             << endl;
-    }
-    switch (this->protocol) {
-        case UDP:
-        case UDP_HEADER: {
-            SocketAddress *&toAddress = this->partner->getPartner();
-            assert(toAddress != nullptr);
-            if (toAddress == nullptr) {
-                (*cerror) << "UDP send partner is null!" << endl;
-                errorCode = 0;
-                return false;
+
+    if (!keepForNextSend) {
+        setErrnoZero();
+        if (verbose) {
+            cout << "Pre send: already sentBytes = " << sentBytes << "; sending " << sendSize << "B to " << this->socket
+                 << endl;
+        }
+        switch (this->protocol) {
+            case SocketType::UDP:
+            case SocketType::UDP_HEADER: {
+                SocketAddress *&toAddress = this->partner->getPartner();
+                assert(toAddress != nullptr);
+                if (toAddress == nullptr) {
+                    (*cerror) << "UDP send partner is null!" << endl;
+                    errorCode = 0;
+                    return false;
+                }
+                localBytesSent = sendto(this->socket, this->sendBuffer->getConstBuffer(),
+                                        (int) this->sendBuffer->getBufferContentSize(),
+                                        0, (struct sockaddr *) (toAddress), sizeof(*toAddress));
+                break;
             }
-            localBytesSent = sendto(this->socket, this->sendBuffer->getConstBuffer(),
-                                    (int) this->sendBuffer->getBufferContentSize(),
-                                    0, (struct sockaddr *) (toAddress), sizeof(*toAddress));
-            break;
+            case SocketType::TCP: {
+                localBytesSent = send(this->socket, this->sendBuffer->getConstBuffer(),
+                                      (int) this->sendBuffer->getBufferContentSize(), 0);
+                break;
+            }
+            default : {
+                throw runtime_error("Unknown protocol: " + to_string(this->protocol));
+            }
         }
-        case TCP: {
-            localBytesSent = send(this->socket, this->sendBuffer->getConstBuffer(),
-                                  (int) this->sendBuffer->getBufferContentSize(), 0);
-            break;
+        if (verbose) {
+            cout << "Post send: already sent = " << sentBytes << "B; managed to send localBytesSent = "
+                 << localBytesSent
+                 << endl;
+            /*
+            for (int i = 0; i < localBytesSent; i++) {
+                cout << (int) ((unsigned char) buffer[i + sentBytes]) << ", ";
+            }
+            cout << endl;
+            //*/
         }
-        default : {
-            throw runtime_error("Unknown protocol: " + to_string(this->protocol));
+        this->sendBuffer->setBufferContentSize(0);
+        localBytesSent -= startingPosition;
+        if (withHeader) {
+            if (localBytesSent < 4) {
+                cout << "The assertion in Socket::performSend (localBytesSent == 0 || localBytesSent == -1) will fail: "
+                     << "localBytesSent = " << localBytesSent << endl;
+                assert(localBytesSent == 0 || localBytesSent == -1);
+            }
+            localBytesSent -= 4;
         }
-    }
-    if (verbose) {
-        cout << "Post send: already sent = " << sentBytes << "B; managed to send localBytesSent = " << localBytesSent
-             << endl;
-        /*
-        for (int i = 0; i < localBytesSent; i++) {
-            cout << (int) ((unsigned char) buffer[i + sentBytes]) << ", ";
-        }
-        cout << endl;
-        //*/
+    } else {
+        localBytesSent = sendSize;
     }
 
-    if (withHeader && localBytesSent >= 4) {
-        localBytesSent -= 4;
-    }
     return true;
 }
 
@@ -462,7 +484,7 @@ bool Socket::interpretSendResult(int &errorCode, int &localBytesSent, int &retri
 }
 
 bool Socket::_sendBytes(const char *buffer, uint64_t bufferLength, int &errorCode, SerializationHeader *header,
-                        int retries, bool verbose) {
+                        int retries, bool keepForNextSend, bool verbose) {
     assert(this->sendBuffer != nullptr);
     if (!this->isInitialized()) {
         (*cerror) << "Can not send with an uninitialized socket!" << endl;
@@ -480,7 +502,7 @@ bool Socket::_sendBytes(const char *buffer, uint64_t bufferLength, int &errorCod
     while (sentBytes < bufferLength) {
         int sendSize = (int) min(maxSendPerRound, bufferLength - sentBytes);
         if (!this->performSend(buffer, localBytesSent, errorCode, header, sendSize, sentBytes, sendIteration,
-                               verbose)) {
+                               keepForNextSend, verbose)) {
             return false;
         }
 
@@ -548,8 +570,8 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
     // cout << "LocalReceivedBytes before switch: " << localReceivedBytes << endl;
     int serializationIteration = -1, sendIteration = -1;
     switch (this->protocol) {
-        case UDP:
-        case UDP_HEADER: {
+        case SocketType::UDP:
+        case SocketType::UDP_HEADER: {
             if (localReceivedBytes > 0) {
                 // udp respects the boundaries of messages -> what we previously received was a (full) package/message!
                 receiveSize = 0;
@@ -614,7 +636,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
             receiveSize = 0;
             break;
         }
-        case TCP: {
+        case SocketType::TCP: {
             // tcp does not respect the boundaries of messages -> read until we get the receiveSize!
             receiveSize -= localReceivedBytes;
             int localRetries = 10, iterationCounter = 0;
@@ -639,7 +661,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                         localRetries--;
                     } else {
                         cout << "BREAK BECAUSE OF (TCP) ERROR: receive amount = " << receiveAmount << "; errorCode: "
-                             << errorCode  << "; " << getLastErrorString(errorCode) << endl;
+                             << errorCode << "; " << getLastErrorString(errorCode) << endl;
                         localReceivedBytes = receiveAmount;
                         return true;
                     }
