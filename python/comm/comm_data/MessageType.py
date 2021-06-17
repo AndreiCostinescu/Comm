@@ -7,6 +7,7 @@ class MessageType(enum.Enum):
     IMAGE = 2,
     COORDINATE = 3,
     BYTES = 4,
+    IMAGE_ENCODE = 5,
 
     @staticmethod
     def intToMessageType(i: int):
@@ -20,6 +21,8 @@ class MessageType(enum.Enum):
             return MessageType.COORDINATE
         elif i == 4:
             return MessageType.BYTES
+        elif i == 5:
+            return MessageType.IMAGE_ENCODE
         else:
             raise RuntimeError("Unknown MessageType " + str(i))
 
@@ -35,6 +38,8 @@ class MessageType(enum.Enum):
             return MessageType.COORDINATE
         elif s == "bytes":
             return MessageType.BYTES
+        elif s == "image_encode":
+            return MessageType.IMAGE_ENCODE
         else:
             raise RuntimeError("Unknown MessageType " + s)
 
@@ -50,5 +55,7 @@ class MessageType(enum.Enum):
             return "coordinate"
         elif messageType == MessageType.BYTES:
             return "bytes"
+        elif messageType == MessageType.IMAGE_ENCODE:
+            return "image_encode"
         else:
             raise RuntimeError("Unknown MessageType " + str(messageType))
