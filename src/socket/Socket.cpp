@@ -639,7 +639,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                         localRetries--;
                     } else {
                         cout << "BREAK BECAUSE OF (TCP) ERROR: receive amount = " << receiveAmount << "; errorCode: "
-                             << errorCode  << "; " << getLastErrorString(errorCode) << endl;
+                             << errorCode << "; " << getLastErrorString(errorCode) << endl;
                         localReceivedBytes = receiveAmount;
                         return true;
                     }

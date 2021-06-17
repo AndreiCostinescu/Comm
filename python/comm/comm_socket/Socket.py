@@ -215,14 +215,14 @@ class Socket:
             if os == "Windows":
                 timeval = sendTimeout
             else:
-                timeval = struct.pack('ll', 0, 1000 * sendTimeout)
+                timeval = struct.pack('ll', 0, sendTimeout)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDTIMEO, timeval)
             print("Socket send timeout:", sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDTIMEO))
         if recvTimeout > 0:
             if os == "Windows":
                 timeval = recvTimeout
             else:
-                timeval = struct.pack('ll', 0, 1000 * recvTimeout)
+                timeval = struct.pack('ll', 0, recvTimeout)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
             print("Socket recv timeout:", sock.getsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO))
 
@@ -432,8 +432,10 @@ class Socket:
             while receiveSize > 0:
                 receiveBuffer = self.socket.recv(receiveSize)
                 receiveAmount = len(receiveBuffer)
+                receiveSize -= receiveAmount
+                self.recvBuffer.buffer = memcpy(self.recvBuffer.buffer, localReceivedBytes, receiveBuffer, 0,
+                                                receiveAmount)
                 localReceivedBytes += receiveAmount
-                self.recvBuffer.buffer += receiveBuffer
                 if receiveAmount <= 0:
                     break
         else:

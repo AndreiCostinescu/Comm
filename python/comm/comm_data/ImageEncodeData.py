@@ -135,6 +135,7 @@ class ImageEncodeData(ImageData):
             self.image = cv.imdecode(self.encodedImage, cv.IMREAD_COLOR)
             self.imageHeight = self.image.shape[0]
             self.imageWidth = self.image.shape[1]
+            self.imageType = ImageData.imageCVType(self.image)
             self.imageDeserialized = True
             self.deserializeState = 0
             return True
