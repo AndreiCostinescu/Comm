@@ -19,4 +19,5 @@ class DataCollection:
         communicationData = self.data.get(MessageType.messageTypeToString(messageType), None)
         if messageType != MessageType.NOTHING and communicationData is None:
             self.data[MessageType.messageTypeToString(messageType)] = createCommunicationData(messageType)
+            communicationData = self.data[MessageType.messageTypeToString(messageType)]
         return communicationData

@@ -93,7 +93,7 @@ class ImageData(CommunicationData):
                 dataBuffer = buffer.getBuffer()
                 print("Serialized content: ")
                 for i in range(ImageData.headerSize):
-                    print(int(dataBuffer[i]), "")
+                    print(int(dataBuffer[i]), "", end="")
                 print()
             self.serializeState = 1
             return False
@@ -119,7 +119,7 @@ class ImageData(CommunicationData):
         else:
             raise RuntimeError("Impossible deserialize state... " + str(self.deserializeState))
 
-    def deserialize(self, buffer: Buffer, start: int, verbose: bool) -> bool:
+    def deserialize(self, buffer: Buffer, start: int, forceCopy: bool, verbose: bool) -> bool:
         if self.deserializeState == 0:
             self.imageDeserialized = False
             self.id = buffer.getInt(start)
