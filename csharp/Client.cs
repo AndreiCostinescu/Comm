@@ -34,7 +34,7 @@ namespace Comm {
         public override void main() {
             int i = 0;
             Console.WriteLine("Entering Client::main() loop!");
-            while (this.continueCommunicationLoop(0) && i++ < 1) {
+            while (this.continueLoop(0) && i++ < 1) {
                 // try to connect to the server
                 try {
                     if (this.serverPartner != null) {
@@ -100,7 +100,7 @@ namespace Comm {
             return success;
         }
 
-        private bool continueCommunicationLoop(int level = 0) {
+        private bool continueLoop(int level = 0) {
             // Console.WriteLine("Quit: " + this.quit + "; commQuit: " + this.commQuit + "; beActive: " + ((this.beActive == null) ? "???" : this.beActive));
             return (level < 0 ||
                     (!this.quit &&
@@ -117,7 +117,7 @@ namespace Comm {
             CoordinateData coordinate = (CoordinateData) dataCollection.get(MessageType.COORDINATE);
 
             this.getter.resetDrawingArea();
-            while (this.continueCommunicationLoop(2) && this.getter.getData(coordinate)) {
+            while (this.continueLoop(2) && this.getter.getData(coordinate)) {
                 coordinate.set("id", messageID);
                 if (messageID % verboseMod == 0) {
                     Console.WriteLine("Send coordinate data: " + coordinate.getID() + ", " + coordinate.getX() + ", " + coordinate.getY() + ", " + coordinate.getTime() + ", " + coordinate.getTouch());
@@ -137,7 +137,7 @@ namespace Comm {
                 Console.WriteLine("Send problems");
             } else if (this.commQuit) {
                 Console.WriteLine("Server sent quit");
-            } else if (!this.continueCommunicationLoop(2)) {
+            } else if (!this.continueLoop(2)) {
                 Console.WriteLine("Don't continue...: " + Comm.utils.Utils.strcmp(this.beActive, Comm.data.Messages.STOP_MESSAGE) + "; " + this.beActive);
             } else {
                 Console.WriteLine("CoordinateGetter problems!!!");
@@ -155,9 +155,9 @@ namespace Comm {
 
             Console.WriteLine("Before communication loop in recvControlFromServerLoop!");
             Debug.Assert(this.beActive != null);
-            while (this.continueCommunicationLoop(2)) {
+            while (this.continueLoop(2)) {
                 messageType = this.processIncomingMessage(partner, SocketType.TCP, ref dataCollection);
-                if (!this.continueCommunicationLoop(2)) {
+                if (!this.continueLoop(2)) {
                     Console.WriteLine("Don't continue communication loop...: " + Comm.utils.Utils.strcmp(this.beActive, Comm.data.Messages.STOP_MESSAGE) + "; " + this.beActive);
                     break;
                 }
@@ -205,7 +205,7 @@ namespace Comm {
             StatusData status = (StatusData) dataCollection.get(MessageType.STATUS);
 
             Console.WriteLine("Before communication loop in recvDataFromServerLoop!");
-            while (this.continueCommunicationLoop(2)) {
+            while (this.continueLoop(2)) {
                 // messageType = this.processIncomingMessage(partner, SocketType.UDP, ref dataCollection);
                 messageType = this.processIncomingMessage(partner, SocketType.UDP_HEADER, ref dataCollection);
                 if (messageType != MessageType.NOTHING) {
@@ -254,7 +254,7 @@ namespace Comm {
                 return;
             }
 
-            Debug.Assert(this.quit || this.continueCommunicationLoop(2));
+            Debug.Assert(this.quit || this.continueLoop(2));
 
             Communication controlServerPartner = this.serverPartner.copy();
             Communication dataServerPartner = this.serverPartner.copy();
@@ -264,12 +264,12 @@ namespace Comm {
             Task controlThread = Task.Run(() => { this.recvControlFromServerLoop(controlServerPartner, dataCollectionCopy); });
 
             this.sendToServerLoop(this.serverPartner, this.dataCollection);
-            Debug.Assert(!this.continueCommunicationLoop(2));
+            Debug.Assert(!this.continueLoop(2));
 
             // dataThread.Wait();
             controlThread.Wait();
 
-            Debug.Assert(!this.continueCommunicationLoop(2));
+            Debug.Assert(!this.continueLoop(2));
             controlServerPartner.cleanup();
             dataServerPartner.cleanup();
             Console.WriteLine("Exiting communication loop!");
@@ -285,9 +285,9 @@ namespace Comm {
             string statusResult;
 
             this.commQuit = false;
-            while (this.continueCommunicationLoop(1)) {
+            while (this.continueLoop(1)) {
                 // loop for ping messages
-                while (this.continueCommunicationLoop(1)) {
+                while (this.continueLoop(1)) {
                     this.processIncomingMessage(this.serverPartner, SocketType.TCP, ref this.dataCollection);
                     statusResult = status.getData();
                     if (statusResult != null) {
@@ -315,7 +315,7 @@ namespace Comm {
 
                 // recv the udp port 
                 MessageType messageType = MessageType.NOTHING;
-                while (this.continueCommunicationLoop(1)) {
+                while (this.continueLoop(1)) {
                     if (!this.listen(this.serverPartner, SocketType.TCP, ref messageType, ref this.dataCollection, true, 10)) {
                         Console.WriteLine("Can not receive data from " + this.serverPartner.getPartnerString(SocketType.TCP) + 
                                           "; error " + this.serverPartner.getErrorString());
@@ -334,7 +334,7 @@ namespace Comm {
                     }
                     break;
                 }
-                if (!this.continueCommunicationLoop(1)) {
+                if (!this.continueLoop(1)) {
                     Console.WriteLine("Stopped because don't continue communication loop!");
                     break;
                 }
@@ -352,7 +352,7 @@ namespace Comm {
 
                 // second loop for ping messages until control mode has been selected
                 string controlMode = "";
-                while (this.continueCommunicationLoop(1)) {
+                while (this.continueLoop(1)) {
                     this.processIncomingMessage(this.serverPartner, SocketType.TCP, ref this.dataCollection);
                     statusResult = status.getData();
                     if (statusResult != null) {
@@ -386,7 +386,7 @@ namespace Comm {
             }
 
             /*
-            if (this.continueCommunicationLoop(0)) {
+            if (this.continueLoop(0)) {
                 try {
                     this.controlSelectView.stopServerCommunication();
                 } catch (Exception e) {
