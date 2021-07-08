@@ -421,8 +421,7 @@ bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode
         }
         if (verbose) {
             cout << "Post send: already sent = " << sentBytes << "B; managed to send localBytesSent = "
-                 << localBytesSent
-                 << endl;
+                 << localBytesSent << endl;
             /*
             for (int i = 0; i < localBytesSent; i++) {
                 cout << (int) ((unsigned char) buffer[i + sentBytes]) << ", ";
@@ -437,8 +436,9 @@ bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode
                 cout << "The assertion in Socket::performSend (localBytesSent == 0 || localBytesSent == -1) will fail: "
                      << "localBytesSent = " << localBytesSent << endl;
                 assert(localBytesSent == 0 || localBytesSent == -1);
+            } else {
+                localBytesSent -= 4;
             }
-            localBytesSent -= 4;
         }
     } else {
         localBytesSent = sendSize;
