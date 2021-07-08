@@ -80,8 +80,8 @@ Socket *Socket::copy() const {
     copy->protocol = this->protocol;
     copy->socket = this->socket;
 
-    copy->partner = this->partner->copy();
-    copy->myself = this->myself->copy();
+    copy->partner = (this->partner != nullptr) ? this->partner->copy() : nullptr;
+    copy->myself = (this->myself != nullptr) ? this->myself->copy() : nullptr;
 
     copy->sendTimeout = this->sendTimeout;
     copy->recvTimeout = this->recvTimeout;
