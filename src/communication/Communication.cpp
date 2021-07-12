@@ -53,7 +53,8 @@ bool Communication::transmitData(SocketType socketType, CommunicationData *data,
             serializeDone = data->serialize(&(this->sendBuffer), dataStart, withHeader, verbose);
         }
         this->errorCode = 0;
-        if (!this->send(socketType, withHeader, retries, verbose)) {
+        // TODO: change keepForNextSend = (SocketType == UDP && serializeDone);
+        if (!this->send(socketType, withHeader, retries, false, verbose)) {
             if (this->errorCode == 0) {
                 if (verbose) {
                     cout << "Socket closed: Can not send data serialized bytes..." << endl;
@@ -76,7 +77,7 @@ bool Communication::sendRaw(SocketType socketType, const char *data, int dataSiz
     }
     this->sendBuffer.setData(data, dataSize);
     this->errorCode = 0;
-    if (!this->send(socketType, false, retries, verbose)) {
+    if (!this->send(socketType, false, retries, false, verbose)) {
         if (this->errorCode == 0) {
             if (verbose) {
                 cout << "Socket closed: Can not raw data serialized bytes..." << endl;
@@ -380,18 +381,18 @@ void Communication::_cleanup() {
     this->_cleanupData();
 }
 
-bool Communication::send(SocketType socketType, bool withHeader, int retries, bool verbose) {
+bool Communication::send(SocketType socketType, bool withHeader, int retries, bool keepForNextSend, bool verbose) {
     return this->send(socketType, this->sendBuffer.getConstBuffer(), this->sendBuffer.getBufferContentSize(),
-                      (withHeader) ? &this->sendHeader : nullptr, retries, verbose);
+                      (withHeader) ? &this->sendHeader : nullptr, retries, keepForNextSend, verbose);
 }
 
 bool Communication::send(SocketType socketType, const char *buffer, uint64_t contentSize,
-                         SerializationHeader *header, int retries, bool verbose) {
+                         SerializationHeader *header, int retries, bool keepForNextSend, bool verbose) {
     Socket *&socket = this->getSocket(socketType);
     if (socket == nullptr) {
         return false;
     }
-    return socket->sendBytes(buffer, contentSize, this->errorCode, header, retries, verbose);
+    return socket->sendBytes(buffer, contentSize, this->errorCode, header, retries, keepForNextSend, verbose);
 }
 
 #pragma clang diagnostic push
