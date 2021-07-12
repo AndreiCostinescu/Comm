@@ -203,8 +203,10 @@ void ImageData::setImage(unsigned char *_imageBytes, int _imageByteSize, int _im
     this->imageType = _imageType;
     this->contentSize = _imageByteSize;
     #if WITH_OPENCV
-    this->image = this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
-    memcpy(this->image.data, this->imageBytes, this->contentSize);
+    if (this->imageBytes != nullptr) {
+        this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
+        memcpy(this->image.data, this->imageBytes, this->contentSize);
+    }
     #endif
 }
 

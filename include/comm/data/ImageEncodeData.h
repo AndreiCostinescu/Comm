@@ -46,6 +46,9 @@ namespace comm {
 
         Encoding getEncoding();
 
+        void setImageEncodedBytes(const std::vector<uchar> &imageEncodedBytes, int imageHeight, int imageWidth,
+                                  int imageType, int id, Encoding _encoding);
+
     private:
         std::vector<uchar> encodedImage;
         int encodedContentSize;

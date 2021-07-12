@@ -70,4 +70,8 @@ if (WITH_OPENCV)
     set(EXE "TestSerializationHeaderError")
     add_executable(${EXE} testSerializationHeaderError.cpp)
     target_link_libraries(${EXE} ${MASTER_LIBRARIES})
+
+    set(EXE "TestUploadPictureFile")
+    add_executable(${EXE} testUploadPictureFile.cpp)
+    target_link_libraries(${EXE} ${MASTER_LIBRARIES})
 endif ()
