@@ -48,6 +48,16 @@ namespace comm {
 
         [[nodiscard]] bool getTouch() const;
 
+        int &getIDReference();
+
+        double &getXReference();
+
+        double &getYReference();
+
+        long long &getTimeReference();
+
+        bool &getTouchReference();
+
     private:
         int id;
         double x, y;
