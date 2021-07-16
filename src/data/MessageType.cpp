@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 09.03.2021.
+// Created by Andrei on 09.03.2021.
 //
 
 #include <comm/data/MessageType.h>
