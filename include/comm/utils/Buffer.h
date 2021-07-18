@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 24.03.2021.
+// Created by Andrei on 24.03.2021.
 //
 
 #ifndef COMM_UTILS_BUFFER_H

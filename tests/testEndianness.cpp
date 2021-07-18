@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 17.03.2021.
+// Created by Andrei on 17.03.2021.
 //
 
 #include <cassert>

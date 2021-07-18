@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 12.03.2021.
+// Created by Andrei on 12.03.2021.
 //
 
 #include <comm/socket/Socket.h>
