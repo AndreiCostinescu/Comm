@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 22.04.2021.
+// Created by Andrei on 22.04.2021.
 //
 
 #ifndef COMMUNICATION_STRING_UTILS_H

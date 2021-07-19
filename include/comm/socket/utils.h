@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 16.03.2021.
+// Created by Andrei on 16.03.2021.
 //
 
 #ifndef COMM_SOCKET_UTILS_H
