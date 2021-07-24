@@ -80,6 +80,12 @@ void test(SocketType udpSocketType) {
 int main() {
     cout << "Hello World!" << endl;
 
+    auto x = nlohmann::json();
+    cout << x << endl;
+
+    x = nlohmann::json::parse("{}");
+    cout << x << endl;
+
     thread t(server, SocketType::UDP);
     test(SocketType::UDP);
     t.join();
