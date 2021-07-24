@@ -430,7 +430,7 @@ bool Communication::doReceive(SocketType socketType, char *&dataLocalDeserialize
 
 bool Communication::postReceiveMessageType(MessageType &messageType, const bool receiveResult, int dataStart) {
     if (!receiveResult) {
-        if (this->getErrorCode() < 1) {
+        if (this->getErrorCode() < 0) {
             messageType = MessageType::NOTHING;
         } else {
             return false;
