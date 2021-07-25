@@ -946,6 +946,13 @@ bool Socket::_receiveBytes(char *buffer, uint64_t expectedLength, int &errorCode
             break;
         }
     }
+    if (!(expectedLength == 0 || receivedBytes == expectedLength)) {
+        cout << "Next assertion will fail: expectedLength = " << expectedLength << " and receivedBytes = "
+             << receivedBytes << endl;
+        if (this->protocol == SocketType::UDP) {
+            cout << "Maybe packets arrived in the wrong order on UDP?" << endl;
+        }
+    }
     assert(expectedLength == 0 || receivedBytes == expectedLength);
     if (verbose) {
         cout << this_thread::get_id() << ": Exiting _receiveBytes function having received = " << receivedBytes
