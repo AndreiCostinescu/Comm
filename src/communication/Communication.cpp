@@ -126,7 +126,7 @@ bool Communication::recvData(SocketType socketType, CommunicationData *data, boo
         }
         this->preReceiveData(dataLocalDeserializeBuffer, expectedSize, dataStart, data, withHeader);
         receiveResult = this->doReceive(socketType, dataLocalDeserializeBuffer, expectedSize, withHeader, retries,
-                                        true, verbose);
+                                        (deserializeState != 0), verbose);
         if (!this->postReceiveData(data, deserializeState, localRetries, receivedSomething, deserializationDone,
                                    messageType, dataStart, localRetriesThreshold, receiveResult, withHeader, verbose)) {
             return false;
