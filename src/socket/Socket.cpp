@@ -662,7 +662,9 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                             localReceivedBytes = receiveAmount;
                             return true;
                         }
-                        // cout << "TIMEOUT IN TCP RECEIVE!!!" << endl;
+                        if (localVerbose) {
+                            cout << "TIMEOUT IN TCP RECEIVE!!!" << endl;
+                        }
                         localRetries--;
                     } else {
                         cout << "BREAK BECAUSE OF (TCP) ERROR: receive amount = " << receiveAmount << "; errorCode: "
