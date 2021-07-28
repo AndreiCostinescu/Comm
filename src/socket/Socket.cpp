@@ -662,7 +662,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                             localReceivedBytes = receiveAmount;
                             return true;
                         }
-                        cout << "TIMEOUT IN TCP RECEIVE!!!" << endl;
+                        // cout << "TIMEOUT IN TCP RECEIVE!!!" << endl;
                         localRetries--;
                     } else {
                         cout << "BREAK BECAUSE OF (TCP) ERROR: receive amount = " << receiveAmount << "; errorCode: "
@@ -686,7 +686,7 @@ bool Socket::performReceive(char *buffer, int &localReceivedBytes, bool &overwri
                 iterationCounter++;
             }
             if (localRetries == 0) {
-                cout << "Couldn't receive data from TCP; There will be an error..." << endl;
+                cout << "Couldn't receive data from TCP (timeout threshold reached); There will be an error..." << endl;
                 // latency; network issues...
                 localReceivedBytes = -3;
                 return false;
