@@ -429,6 +429,11 @@ bool Socket::performSend(const char *buffer, int &localBytesSent, int &errorCode
             cout << endl;
             //*/
         }
+        if (localBytesSent == -1) {
+            cout << "Error when sending! " << getLastErrorString() << endl;
+            // return true not false to let interpretSendResult print the error code!
+            return true;
+        }
         this->sendBuffer->setBufferContentSize(0);
         localBytesSent -= startingPosition;
         if (withHeader) {
