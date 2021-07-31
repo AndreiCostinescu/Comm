@@ -1,5 +1,5 @@
 //
-// Created by Andrei on 09.03.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 09.03.2021.
 //
 
 #ifndef COMM_DATA_MESSAGETYPE_H

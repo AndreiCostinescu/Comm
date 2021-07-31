@@ -1,5 +1,5 @@
 //
-// Created by Andrei on 31-Mar-21.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 31-Mar-21.
 //
 
 #include <comm/socket/SocketPartner.h>

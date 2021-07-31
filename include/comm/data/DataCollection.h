@@ -1,5 +1,5 @@
 //
-// Created by Andrei on 01-Apr-21.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 01-Apr-21.
 //
 
 #ifndef COMM_DATA_DATACOLLECTION_H

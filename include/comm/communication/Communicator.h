@@ -1,5 +1,5 @@
 //
-// Created by Andrei on 24.03.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 24.03.2021.
 //
 
 #ifndef COMM_COMMUNICATION_COMMUNICATOR_H

@@ -1,5 +1,5 @@
 //
-// Created by Andrei on 12.07.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 12.07.2021.
 //
 
 #include <comm/utils/Buffer.h>

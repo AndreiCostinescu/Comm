@@ -1,5 +1,5 @@
 //
-// Created by Andrei on 25-Apr-21.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 25-Apr-21.
 //
 
 #include <comm/data/BytesData.h>
