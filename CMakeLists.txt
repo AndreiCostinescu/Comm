@@ -46,7 +46,6 @@ SET(DATA_STUFF src/data/MessageType.cpp src/data/messages.cpp src/data/Communica
 
 set(COMM_LIB "Communication")
 add_library(${COMM_LIB} SHARED ${COMMUNICATION_STUFF} ${DATA_STUFF} ${SOCKET_STUFF} ${UTILS_STUFF})
-target_link_libraries(${COMM_LIB} ${MASTER_LIBRARIES})
 if (WITH_OPENCV)
     # No idea what PUBLIC or PRIVATE does here...
     target_compile_definitions(${COMM_LIB} PUBLIC -DWITH_OPENCV)
@@ -54,7 +53,6 @@ endif ()
 
 set(COMM_LIB "${COMM_LIB}_static")
 add_library(${COMM_LIB} ${COMMUNICATION_STUFF} ${DATA_STUFF} ${SOCKET_STUFF} ${UTILS_STUFF})
-target_link_libraries(${COMM_LIB} ${MASTER_LIBRARIES})
 if (WITH_OPENCV)
     # No idea what PUBLIC or PRIVATE does here...
     target_compile_definitions(${COMM_LIB} PUBLIC -DWITH_OPENCV)
