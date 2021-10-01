@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 14.03.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 14.03.2021.
 //
 
 #ifndef COMM_COMMUNICATION_COMMUNICATION_H
@@ -76,10 +76,10 @@ namespace comm {
 
         virtual void _cleanup();
 
-        virtual bool send(SocketType socketType, bool withHeader, int retries, bool verbose);
+        virtual bool send(SocketType socketType, bool withHeader, int retries, bool keepForNextSend, bool verbose);
 
         virtual bool send(SocketType socketType, const char *buffer, uint64_t contentSize,
-                          SerializationHeader *header, int retries, bool verbose);
+                          SerializationHeader *header, int retries, bool keepForNextSend, bool verbose);
 
         void preReceiveMessageType(char *&dataLocalDeserializeBuffer, uint64_t &expectedSize,
                                    int dataStart);

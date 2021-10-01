@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 11.03.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 11.03.2021.
 //
 
 #ifndef COMM_DATA_STATUSDATA_H

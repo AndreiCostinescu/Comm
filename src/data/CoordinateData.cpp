@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 10.03.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 10.03.2021.
 //
 
 #include <comm/data/CoordinateData.h>
@@ -136,5 +136,25 @@ long long CoordinateData::getTime() const {
 }
 
 bool CoordinateData::getTouch() const {
+    return this->touch;
+}
+
+int &CoordinateData::getIDReference() {
+    return this->id;
+}
+
+double &CoordinateData::getXReference() {
+    return this->x;
+}
+
+double &CoordinateData::getYReference() {
+    return this->y;
+}
+
+long long &CoordinateData::getTimeReference() {
+    return this->time;
+}
+
+bool &CoordinateData::getTouchReference() {
     return this->touch;
 }

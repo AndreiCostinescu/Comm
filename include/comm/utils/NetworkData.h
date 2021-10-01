@@ -1,5 +1,5 @@
 //
-// Created by Andrei on 15-May-21.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 15-May-21.
 //
 
 #ifndef COMM_UTILS_NETWORKDATA_H

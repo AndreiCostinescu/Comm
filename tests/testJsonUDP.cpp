@@ -1,5 +1,5 @@
 //
-// Created by Andrei on 03.06.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 03.06.2021.
 //
 
 #include <cassert>
@@ -79,6 +79,12 @@ void test(SocketType udpSocketType) {
 
 int main() {
     cout << "Hello World!" << endl;
+
+    auto x = nlohmann::json();
+    cout << x << endl;
+
+    x = nlohmann::json::parse("{}");
+    cout << x << endl;
 
     thread t(server, SocketType::UDP);
     test(SocketType::UDP);

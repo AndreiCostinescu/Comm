@@ -1,5 +1,5 @@
 //
-// Created by Andrei on 29-May-21.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 29-May-21.
 //
 
 #include <comm/data/ImageEncodeData.h>
@@ -68,9 +68,11 @@ bool ImageEncodeData::serialize(Buffer *buffer, int start, bool forceCopy, bool 
             buffer->setInt(this->imageType, start + 12);
 
             #ifdef WITH_OPENCV
-            cv::imencode("." + ImageEncodeData::convertEncodingToString(this->encoding), this->image,
-                         this->encodedImage);
-            this->encodedContentSize = this->encodedImage.size();
+            if (this->imageBytes != nullptr) {
+                cv::imencode("." + ImageEncodeData::convertEncodingToString(this->encoding), this->image,
+                             this->encodedImage);
+                this->encodedContentSize = this->encodedImage.size();
+            }
             #endif
 
             buffer->setInt(this->encodedContentSize, start + 16);
@@ -171,4 +173,13 @@ void ImageEncodeData::setEncoding(Encoding _encoding) {
 
 ImageEncodeData::Encoding ImageEncodeData::getEncoding() {
     return this->encoding;
+}
+
+void ImageEncodeData::setImageEncodedBytes(const std::vector<uchar> &imageEncodedBytes, int imageHeight, int imageWidth,
+                                           int imageType, int id, Encoding _encoding) {
+    this->id = id;
+    this->setImage(nullptr, 0, imageHeight, imageWidth, imageType);
+    this->encodedImage = imageEncodedBytes;
+    this->encodedContentSize = this->encodedImage.size();
+    this->encoding = _encoding;
 }

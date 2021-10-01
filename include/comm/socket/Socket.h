@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 12.03.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 12.03.2021.
 //
 
 #ifndef COMM_SOCKET_SOCKET_H
@@ -57,11 +57,11 @@ namespace comm {
 
         void accept(Socket *&acceptSocket, bool verbose = false) const;
 
-        bool sendBytes(const char *buffer, uint64_t bufferLength, int &errorCode,
-                       SerializationHeader *header, int retries = 0, bool verbose = false);
+        bool sendBytes(const char *buffer, uint64_t bufferLength, int &errorCode, SerializationHeader *header,
+                       int retries = 0, bool keepForNextSend = false, bool verbose = false);
 
         bool sendBytes(Buffer &buffer, int &errorCode, SerializationHeader *header, int retries = 0,
-                       bool verbose = false);
+                       bool keepForNextSend = false, bool verbose = false);
 
         bool receiveBytes(char *&buffer, uint64_t &bufferLength, uint64_t expectedLength,
                           int &errorCode, SerializationHeader *expectedHeader, int retries = 0,
@@ -84,13 +84,14 @@ namespace comm {
         void initMyself(bool withBind = true, bool verbose = false);
 
         bool performSend(const char *buffer, int &localBytesSent, int &errorCode, SerializationHeader *header,
-                         int sendSize, int sentBytes, char sendIteration, bool verbose = false);
+                         int sendSize, int sentBytes, char sendIteration, bool keepForNextSend, bool verbose = false);
 
         static bool interpretSendResult(int &errorCode, int &localBytesSent, int &retries, char &sendIteration,
                                         bool verbose = false);
 
         bool _sendBytes(const char *buffer, uint64_t bufferLength, int &errorCode,
-                        SerializationHeader *header, int retries = 0, bool verbose = false);
+                        SerializationHeader *header, int retries = 0, bool keepForNextSend = false,
+                        bool verbose = false);
 
         bool checkCorrectReceivePartner(bool &overwritePartner, int receiveIteration);
 

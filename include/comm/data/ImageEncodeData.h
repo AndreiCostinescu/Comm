@@ -1,5 +1,5 @@
 //
-// Created by Andrei on 29-May-21.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 29-May-21.
 //
 
 #ifndef COMM_DATA_IMAGEENCODEDATA_H
@@ -45,6 +45,9 @@ namespace comm {
         void setEncoding(Encoding _encoding);
 
         Encoding getEncoding();
+
+        void setImageEncodedBytes(const std::vector<uchar> &imageEncodedBytes, int imageHeight, int imageWidth,
+                                  int imageType, int id, Encoding _encoding);
 
     private:
         std::vector<uchar> encodedImage;

@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 10.03.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 10.03.2021.
 //
 
 #ifndef COMM_DATA_IMAGEDATA_H

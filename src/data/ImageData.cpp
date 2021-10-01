@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 10.03.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 10.03.2021.
 //
 
 #include <comm/data/ImageData.h>
@@ -203,8 +203,10 @@ void ImageData::setImage(unsigned char *_imageBytes, int _imageByteSize, int _im
     this->imageType = _imageType;
     this->contentSize = _imageByteSize;
     #if WITH_OPENCV
-    this->image = this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
-    memcpy(this->image.data, this->imageBytes, this->contentSize);
+    if (this->imageBytes != nullptr) {
+        this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
+        memcpy(this->image.data, this->imageBytes, this->contentSize);
+    }
     #endif
 }
 

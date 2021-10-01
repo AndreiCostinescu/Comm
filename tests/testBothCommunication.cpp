@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 16.03.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 16.03.2021.
 //
 
 #include <cassert>
@@ -13,7 +13,7 @@
 using namespace comm;
 using namespace std;
 
-int port = 8401;
+int port = 8401, udpMessageLimit = 250;
 
 void server_1() {
     string x = "Thread 2";
@@ -56,7 +56,7 @@ void server_1() {
         if (message != nullptr) {
             cout << x << ": Received on UDP \"" << message << "\"" << endl;
             auto split = splitString(message, " ");
-            if (split.size() == 2 && stoi(split[1]) >= 96) {
+            if (split.size() == 2 && stoi(split[1]) >= udpMessageLimit) {
                 break;
             }
         }
@@ -175,15 +175,19 @@ void test_2() {
 int main() {
     cout << "Hello World!" << endl;
 
+    cout << "Starting first test..." << endl;
     thread t(server_2);
     test_2();
     t.join();
+    cout << "Finished first test!" << endl << endl << endl << endl;
 
     this_thread::sleep_for(chrono::seconds(2));
 
+    cout << "Starting second test..." << endl;
     t = thread(server_1);
     test_1();
     t.join();
+    cout << "Finished second test!" << endl << endl << endl << endl;
 
     return 0;
 }

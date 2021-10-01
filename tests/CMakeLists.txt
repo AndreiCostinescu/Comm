@@ -38,6 +38,10 @@ set(EXE "TestTelemetry")
 add_executable(${EXE} testTelemetry.cpp string_utils.cpp map_utils.hpp)
 target_link_libraries(${EXE} ${MASTER_LIBRARIES})
 
+set(EXE "TestDoubleUDPPortInstantiation")
+add_executable(${EXE} testDoubleUDPPortInstantiation.cpp)
+target_link_libraries(${EXE} ${MASTER_LIBRARIES})
+
 if (WITH_OPENCV)
     set(EXE "TestSendImageUDP")
     add_executable(${EXE} testSendImageUDP.cpp)
@@ -69,5 +73,9 @@ if (WITH_OPENCV)
 
     set(EXE "TestSerializationHeaderError")
     add_executable(${EXE} testSerializationHeaderError.cpp)
+    target_link_libraries(${EXE} ${MASTER_LIBRARIES})
+
+    set(EXE "TestUploadPictureFile")
+    add_executable(${EXE} testUploadPictureFile.cpp)
     target_link_libraries(${EXE} ${MASTER_LIBRARIES})
 endif ()

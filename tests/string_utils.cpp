@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 22.04.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 22.04.2021.
 //
 
 #include "string_utils.h"

@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 10.03.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 10.03.2021.
 //
 
 #ifndef COMM_DATA_COORDINATEDATA_H
@@ -47,6 +47,16 @@ namespace comm {
         [[nodiscard]] long long getTime() const;
 
         [[nodiscard]] bool getTouch() const;
+
+        int &getIDReference();
+
+        double &getXReference();
+
+        double &getYReference();
+
+        long long &getTimeReference();
+
+        bool &getTouchReference();
 
     private:
         int id;

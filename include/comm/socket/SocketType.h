@@ -1,5 +1,5 @@
 //
-// Created by Andrei on 15-Apr-21.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 15-Apr-21.
 //
 
 #ifndef COMM_SOCKET_SOCKETTYPE_H

@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 24.03.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 24.03.2021.
 //
 
 #ifndef COMM_DATA_COMMUNICATORSTATE_H

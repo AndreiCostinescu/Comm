@@ -1,5 +1,5 @@
 //
-// Created by ga78cat on 18.03.2021.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 18.03.2021.
 //
 
 #include <cassert>
@@ -67,12 +67,12 @@ void tcpClient() {
     cout << endl << endl;
     cout << "Server: UDP sendTo: " << p.getPartnerString(SocketType::UDP) << endl;
     cout << "Server: UDP myself: " << p.getMyAddressString(SocketType::UDP) << endl;
-    p.recvData(SocketType::UDP, &s, false, false, false,0, false);
+    p.recvData(SocketType::UDP, &s, false, false, false, 0, false);
     assert(strcmp(s.getData(), "Hello!") == 0);
     cout << "Got data: " << s.getData() << "; expected: \"Hello!\"" << endl;
     cout << "Server: UDP sendTo: " << p.getPartnerString(SocketType::UDP) << endl;
     cout << "Server: UDP myself: " << p.getMyAddressString(SocketType::UDP) << endl;
-    p.recvData(SocketType::UDP, &s, false, false, false,0, false);
+    p.recvData(SocketType::UDP, &s, false, false, false, 0, false);
     cout << "Got data: " << s.getData() << "; expected: " << p.getPartnerString(SocketType::UDP) << endl;
     // Only compare the ports!
     assert(splitString(s.getData(), ":")[1] == splitString(p.getPartnerString(SocketType::UDP), ":")[1]);

@@ -1,9 +1,9 @@
 //
-// Created by andrei on 21.04.21.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 21.04.21.
 //
 
 //
-// Created by andrei on 30.11.20.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 30.11.20.
 //
 
 #include <comm/communication/Communication.h>

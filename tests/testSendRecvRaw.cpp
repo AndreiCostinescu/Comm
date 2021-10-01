@@ -1,5 +1,5 @@
 //
-// Created by Andrei on 28.05.21.
+// Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 28.05.21.
 //
 
 #include <comm/communication/Communication.h>
