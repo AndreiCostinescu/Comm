@@ -5,27 +5,21 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_compile_options(-std=c++17 -pthread)
 
-option(PERCEPTRON_BUILD "Build the code on Perceptron computer" OFF)
-option(NUC_BUILD "Build the code on the NUC" ON)
-
 option(WITH_OPENCV "Build the code with opencv" OFF)
+set(OPENCV_VERSION "" CACHE STRING "The opencv version to use in the project")
 
 include_directories(include)
 
 if (WITH_OPENCV)
-    if (NUC_BUILD)
+    if (WIN32)
+        SET(OpenCV_DIR "C:/Program Files (x86)/opencv/opencv_4.4.0")
+    endif (WIN32)
 
-    else (NUC_BUILD)
-        if (WIN32)
-            SET(OpenCV_DIR "C:/Program Files (x86)/opencv/opencv_4.4.0")
-        endif (WIN32)
-    endif (NUC_BUILD)
-
-    if (PERCEPTRON_BUILD)
-        FIND_PACKAGE(OpenCV 3.2 REQUIRED)
-    else (PERCEPTRON_BUILD)
-        FIND_PACKAGE(OpenCV REQUIRED)
-    endif (PERCEPTRON_BUILD)
+    if ("${OPENCV_VERSION}" STREQUAL "")
+        find_package(OpenCV REQUIRED)
+    else ()
+        find_package(OpenCV ${OPENCV_VERSION} REQUIRED)
+    endif ()
 
     include_directories(${OpenCV_INCLUDE_DIRS})
 
