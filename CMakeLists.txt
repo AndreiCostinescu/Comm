@@ -42,14 +42,14 @@ set(COMM_LIB "Communication")
 add_library(${COMM_LIB} SHARED ${COMMUNICATION_STUFF} ${DATA_STUFF} ${SOCKET_STUFF} ${UTILS_STUFF})
 if (WITH_OPENCV)
     # No idea what PUBLIC or PRIVATE does here...
-    target_compile_definitions(${COMM_LIB} PUBLIC -DWITH_OPENCV)
+    target_compile_definitions(${COMM_LIB} PUBLIC -DCOMM_USE_OPENCV)
 endif ()
 
 set(COMM_LIB "${COMM_LIB}_static")
 add_library(${COMM_LIB} ${COMMUNICATION_STUFF} ${DATA_STUFF} ${SOCKET_STUFF} ${UTILS_STUFF})
 if (WITH_OPENCV)
     # No idea what PUBLIC or PRIVATE does here...
-    target_compile_definitions(${COMM_LIB} PUBLIC -DWITH_OPENCV)
+    target_compile_definitions(${COMM_LIB} PUBLIC -DCOMM_USE_OPENCV)
 endif ()
 
 set(MASTER_LIBRARIES ${COMM_LIB} ${MASTER_LIBRARIES})

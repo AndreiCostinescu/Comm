@@ -9,7 +9,7 @@
 
 using namespace comm;
 using namespace std;
-#ifdef WITH_OPENCV
+#ifdef COMM_USE_OPENCV
 using namespace cv;
 #endif
 
@@ -48,7 +48,7 @@ ImageData::ImageData(uchar *imageBytes, int imageByteSize, int imageHeight, int 
         imageDeserialized(true), imageBytes(imageBytes) {}
 
 
-#ifdef WITH_OPENCV
+#ifdef COMM_USE_OPENCV
 
 ImageData::ImageData(cv::Mat image, int id) : ImageData() {
     this->setID(id);

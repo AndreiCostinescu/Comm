@@ -42,7 +42,7 @@ ImageEncodeData::Encoding ImageEncodeData::convertStringToEncoding(const string 
 
 ImageEncodeData::ImageEncodeData() : ImageData(), encoding(Encoding::PNG), encodedContentSize(0), encodedImage() {}
 
-#ifdef WITH_OPENCV
+#ifdef COMM_USE_OPENCV
 ImageEncodeData::ImageEncodeData(cv::Mat image, int id, Encoding encoding) :
         ImageData(std::move(image), id), encoding(encoding), encodedContentSize(0), encodedImage() {}
 #endif
@@ -67,7 +67,7 @@ bool ImageEncodeData::serialize(Buffer *buffer, int start, bool forceCopy, bool 
             buffer->setInt(this->imageWidth, start + 8);
             buffer->setInt(this->imageType, start + 12);
 
-            #ifdef WITH_OPENCV
+            #ifdef COMM_USE_OPENCV
             if (this->imageBytes != nullptr) {
                 cv::imencode("." + ImageEncodeData::convertEncodingToString(this->encoding), this->image,
                              this->encodedImage);
@@ -146,7 +146,7 @@ bool ImageEncodeData::deserialize(Buffer *buffer, int start, bool forceCopy, boo
             for (int i = 0; i < this->encodedContentSize; i++) {
                 this->encodedImage[i] = encodedBuffer[i];
             }
-            #ifdef WITH_OPENCV
+            #ifdef COMM_USE_OPENCV
             // TODO: change the flag depending on the image type!
             cv::imdecode(this->encodedImage, cv::IMREAD_COLOR, &this->image);
             if (this->image.data != nullptr) {

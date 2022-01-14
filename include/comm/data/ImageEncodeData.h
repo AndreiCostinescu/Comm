@@ -25,7 +25,7 @@ namespace comm {
 
         ImageEncodeData();
 
-        #ifdef WITH_OPENCV
+        #ifdef COMM_USE_OPENCV
         ImageEncodeData(cv::Mat image, int id, Encoding encoding);
         #endif
 

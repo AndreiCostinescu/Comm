@@ -8,7 +8,7 @@
 #include <comm/data/CommunicationData.h>
 #include <comm/utils/Buffer.h>
 
-#ifdef WITH_OPENCV
+#ifdef COMM_USE_OPENCV
 
 #include <opencv2/opencv.hpp>
 
@@ -27,7 +27,7 @@ namespace comm {
 
         ImageData();
 
-        #ifdef WITH_OPENCV
+        #ifdef COMM_USE_OPENCV
 
         ImageData(cv::Mat image, int id);
 
@@ -47,7 +47,7 @@ namespace comm {
 
         void setID(int id);
 
-        #ifdef WITH_OPENCV
+        #ifdef COMM_USE_OPENCV
 
         void setImage(cv::Mat image);
 
@@ -73,7 +73,7 @@ namespace comm {
         [[nodiscard]] bool isImageDeserialized() const;
 
     protected:
-        #ifdef WITH_OPENCV
+        #ifdef COMM_USE_OPENCV
         cv::Mat image{};
         #endif
         uchar *imageBytes;
