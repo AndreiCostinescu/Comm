@@ -125,7 +125,7 @@ char *ImageData::getDeserializeBuffer() {
             return nullptr;
         }
         case 1: {
-            #ifdef WITH_OPENCV
+            #ifdef COMM_USE_OPENCV
             this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
             return reinterpret_cast<char *>(this->image.data);
             #else
@@ -152,7 +152,7 @@ bool ImageData::deserialize(Buffer *buffer, int start, bool forceCopy, bool verb
             return false;
         }
         case 1: {
-            #ifdef WITH_OPENCV
+            #ifdef COMM_USE_OPENCV
             if (forceCopy) {
                 // this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
                 memcpy(this->image.data, buffer->getBuffer() + start, this->contentSize);
@@ -178,7 +178,7 @@ void ImageData::setID(int _id) {
     this->id = _id;
 }
 
-#ifdef WITH_OPENCV
+#ifdef COMM_USE_OPENCV
 
 void ImageData::setImage(Mat _image) {
     this->image = std::move(_image);
@@ -202,7 +202,7 @@ void ImageData::setImage(unsigned char *_imageBytes, int _imageByteSize, int _im
     this->imageWidth = _imageWidth;
     this->imageType = _imageType;
     this->contentSize = _imageByteSize;
-    #if WITH_OPENCV
+    #if COMM_USE_OPENCV
     if (this->imageBytes != nullptr) {
         this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
         memcpy(this->image.data, this->imageBytes, this->contentSize);
