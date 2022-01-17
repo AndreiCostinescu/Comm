@@ -62,7 +62,7 @@ target_include_directories(${COMM_LIB}
 if (WITH_OPENCV)
     set(OPENCV_COMM_LIB_SHARED ${PROJECT_TARGET}_OpenCV)
     add_library(${OPENCV_COMM_LIB_SHARED} SHARED ${OPENCV_STUFF})
-    target_link_libraries(${OPENCV_COMM_LIB_SHARED} ${PROJECT_TARGET} ${OpenCV_LIBS} ${MASTER_LIBRARIES})
+    target_link_libraries(${OPENCV_COMM_LIB_SHARED} ${COMM_LIB_SHARED} ${OpenCV_LIBS} ${MASTER_LIBRARIES})
     target_include_directories(${OPENCV_COMM_LIB_SHARED}
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -71,7 +71,7 @@ if (WITH_OPENCV)
 
     set(OPENCV_COMM_LIB "${PROJECT_TARGET}_OpenCV_static")
     add_library(${OPENCV_COMM_LIB} ${OPENCV_STUFF})
-    target_link_libraries(${OPENCV_COMM_LIB} ${PROJECT_TARGET}_static ${OpenCV_LIBS} ${MASTER_LIBRARIES})
+    target_link_libraries(${OPENCV_COMM_LIB} ${COMM_LIB} ${OpenCV_LIBS} ${MASTER_LIBRARIES})
     target_include_directories(${OPENCV_COMM_LIB}
             PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -79,7 +79,7 @@ if (WITH_OPENCV)
             )
 endif ()
 
-set(MASTER_LIBRARIES ${COMM_LIB} ${OPENCV_COMM_LIB} ${MASTER_LIBRARIES})
+set(MASTER_LIBRARIES ${OPENCV_COMM_LIB} ${COMM_LIB} ${MASTER_LIBRARIES})
 
 add_subdirectory(tests)
 
