@@ -12,7 +12,10 @@
 using namespace comm;
 using namespace std;
 
-DataCollection::DataCollection() : data(), dataKeys() {}
+DataCollection::DataCollection() : DataCollection(createCommunicationDataPtr) {}
+
+DataCollection::DataCollection(function<CommunicationData *(MessageType)> dataCreationFunction)
+        : data(), dataKeys(), dataCreationFunction(move(dataCreationFunction)) {}
 
 DataCollection::~DataCollection() {
     cout << "In DataCollection destructor: " << endl;
@@ -20,7 +23,7 @@ DataCollection::~DataCollection() {
 }
 
 void DataCollection::reset() {
-    for (const auto &_data : this->data) {
+    for (const auto &_data: this->data) {
         cout << "\tDelete " << _data.first << ": " << _data.second << endl;
         delete _data.second;
     }
@@ -40,7 +43,7 @@ CommunicationData *DataCollection::get(const MessageType &messageType) {
     CommunicationData *commData;
     string stringMessageType = messageTypeToString(messageType);
     if (!mapGetIfContains(this->data, stringMessageType, commData)) {
-        for (const auto &dataKey : this->dataKeys) {
+        for (const auto &dataKey: this->dataKeys) {
             if (dataKey == stringMessageType) {
                 (*cerror) << "The data key assertion will fail for key = " << stringMessageType << endl;
             }

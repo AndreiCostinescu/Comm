@@ -7,10 +7,9 @@
 #include <comm/communication/TCPServer.h>
 #include <comm/data/BytesData.h>
 #include <comm/data/CoordinateData.h>
-#include <comm/data/ImageData.h>
+#include <comm/data/ImageDataWithOpenCV.h>
 #include <comm/data/StatusData.h>
 #include <comm/socket/utils.h>
-#include <opencv2/opencv.hpp>
 #include <iostream>
 #include <thread>
 
@@ -133,7 +132,7 @@ void sender(SocketType socketType, bool withHeader, bool withMessageType, bool s
     this_thread::sleep_for(chrono::seconds(2));
     cout << "\n\n";
 
-    ImageData i;
+    ImageDataWithOpenCV i;
     receiveImage(p, socketType, i, imageCap, withHeader, withMessageType, syphonWronglySerializedData);
 
     i.setID(i.getID() + 1);
@@ -189,7 +188,7 @@ void receiver(SocketType socketType, bool withHeader, bool withMessageType, bool
     this_thread::sleep_for(chrono::seconds(2));
     cout << "\n\n";
 
-    ImageData i;
+    ImageDataWithOpenCV i;
     i.setID(0);
     i.setImage(*lena);
     sendImage(p, socketType, i, imageCap, withHeader, withMessageType, syphonWronglySerializedData);

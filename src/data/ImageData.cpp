@@ -8,9 +8,6 @@
 
 using namespace comm;
 using namespace std;
-#ifdef COMM_USE_OPENCV
-using namespace cv;
-#endif
 
 const int ImageData::headerSize = 5 * sizeof(int);
 
@@ -42,19 +39,13 @@ int ImageData::getOpenCVType(int imageChannels, int bytesPerElement, bool unsign
 ImageData::ImageData() : id(-1), imageHeight(0), imageWidth(0), imageType(0), contentSize(0), imageDeserialized(true),
                          imageBytes(nullptr) {}
 
-ImageData::ImageData(uchar *imageBytes, int imageByteSize, int imageHeight, int imageWidth, int imageType, int id) :
+ImageData::ImageData(unsigned char *imageBytes, int imageByteSize, int imageHeight, int imageWidth, int imageType,
+                     int id) :
         id(id), imageHeight(imageHeight), imageWidth(imageWidth), imageType(imageType), contentSize(imageByteSize),
         imageDeserialized(true), imageBytes(imageBytes) {}
 
 
-#ifdef COMM_USE_OPENCV
-
-ImageData::ImageData(cv::Mat image, int id) : ImageData() {
-    this->setID(id);
-    this->setImage(std::move(image));
-}
-
-#endif
+ImageData::~ImageData() = default;
 
 MessageType ImageData::getMessageType() {
     return MessageType::IMAGE;
@@ -120,17 +111,9 @@ int ImageData::getExpectedDataSize() const {
 
 char *ImageData::getDeserializeBuffer() {
     switch (this->deserializeState) {
-        case 0: {
-            return nullptr;
-        }
+        case 0:
         case 1: {
-            #ifdef COMM_USE_OPENCV
-            this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
-            return reinterpret_cast<char *>(this->image.data);
-            #else
             return nullptr;
-            #endif
-
         }
         default : {
             throw runtime_error("Impossible deserialize state... " + to_string(this->deserializeState));
@@ -177,23 +160,6 @@ void ImageData::setID(int _id) {
     this->id = _id;
 }
 
-#ifdef COMM_USE_OPENCV
-
-void ImageData::setImage(Mat _image) {
-    this->image = std::move(_image);
-    this->imageBytes = this->image.data;
-    this->imageHeight = this->image.rows;
-    this->imageWidth = this->image.cols;
-    this->imageType = this->image.type();
-    this->contentSize = (int) this->image.step[0] * this->imageHeight;
-}
-
-Mat ImageData::getImage() const {
-    return this->image;
-}
-
-#endif
-
 void ImageData::setImage(unsigned char *_imageBytes, int _imageByteSize, int _imageHeight, int _imageWidth,
                          int _imageType) {
     this->imageBytes = _imageBytes;
@@ -201,13 +167,7 @@ void ImageData::setImage(unsigned char *_imageBytes, int _imageByteSize, int _im
     this->imageWidth = _imageWidth;
     this->imageType = _imageType;
     this->contentSize = _imageByteSize;
-    #if COMM_USE_OPENCV
-    if (this->imageBytes != nullptr) {
-        this->image = Mat(this->imageHeight, this->imageWidth, this->imageType);
-        memcpy(this->image.data, this->imageBytes, this->contentSize);
     }
-    #endif
-}
 
 int ImageData::getID() const {
     return this->id;

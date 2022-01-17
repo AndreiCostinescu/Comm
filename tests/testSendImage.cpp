@@ -3,7 +3,7 @@
 //
 
 #include <comm/communication/Communication.h>
-#include <comm/data/ImageData.h>
+#include <comm/data/ImageDataWithOpenCV.h>
 #include <comm/data/StatusData.h>
 #include <comm/socket/utils.h>
 #include <iostream>
@@ -26,7 +26,7 @@ void udpStreamer(SocketType socketType) {
     cv::namedWindow("Camera image");
     // Mat image = cv::imread("../../data/Lena.png");
     Mat image;
-    ImageData i;
+    ImageDataWithOpenCV i;
     int id = 0;
     while (!udpStopFlag && (limit < 0 or id < limit)) {
         camera >> image;
@@ -72,7 +72,7 @@ void tcpStreamer() {
     cv::namedWindow("Camera image");
     // Mat image = cv::imread("../../data/Lena.png");
     Mat image;
-    ImageData i;
+    ImageDataWithOpenCV i;
     int id = 0;
     while (!tcpStopFlag && (limit < 0 or id < limit)) {
         camera >> image;

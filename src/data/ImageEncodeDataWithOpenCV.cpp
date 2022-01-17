@@ -2,61 +2,31 @@
 // Created by Andrei Costinescu (andreicostinescu96@gmail.com) on 29-May-21.
 //
 
-#include <comm/data/ImageEncodeData.h>
+#include <comm/data/ImageEncodeDataWithOpenCV.h>
 #include <comm/socket/utils.h>
 #include <cassert>
-#include <iostream>
 
 using namespace comm;
 using namespace std;
 
-const int ImageEncodeData::headerSize = 6 * sizeof(int);
+ImageEncodeDataWithOpenCV::ImageEncodeDataWithOpenCV() : ImageEncodeData() {}
 
-string ImageEncodeData::convertEncodingToString(Encoding encoding) {
-    switch (encoding) {
-        case JPEG: {
-            return "jpg";
-        }
-        case PNG: {
-            return "png";
-        }
-        case TIFF: {
-            return "tiff";
-        }
-        default : {
-            throw runtime_error("Unknown encoding " + to_string(encoding));
-        }
-    }
+ImageEncodeDataWithOpenCV::ImageEncodeDataWithOpenCV(cv::Mat image, int id, Encoding encoding) :
+        ImageDataWithOpenCV(move(image), id), ImageEncodeData() {
+    this->encoding = encoding;
 }
 
-ImageEncodeData::Encoding ImageEncodeData::convertStringToEncoding(const string &encoding) {
-    if (encoding == "jpg") {
-        return Encoding::JPEG;
-    } else if (encoding == "png") {
-        return Encoding::PNG;
-    } else if (encoding == "tiff") {
-        return Encoding::TIFF;
-    } else {
-        throw runtime_error("Unknown encoding " + encoding);
-    }
-}
-
-ImageEncodeData::ImageEncodeData() : ImageData(), encoding(Encoding::PNG), encodedContentSize(0), encodedImage() {}
-
-ImageEncodeData::ImageEncodeData(const vector<unsigned char> &imageEncodedBytes, int imageHeight, int imageWidth,
-                                 int imageType, int id, Encoding encoding) :
-        ImageData(nullptr, 0, imageHeight, imageWidth, imageType, id), encoding(encoding),
-        encodedContentSize(0), encodedImage(imageEncodedBytes) {
+ImageEncodeDataWithOpenCV::ImageEncodeDataWithOpenCV(const vector<unsigned char> &imageEncodedBytes, int imageHeight,
+                                                     int imageWidth, int imageType, int id, Encoding encoding) :
+        ImageDataWithOpenCV(nullptr, 0, imageHeight, imageWidth, imageType, id), ImageEncodeData() {
+    this->encoding = encoding;
+    this->encodedImage = imageEncodedBytes;
     this->encodedContentSize = (int) this->encodedImage.size();
 }
 
-ImageEncodeData::~ImageEncodeData() = default;
+ImageEncodeDataWithOpenCV::~ImageEncodeDataWithOpenCV() = default;
 
-MessageType ImageEncodeData::getMessageType() {
-    return MessageType::IMAGE_ENCODE;
-}
-
-bool ImageEncodeData::serialize(Buffer *buffer, int start, bool forceCopy, bool verbose) {
+bool ImageEncodeDataWithOpenCV::serialize(Buffer *buffer, int start, bool forceCopy, bool verbose) {
     switch (this->serializeState) {
         case 0: {
             buffer->setBufferContentSize(start + ImageEncodeData::headerSize);
@@ -65,13 +35,11 @@ bool ImageEncodeData::serialize(Buffer *buffer, int start, bool forceCopy, bool 
             buffer->setInt(this->imageWidth, start + 8);
             buffer->setInt(this->imageType, start + 12);
 
-            #ifdef COMM_USE_OPENCV
             if (this->imageBytes != nullptr) {
                 cv::imencode("." + ImageEncodeData::convertEncodingToString(this->encoding), this->image,
                              this->encodedImage);
-                this->encodedContentSize = this->encodedImage.size();
+                this->encodedContentSize = (int) this->encodedImage.size();
             }
-            #endif
 
             buffer->setInt(this->encodedContentSize, start + 16);
             buffer->setInt(this->encoding, start + 20);
@@ -105,25 +73,11 @@ bool ImageEncodeData::serialize(Buffer *buffer, int start, bool forceCopy, bool 
     }
 }
 
-int ImageEncodeData::getExpectedDataSize() const {
-    switch (this->deserializeState) {
-        case 0: {
-            return ImageEncodeData::headerSize;
-        }
-        case 1: {
-            return this->encodedContentSize;
-        }
-        default : {
-            throw runtime_error("Impossible deserialize state... " + to_string(this->deserializeState));
-        }
-    }
+char *ImageEncodeDataWithOpenCV::getDeserializeBuffer() {
+    return ImageEncodeData::getDeserializeBuffer();
 }
 
-char *ImageEncodeData::getDeserializeBuffer() {
-    return nullptr;
-}
-
-bool ImageEncodeData::deserialize(Buffer *buffer, int start, bool forceCopy, bool verbose) {
+bool ImageEncodeDataWithOpenCV::deserialize(Buffer *buffer, int start, bool forceCopy, bool verbose) {
     switch (this->deserializeState) {
         case 0: {
             this->imageDeserialized = false;
@@ -144,15 +98,11 @@ bool ImageEncodeData::deserialize(Buffer *buffer, int start, bool forceCopy, boo
             for (int i = 0; i < this->encodedContentSize; i++) {
                 this->encodedImage[i] = encodedBuffer[i];
             }
-            #ifdef COMM_USE_OPENCV
             // TODO: change the flag depending on the image type!
             cv::imdecode(this->encodedImage, cv::IMREAD_COLOR, &this->image);
             if (this->image.data != nullptr) {
                 this->imageDeserialized = true;
             }
-            #else
-            this->imageDeserialized = true;
-            #endif
 
             this->deserializeState = 0;
             return true;
@@ -163,21 +113,4 @@ bool ImageEncodeData::deserialize(Buffer *buffer, int start, bool forceCopy, boo
             return false;
         }
     }
-}
-
-void ImageEncodeData::setEncoding(Encoding _encoding) {
-    this->encoding = _encoding;
-}
-
-ImageEncodeData::Encoding ImageEncodeData::getEncoding() {
-    return this->encoding;
-}
-
-void ImageEncodeData::setImageEncodedBytes(const std::vector<unsigned char> &imageEncodedBytes, int imageHeight,
-                                           int imageWidth, int imageType, int id, Encoding _encoding) {
-    this->id = id;
-    this->setImage(nullptr, 0, imageHeight, imageWidth, imageType);
-    this->encodedImage = imageEncodedBytes;
-    this->encodedContentSize = (int) this->encodedImage.size();
-    this->encoding = _encoding;
 }

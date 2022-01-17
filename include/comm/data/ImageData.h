@@ -8,18 +8,8 @@
 #include <comm/data/CommunicationData.h>
 #include <comm/utils/Buffer.h>
 
-#ifdef COMM_USE_OPENCV
-
-#include <opencv2/opencv.hpp>
-
-#else
-
-typedef unsigned char uchar;
-
-#endif
-
 namespace comm {
-    class ImageData : public CommunicationData {
+    class ImageData : public virtual CommunicationData {
     public:
         static const int headerSize;
 
@@ -27,13 +17,9 @@ namespace comm {
 
         ImageData();
 
-        #ifdef COMM_USE_OPENCV
+        ImageData(unsigned char *imageBytes, int imageByteSize, int imageHeight, int imageWidth, int imageType, int id);
 
-        ImageData(cv::Mat image, int id);
-
-        #endif
-
-        ImageData(uchar *imageBytes, int imageByteSize, int imageHeight, int imageWidth, int imageType, int id);
+        ~ImageData();
 
         MessageType getMessageType() override;
 
@@ -47,16 +33,8 @@ namespace comm {
 
         void setID(int id);
 
-        #ifdef COMM_USE_OPENCV
-
-        void setImage(cv::Mat image);
-
-        [[nodiscard]] cv::Mat getImage() const;
-
-        #endif
-
-        void setImage(unsigned char *_imageBytes, int _imageByteSize, int _imageHeight, int _imageWidth,
-                      int _imageType);
+        virtual void setImage(unsigned char *_imageBytes, int _imageByteSize, int _imageHeight, int _imageWidth,
+                              int _imageType);
 
         [[nodiscard]] int getID() const;
 
@@ -73,10 +51,7 @@ namespace comm {
         [[nodiscard]] bool isImageDeserialized() const;
 
     protected:
-        #ifdef COMM_USE_OPENCV
-        cv::Mat image{};
-        #endif
-        uchar *imageBytes;
+        unsigned char *imageBytes;
         int id, imageHeight, imageWidth, imageType, contentSize;
         bool imageDeserialized;
     };

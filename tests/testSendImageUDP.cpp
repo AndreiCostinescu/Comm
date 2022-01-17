@@ -4,7 +4,7 @@
 
 #include <comm/communication/Communication.h>
 #include <comm/communication/TCPServer.h>
-#include <comm/data/ImageData.h>
+#include <comm/data/ImageDataWithOpenCV.h>
 #include <comm/data/StatusData.h>
 #include <comm/socket/utils.h>
 #include <iostream>
@@ -33,7 +33,7 @@ void sender(SocketType udpSocketType) {
     assert(strcmp(s.getData(), "hello") == 0);
 
     Mat image = cv::imread("../../data/Lena.png");
-    ImageData i(image, 1);
+    ImageDataWithOpenCV i(image, 1);
     if (!p.transmitData(udpSocketType, &i, false, false, 0, true)) {
         cout << "Error: " << p.getErrorCode() << "; " << p.getErrorString() << "; " << getLastErrorString() << endl;
     } else {
@@ -69,7 +69,7 @@ void receiver(SocketType udpSocketType) {
     this_thread::sleep_for(chrono::seconds(2));
     cout << "\n\n";
 
-    ImageData i;
+    ImageDataWithOpenCV i;
     if (!comm->recvData(udpSocketType, &i, false, false, false, 10, true)) {
         cout << "Error: " << comm->getErrorCode() << "; " << comm->getErrorString() << "; " << getLastErrorString()
              << endl;

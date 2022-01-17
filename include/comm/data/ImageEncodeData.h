@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace comm {
-    class ImageEncodeData : public ImageData {
+    class ImageEncodeData : public virtual ImageData {
     public:
         static const int headerSize;
 
@@ -25,12 +25,10 @@ namespace comm {
 
         ImageEncodeData();
 
-        #ifdef COMM_USE_OPENCV
-        ImageEncodeData(cv::Mat image, int id, Encoding encoding);
-        #endif
+        ImageEncodeData(const std::vector<unsigned char> &imageEncodedBytes, int imageHeight, int imageWidth,
+                        int imageType, int id, Encoding encoding);
 
-        ImageEncodeData(const std::vector<uchar> &imageEncodedBytes, int imageHeight, int imageWidth, int imageType,
-                        int id, Encoding encoding);
+        ~ImageEncodeData() override;
 
         MessageType getMessageType() override;
 
@@ -46,11 +44,11 @@ namespace comm {
 
         Encoding getEncoding();
 
-        void setImageEncodedBytes(const std::vector<uchar> &imageEncodedBytes, int imageHeight, int imageWidth,
+        void setImageEncodedBytes(const std::vector<unsigned char> &imageEncodedBytes, int imageHeight, int imageWidth,
                                   int imageType, int id, Encoding _encoding);
 
-    private:
-        std::vector<uchar> encodedImage;
+    protected:
+        std::vector<unsigned char> encodedImage;
         int encodedContentSize;
         Encoding encoding;
     };

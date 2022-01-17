@@ -4,7 +4,6 @@
 
 #include <chrono>
 #include <comm/communication/Communication.h>
-#include <comm/utils/Buffer.h>
 #include <iostream>
 #include <mutex>
 #include <thread>

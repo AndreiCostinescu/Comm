@@ -6,6 +6,7 @@
 #define COMM_DATA_DATACOLLECTION_H
 
 #include <comm/data/CommunicationData.h>
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>
@@ -15,7 +16,9 @@ namespace comm {
     public:
         DataCollection();
 
-        ~DataCollection();
+        DataCollection(std::function<CommunicationData *(MessageType)> dataCreationFunction);
+
+        virtual ~DataCollection();
 
         void reset();
 
@@ -23,9 +26,10 @@ namespace comm {
 
         CommunicationData *get(const MessageType &messageType);
 
-    private:
+    protected:
         std::map<std::string, CommunicationData *> data;
         std::vector<std::string> dataKeys;
+        std::function<CommunicationData *(MessageType)> dataCreationFunction;
     };
 }
 

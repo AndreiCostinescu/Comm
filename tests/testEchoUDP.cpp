@@ -4,7 +4,7 @@
 
 #include <cassert>
 #include <comm/communication/Communication.h>
-#include <comm/data/ImageData.h>
+#include <comm/data/ImageDataWithOpenCV.h>
 #include <comm/data/StatusData.h>
 #include <iostream>
 #include <thread>
@@ -21,7 +21,7 @@ void createUDPEcho(SocketType socketType) {
     Communication comm;
     comm.createSocket(socketType, SocketPartner(true, false), port, 2000, 50);
 
-    ImageData image;
+    ImageDataWithOpenCV image;
     StatusData status;
     MessageType messageType;
     while (!quit) {

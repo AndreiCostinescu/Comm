@@ -3,9 +3,7 @@
 //
 
 #include <comm/communication/Communication.h>
-#include <comm/data/ImageData.h>
-
-#include <utility>
+#include <comm/data/ImageDataWithOpenCV.h>
 
 using namespace comm;
 using namespace cv;
@@ -14,7 +12,7 @@ using namespace std;
 SocketType socketType = SocketType::UDP;
 
 void rawSendImage(Communication &sender, Mat image, int prematureStop = 0, bool withHeader = true) {
-    ImageData sendData(std::move(image), 0);
+    ImageDataWithOpenCV sendData(std::move(image), 0);
     Buffer sendBuffer;
 
     if (withHeader) {
@@ -56,7 +54,7 @@ int main() {
     Communication sender, receiver;
     sender.createSocket(socketType, SocketPartner("127.0.0.1", 8400, false));
     receiver.createSocket(socketType, nullptr, 8400, 2000, 50);
-    ImageData recvData;
+    ImageDataWithOpenCV recvData;
 
     rawSendImage(sender, lena, 2);
     rawSendImage(sender, lena, 0, false);

@@ -4,12 +4,10 @@
 
 #include <comm/communication/Communication.h>
 #include <comm/communication/TCPServer.h>
-#include <comm/data/ImageData.h>
+#include <comm/data/ImageDataWithOpenCV.h>
 #include <comm/data/StatusData.h>
 #include <iostream>
-#include <opencv2/opencv.hpp>
 #include <thread>
-#include <comm/data/messages.h>
 
 using namespace comm;
 using namespace cv;
@@ -26,7 +24,7 @@ void createUDPServer() {
     comm.createSocket(SocketType::UDP, SocketPartner(true, false), port, 2000, 50);
 
     Mat lena = cv::imread("../../data/Lena.png");
-    ImageData image;
+    ImageDataWithOpenCV image;
     StatusData status;
     MessageType messageType;
     while (!quit) {
@@ -90,7 +88,7 @@ void createUDPClient() {
     Communication comm;
     comm.createSocket(SocketType::UDP, SocketPartner("127.0.0.1", port, false), 0, 2000, 1000);
 
-    ImageData image;
+    ImageDataWithOpenCV image;
     StatusData status;
     MessageType messageType;
     status.setData("UDP");
