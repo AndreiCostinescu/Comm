@@ -1,0 +1,115 @@
+@PACKAGE_INIT@
+
+set(@PROJECT_NAME@_VERSION_MAJOR "@PROJECT_VERSION_MAJOR@")
+set(@PROJECT_NAME@_VERSION_MINOR "@PROJECT_VERSION_MINOR@")
+set(@PROJECT_NAME@_VERSION_PATCH "@PROJECT_VERSION_PATCH@")
+
+set(@PROJECT_NAME@_VERSION ${@PROJECT_NAME@_VERSION_MAJOR}.${@PROJECT_NAME@_VERSION_MINOR}.${@PROJECT_NAME@_VERSION_PATCH})
+
+set(@PROJECT_NAME@_EXTERNAL_LIBRARIES )
+
+### ADD EXTERNAL DEPENDENCIES: utils ###
+
+if (WIN32)
+    set(@PROJECT_NAME@_EXTERNAL_LIBRARIES wsock32 ws2_32 ${@PROJECT_NAME@_EXTERNAL_LIBRARIES})
+else (WIN32)
+    set(@PROJECT_NAME@_EXTERNAL_LIBRARIES pthread ${@PROJECT_NAME@_EXTERNAL_LIBRARIES})
+endif (WIN32)
+
+### CREATE THE TARGETS ###
+
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+
+### CHECK THE REQUESTED COMPONENTS ###
+
+set(@PROJECT_NAME@_COMPONENTS "@PROJECT_NAME_LOWER@_core" "@PROJECT_NAME_LOWER@_core_static" "@PROJECT_NAME_LOWER@_opencv" "@PROJECT_NAME_LOWER@_opencv_static")
+
+if(NOT @PROJECT_NAME@_FIND_COMPONENTS)
+    set(@PROJECT_NAME@_FIND_COMPONENTS "@PROJECT_NAME_LOWER@_core" "@PROJECT_NAME_LOWER@_opencv")
+endif()
+message("@PROJECT_NAME@ requested components: ${@PROJECT_NAME@_FIND_COMPONENTS}")
+
+set(@PROJECT_NAME@_LOCAL_FIND_COMPONENTS )
+set(@PROJECT_NAME@_REQUEST_OPENCV 0)
+foreach(__@PROJECT_NAME@_component ${@PROJECT_NAME@_FIND_COMPONENTS})
+    if(NOT (__@PROJECT_NAME@_component MATCHES "^@PROJECT_NAME@_" OR __@PROJECT_NAME@_component MATCHES "^@PROJECT_NAME_LOWER@_"))
+        set(__@PROJECT_NAME@_component @PROJECT_NAME@_${__@PROJECT_NAME@_component})
+    endif()
+    set(@PROJECT_NAME@_LOCAL_FIND_COMPONENTS ${__@PROJECT_NAME@_component} ${@PROJECT_NAME@_LOCAL_FIND_COMPONENTS})
+    string(TOLOWER "${__@PROJECT_NAME@_component}" __@PROJECT_NAME@_componentLOW)
+    if ("${__@PROJECT_NAME@_component}" MATCHES "opencv")
+        set(@PROJECT_NAME@_REQUEST_OPENCV 1)
+    endif()
+endforeach()
+
+### ADD EXTERNAL DEPENDENCIES IF NEEDED: opencv ###
+
+if (${@PROJECT_NAME@_REQUEST_OPENCV})
+    if ("${OPENCV_VERSION}" STREQUAL "")
+        find_package(OpenCV REQUIRED COMPONENTS highgui)
+    else ()
+        find_package(OpenCV ${OPENCV_VERSION} REQUIRED COMPONENTS highgui)
+    endif ()
+
+    include_directories(${OpenCV_INCLUDE_DIRS})
+    set(@PROJECT_NAME@_EXTERNAL_LIBRARIES ${OpenCV_LIBS} ${@PROJECT_NAME@_EXTERNAL_LIBRARIES})
+endif ()
+
+### START POPULATING @PROJECT_NAME@_INCLUDE and @PROJECT_NAME@_LIBRARY variables
+
+# set_and_check(@PROJECT_NAME@_INCLUDE "${PACKAGE_PREFIX_DIR}/include")
+set_and_check(@PROJECT_NAME@_INCLUDE "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
+set(@PROJECT_NAME@_LIBRARY ${@PROJECT_NAME@_EXTERNAL_LIBRARIES} ${@PROJECT_NAME@_LIBRARY})  # might contain components from previous includes
+
+### ADD THE REQUESTED COMPONENTS TO @PROJECT_NAME@_LIBRARY ###
+
+# first, iterate through the components because of inter-dependencies-ordering
+foreach(__@PROJECT_NAME@_component ${@PROJECT_NAME@_COMPONENTS})
+    list(FIND @PROJECT_NAME@_LOCAL_FIND_COMPONENTS ${__@PROJECT_NAME@_component} __componentIdx)
+    if(__componentIdx LESS 0)
+        continue()
+    endif ()
+    string(TOLOWER "${__@PROJECT_NAME@_component}" __@PROJECT_NAME@_componentLOW)
+    if ("${__@PROJECT_NAME@_componentLOW}" STREQUAL "@PROJECT_NAME_LOWER@_core")
+        set(@PROJECT_NAME@_LIBRARY @PROJECT_NAME@::@COMM_LIB_SHARED@ ${@PROJECT_NAME@_LIBRARY})
+        set(${__@PROJECT_NAME@_componentUP}_FOUND 1)  # indicate that module is found
+        set(@PROJECT_NAME@_${__@PROJECT_NAME@_component}_FOUND TRUE)  # indicate that module is found
+    elseif ("${__@PROJECT_NAME@_componentLOW}" STREQUAL "@PROJECT_NAME_LOWER@_core_static")
+        set(@PROJECT_NAME@_LIBRARY @PROJECT_NAME@::@COMM_LIB@ ${@PROJECT_NAME@_LIBRARY})
+        set(${__@PROJECT_NAME@_componentUP}_FOUND 1)  # indicate that module is found
+        set(@PROJECT_NAME@_${__@PROJECT_NAME@_component}_FOUND TRUE)  # indicate that module is found
+    elseif ("${__@PROJECT_NAME@_componentLOW}" STREQUAL "@PROJECT_NAME_LOWER@_opencv")
+        set(@PROJECT_NAME@_LIBRARY @PROJECT_NAME@::@OPENCV_COMM_LIB_SHARED@ ${@PROJECT_NAME@_LIBRARY})
+        set(${__@PROJECT_NAME@_componentUP}_FOUND 1)  # indicate that module is found
+        set(@PROJECT_NAME@_${__@PROJECT_NAME@_component}_FOUND TRUE)  # indicate that module is found
+    elseif ("${__@PROJECT_NAME@_componentLOW}" STREQUAL "@PROJECT_NAME_LOWER@_opencv_static")
+        set(@PROJECT_NAME@_LIBRARY @PROJECT_NAME@::@OPENCV_COMM_LIB@ ${@PROJECT_NAME@_LIBRARY})
+        set(${__@PROJECT_NAME@_componentUP}_FOUND 1)  # indicate that module is found
+        set(@PROJECT_NAME@_${__@PROJECT_NAME@_component}_FOUND TRUE)  # indicate that module is found
+    else ()
+        message(WARNING "Unknown component/module/target ${__@PROJECT_NAME@_componentLOW}")
+    endif ()
+endforeach ()
+
+### SET THE NOT FOUND COMPONENTS! ###
+
+# second, iterate through the requested components and check if found or not...
+foreach(__@PROJECT_NAME@_component ${@PROJECT_NAME@_FIND_COMPONENTS})
+    if (NOT @PROJECT_NAME@_${__@PROJECT_NAME@_component}_FOUND)
+        # Either the component is required or the user did not set any components at all.
+        # In the latter case, the @PROJECT_NAME@_FIND_REQUIRED_<component> variable will not be defined
+        # since it is not set by this config. So let's assume the implicitly set components are always required.
+        if(NOT DEFINED @PROJECT_NAME@_FIND_REQUIRED_${__@PROJECT_NAME@_component} OR @PROJECT_NAME@_FIND_REQUIRED_${__@PROJECT_NAME@_component})
+            message(FATAL_ERROR "${__@PROJECT_NAME@_component} is required but was not found")
+        elseif(NOT @PROJECT_NAME@_FIND_QUIETLY)
+            # The component was marked as optional using OPTIONAL_COMPONENTS
+            message(WARNING "Optional component ${__@PROJECT_NAME@_component} was not found")
+        endif()
+        #indicate that module is NOT found
+        string(TOUPPER "${__@PROJECT_NAME@_component}" __@PROJECT_NAME@_componentUP)
+        set(${__@PROJECT_NAME@_componentUP}_FOUND "${__@PROJECT_NAME@_componentUP}_FOUND-NOTFOUND")
+        set(@PROJECT_NAME@_${__@PROJECT_NAME@_component}_FOUND FALSE)
+    endif()
+endforeach()
+
+check_required_components(@PROJECT_NAME@)

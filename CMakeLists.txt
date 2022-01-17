@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
-# cmake_minimum_required(VERSION 3.16)
-project(Comm)
-set(CMAKE_CXX_STANDARD 17)
 
+project(Comm)  # sets PROJECT_NAME variable
+set(PROJECT_VERSION_STRING "1.0.0")
+set(PROJECT_TARGET "Communication")
+set(PROJECT_INCLUDE_PREFIX "comm")
+
+set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-std=c++17 -pthread)
 
 option(WITH_OPENCV "Build the code with opencv" OFF)
@@ -79,3 +82,5 @@ endif ()
 set(MASTER_LIBRARIES ${COMM_LIB} ${OPENCV_COMM_LIB} ${MASTER_LIBRARIES})
 
 add_subdirectory(tests)
+
+include(cmake/installConfig.cmake)
