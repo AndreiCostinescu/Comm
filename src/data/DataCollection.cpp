@@ -4,7 +4,9 @@
 
 #include <comm/data/DataCollection.h>
 #include <comm/data/dataUtils.h>
+#include <comm/socket/utils.h>
 #include <comm/utils/utils.hpp>
+#include <iostream>
 #include <stdexcept>
 
 using namespace comm;

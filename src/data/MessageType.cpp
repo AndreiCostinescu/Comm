@@ -3,8 +3,7 @@
 //
 
 #include <comm/data/MessageType.h>
-#include <comm/socket/utils.h>
-#include <iostream>
+#include <stdexcept>
 
 using namespace comm;
 using namespace std;

@@ -5,9 +5,7 @@
 #ifndef COMM_DATA_MESSAGETYPE_H
 #define COMM_DATA_MESSAGETYPE_H
 
-#include <stdexcept>
 #include <string>
-#include <comm/socket/Socket.h>
 
 namespace comm {
     enum MessageType {

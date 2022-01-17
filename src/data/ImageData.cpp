@@ -5,7 +5,6 @@
 #include <comm/data/ImageData.h>
 #include <comm/socket/utils.h>
 #include <iostream>
-#include <utility>
 
 using namespace comm;
 using namespace std;
