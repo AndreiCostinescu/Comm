@@ -22,20 +22,15 @@ include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
 
 ### CHECK THE REQUESTED COMPONENTS ###
 
-set(@PROJECT_NAME@_COMPONENTS "@PROJECT_NAME_LOWER@_core" "@PROJECT_NAME_LOWER@_core_static" "@PROJECT_NAME_LOWER@_opencv" "@PROJECT_NAME_LOWER@_opencv_static")
+set(@PROJECT_NAME@_COMPONENTS "core" "core_static" "opencv" "opencv_static")
 
 if(NOT @PROJECT_NAME@_FIND_COMPONENTS)
-    set(@PROJECT_NAME@_FIND_COMPONENTS "@PROJECT_NAME_LOWER@_core" "@PROJECT_NAME_LOWER@_opencv")
+    set(@PROJECT_NAME@_FIND_COMPONENTS "core" "opencv")
 endif()
 message("@PROJECT_NAME@ requested components: ${@PROJECT_NAME@_FIND_COMPONENTS}")
 
-set(@PROJECT_NAME@_LOCAL_FIND_COMPONENTS )
 set(@PROJECT_NAME@_REQUEST_OPENCV 0)
 foreach(__@PROJECT_NAME@_component ${@PROJECT_NAME@_FIND_COMPONENTS})
-    if(NOT (__@PROJECT_NAME@_component MATCHES "^@PROJECT_NAME@_" OR __@PROJECT_NAME@_component MATCHES "^@PROJECT_NAME_LOWER@_"))
-        set(__@PROJECT_NAME@_component @PROJECT_NAME@_${__@PROJECT_NAME@_component})
-    endif()
-    set(@PROJECT_NAME@_LOCAL_FIND_COMPONENTS ${__@PROJECT_NAME@_component} ${@PROJECT_NAME@_LOCAL_FIND_COMPONENTS})
     string(TOLOWER "${__@PROJECT_NAME@_component}" __@PROJECT_NAME@_componentLOW)
     if ("${__@PROJECT_NAME@_component}" MATCHES "opencv")
         set(@PROJECT_NAME@_REQUEST_OPENCV 1)
@@ -57,7 +52,6 @@ endif ()
 
 ### START POPULATING @PROJECT_NAME@_INCLUDE and @PROJECT_NAME@_LIBRARY variables
 
-# set_and_check(@PROJECT_NAME@_INCLUDE "${PACKAGE_PREFIX_DIR}/include")
 set_and_check(@PROJECT_NAME@_INCLUDE "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
 set(@PROJECT_NAME@_LIBRARY ${@PROJECT_NAME@_EXTERNAL_LIBRARIES} ${@PROJECT_NAME@_LIBRARY})  # might contain components from previous includes
 
@@ -65,24 +59,24 @@ set(@PROJECT_NAME@_LIBRARY ${@PROJECT_NAME@_EXTERNAL_LIBRARIES} ${@PROJECT_NAME@
 
 # first, iterate through the components because of inter-dependencies-ordering
 foreach(__@PROJECT_NAME@_component ${@PROJECT_NAME@_COMPONENTS})
-    list(FIND @PROJECT_NAME@_LOCAL_FIND_COMPONENTS ${__@PROJECT_NAME@_component} __componentIdx)
+    list(FIND @PROJECT_NAME@_FIND_COMPONENTS ${__@PROJECT_NAME@_component} __componentIdx)
     if(__componentIdx LESS 0)
         continue()
     endif ()
     string(TOLOWER "${__@PROJECT_NAME@_component}" __@PROJECT_NAME@_componentLOW)
-    if ("${__@PROJECT_NAME@_componentLOW}" STREQUAL "@PROJECT_NAME_LOWER@_core")
+    if ("${__@PROJECT_NAME@_componentLOW}" STREQUAL "core")
         set(@PROJECT_NAME@_LIBRARY @PROJECT_NAME@::@COMM_LIB_SHARED@ ${@PROJECT_NAME@_LIBRARY})
         set(${__@PROJECT_NAME@_componentUP}_FOUND 1)  # indicate that module is found
         set(@PROJECT_NAME@_${__@PROJECT_NAME@_component}_FOUND TRUE)  # indicate that module is found
-    elseif ("${__@PROJECT_NAME@_componentLOW}" STREQUAL "@PROJECT_NAME_LOWER@_core_static")
+    elseif ("${__@PROJECT_NAME@_componentLOW}" STREQUAL "core_static")
         set(@PROJECT_NAME@_LIBRARY @PROJECT_NAME@::@COMM_LIB@ ${@PROJECT_NAME@_LIBRARY})
         set(${__@PROJECT_NAME@_componentUP}_FOUND 1)  # indicate that module is found
         set(@PROJECT_NAME@_${__@PROJECT_NAME@_component}_FOUND TRUE)  # indicate that module is found
-    elseif ("${__@PROJECT_NAME@_componentLOW}" STREQUAL "@PROJECT_NAME_LOWER@_opencv")
+    elseif ("${__@PROJECT_NAME@_componentLOW}" STREQUAL "opencv")
         set(@PROJECT_NAME@_LIBRARY @PROJECT_NAME@::@OPENCV_COMM_LIB_SHARED@ ${@PROJECT_NAME@_LIBRARY})
         set(${__@PROJECT_NAME@_componentUP}_FOUND 1)  # indicate that module is found
         set(@PROJECT_NAME@_${__@PROJECT_NAME@_component}_FOUND TRUE)  # indicate that module is found
-    elseif ("${__@PROJECT_NAME@_componentLOW}" STREQUAL "@PROJECT_NAME_LOWER@_opencv_static")
+    elseif ("${__@PROJECT_NAME@_componentLOW}" STREQUAL "opencv_static")
         set(@PROJECT_NAME@_LIBRARY @PROJECT_NAME@::@OPENCV_COMM_LIB@ ${@PROJECT_NAME@_LIBRARY})
         set(${__@PROJECT_NAME@_componentUP}_FOUND 1)  # indicate that module is found
         set(@PROJECT_NAME@_${__@PROJECT_NAME@_component}_FOUND TRUE)  # indicate that module is found
