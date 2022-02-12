@@ -40,14 +40,16 @@ endforeach()
 ### ADD EXTERNAL DEPENDENCIES IF NEEDED: opencv ###
 
 if (${@PROJECT_NAME@_REQUEST_OPENCV})
-    if ("${OPENCV_VERSION}" STREQUAL "")
-        find_package(OpenCV REQUIRED COMPONENTS highgui)
-    else ()
-        find_package(OpenCV ${OPENCV_VERSION} REQUIRED COMPONENTS highgui)
-    endif ()
+    if ((NOT DEFINED OPENCV_HIGHGUI_FOUND) OR (NOT ${OPENCV_HIGHGUI_FOUND}) OR (NOT DEFINED OpenCV_highgui_FOUND) OR (NOT ${OpenCV_highgui_FOUND}))
+        if ("${OPENCV_VERSION}" STREQUAL "")
+            find_package(OpenCV REQUIRED COMPONENTS highgui)
+        else ()
+            find_package(OpenCV ${OPENCV_VERSION} REQUIRED COMPONENTS highgui)
+        endif ()
 
-    include_directories(${OpenCV_INCLUDE_DIRS})
-    set(@PROJECT_NAME@_EXTERNAL_LIBRARIES ${OpenCV_LIBS} ${@PROJECT_NAME@_EXTERNAL_LIBRARIES})
+        include_directories(${OpenCV_INCLUDE_DIRS})
+        set(@PROJECT_NAME@_EXTERNAL_LIBRARIES ${OpenCV_LIBS} ${@PROJECT_NAME@_EXTERNAL_LIBRARIES})
+    endif ()
 endif ()
 
 ### START POPULATING @PROJECT_NAME@_INCLUDE and @PROJECT_NAME@_LIBRARY variables
